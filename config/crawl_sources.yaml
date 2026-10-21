@@ -1,0 +1,27 @@
+# 본문 크롤링(Scrapling) 도메인 정책 — A-292
+# 키워드 게이트를 통과한 RSS 기사 링크만 원문 본문을 가져온다(목록·검색 페이지 순회 없음).
+# allow: 자동 수집 허용 도메인. robots.txt 판정은 실행 시 별도로 한 번 더 한다.
+# block: 이용약관이 자동 수집·데이터 마이닝을 금지하거나 시세 재배포 라이선스가 필요한 도메인.
+#        헤드라인·요약은 기존 RSS/GDELT 경로로만 받고, 본문은 받지 않는다.
+# selector: 본문 CSS 후보(앞에서부터 시도). 비우면 공통 후보(article → main → body).
+# ToS 확인 상태는 DQ-34 — 확인 전 allow 도메인은 '공개 피드 제공 + robots 허용' 근거로만 둔다.
+
+allow:
+  farmdocdaily.illinois.edu: {selector: [".entry-content", "article"]}
+  www.world-grain.com: {}
+  www.ofimagazine.com: {}
+  grain.org: {}
+  soygrowers.com: {selector: [".entry-content", "article"]}
+  www.climatepol.com: {selector: ["#article-view-content-div", "article"]}
+  www.agmarket.net: {selector: [".entry-content", "article"]}
+  www.graincentral.com: {selector: [".entry-content", "article"]}
+  www.totalfarmmarketing.com: {selector: [".entry-content", "article"]}
+  ukragroconsult.com: {}
+
+block:
+  reuters.com: "이용약관 — 자동 수집 금지(헤드라인은 Google News·GDELT 경유만)"
+  apnews.com: "이용약관 — 자동 수집 금지(헤드라인은 Google News·GDELT 경유만)"
+  investing.com: "이용약관 — 스크래핑·데이터 마이닝 금지(시세는 yfinance·TE 경로)"
+  cmegroup.com: "시세 재배포 라이선스 필요(CBOT 시세는 Databento·yfinance 경로)"
+  theice.com: "시세 재배포 라이선스 필요(ICE 시세는 ingest_ice_volumes·TE 경로)"
+  news.google.com: "리디렉트 프록시 — 원문 도메인 판정 불가"
