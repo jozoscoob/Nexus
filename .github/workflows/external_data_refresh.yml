@@ -426,13 +426,15 @@ jobs:
           sparse-checkout: |
             src
             scripts
+            config
             data/processed
           sparse-checkout-cone-mode: true
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install pandas pyarrow httpx openai   # openai: 기사별 한국어 헤드라인(A-284 — 승인자 지정 gpt-5.6-luna)
+        # openai: 기사별 한국어 헤드라인(A-284) · scrapling·pyyaml: 게이트 통과 기사 본문 코퍼스(A-292)
+        run: pip install pandas pyarrow httpx openai pyyaml "scrapling[fetchers]==0.5"
       - uses: actions/download-artifact@v4
         with:
           path: data/raw/
@@ -444,12 +446,15 @@ jobs:
           BRIEF_LLM_MODEL: ${{ vars.BRIEF_LLM_MODEL || 'gpt-5.6-luna' }}
           BRIEF_LLM_EFFORT: ${{ vars.BRIEF_LLM_EFFORT || 'xhigh' }}
           KO_HEADLINE_DAILY_CAP: ${{ vars.KO_HEADLINE_DAILY_CAP || '60' }}
+          # A-292: 본문 크롤링 on/off·일 상한 — Variables로 끌 수 있다(0이면 미수집)
+          CRAWL_FULLTEXT: ${{ vars.CRAWL_FULLTEXT || '1' }}
+          CRAWL_DAILY_CAP: ${{ vars.CRAWL_DAILY_CAP || '40' }}
         run: python scripts/daily_unstructured_digest.py >> "$GITHUB_STEP_SUMMARY"
       - name: Commit daily signal archive (A-181 — 변수별 영구 축적)
         run: |
-          if git diff --quiet -- data/processed/unstructured_daily_signals.csv data/processed/ko_headline_cache.json 2>/dev/null \
+          if git diff --quiet -- data/processed/unstructured_daily_signals.csv data/processed/ko_headline_cache.json data/processed/crawl_corpus 2>/dev/null \
              && git ls-files --error-unmatch data/processed/unstructured_daily_signals.csv >/dev/null 2>&1 \
-             && [ -z "$(git ls-files --others --exclude-standard data/processed/ko_headline_cache.json)" ]; then
+             && [ -z "$(git ls-files --others --exclude-standard data/processed/ko_headline_cache.json data/processed/crawl_corpus)" ]; then
             echo "아카이브 무변경 — 커밋 생략"
             exit 0
           fi
@@ -457,6 +462,7 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add data/processed/unstructured_daily_signals.csv "data/semantic/events" 2>/dev/null || git add data/processed/unstructured_daily_signals.csv
           git add data/processed/ko_headline_cache.json 2>/dev/null || true   # A-284: 한국어 헤드라인 캐시(기사당 1회 호출 보장)
+          git add data/processed/crawl_corpus 2>/dev/null || true             # A-292: 기사 본문 코퍼스(월별 JSONL)
           git commit -m "data: 일별 비정형 신호 아카이브 append ($(date -u +%F)) [A-181]" || exit 0
           # A-271: bot push 경합(교차검증·다른 bot 커밋) 3회 재시도 — 실패는 잡 실패로 가시화
           for i in 1 2 3; do
