@@ -73,4 +73,5 @@
 |---|---|---|---|---|---|
 | DQ-34 | **본문 크롤링 allow 도메인 10곳 이용약관 확인** | 현재 근거는 '공개 RSS 제공 + robots.txt 허용'뿐. Reuters·AP·Investing.com은 약관상 자동 수집 금지라 block(헤드라인은 기존 Google News·GDELT 경유만), CME·ICE는 시세 재배포 라이선스로 block | A 현행 allow 유지·법무 확인 후 조정 / B 확인 전 `CRAWL_FULLTEXT=0`(Variables)으로 끔 | 무료 | 첫 크롤링 런 전 |
 | DQ-35 | **실시간 수집 실행 표면** | GitHub Actions cron은 5분 최소·지연 수십 분 가능 — 뉴스 '준실시간'까지만. 시세 실시간은 크롤링이 아닌 스트리밍 API 영역(CBOT ZL: Databento 기존 키 Live 요금제, ICE: 라이선스). D-052로 크롤링은 사내 AWS 이관 예정 | A 뉴스 2시간 간격 Actions cron(무료·즉시) / B 사내 AWS 상주 워커(Scrapling Spider 일시정지·재개) — D-052 이관과 묶음 / C 시세 Databento Live 추가 | A 무료 · B 사내 인프라 · C 유료 | 11월 |
+| DQ-37 | **CBOT 정산가 목표변수의 yfinance 경로 정리** | 차단 사이트 대체 경로 조사(R-025)에서 확인: `CBOT_BO_CLOSE`(G1·G2 목표변수)가 yfinance ZL=F 정산가를 원천으로 쓰며, 수집기가 레이트리밋 회피를 위해 Chrome을 흉내 내는 curl_cffi 세션을 사용함. Yahoo 데이터는 거래소 라이선스 하 개인 이용 전제 — 현 파이프라인에서 법적 근거가 가장 약한 지점. 스크린샷·OCR은 대안이 아님(약관·저작권·거래소 라이선스 판단이 동일) | A Databento(GLBX.MDP3)를 정산가 원천으로 전환, yfinance는 수동 교차검증 전용(권고) / B CME DataMine 정산가 이력 1회 구매 + 이후 Databento / C 현행 유지·위험 기록 | A 기존 키 · B 유료(견적) · C 무료 | 11월 |
 
