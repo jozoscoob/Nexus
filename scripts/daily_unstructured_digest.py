@@ -563,6 +563,14 @@ def _fetch_specialist_media() -> list[dict]:
         if not kept:
             continue
         winners[indicator] = channel
+        if os.environ.get("CRAWL_FULLTEXT") == "1":          # A-292: 게이트 통과 기사 본문 → 코퍼스(비치명)
+            try:
+                import sys
+                sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+                from src.pipeline.connectors import scrapling_connector as sc
+                sc.append_corpus(sc.enrich_items(kept, indicator))
+            except Exception as e:                            # noqa: BLE001
+                print(f"[경고] 본문 크롤링 단계 실패(비치명): {type(e).__name__}")
         label = _CHANNEL_LABELS.get(channel, channel)
         by_date: dict[str, list[str]] = {}
         kws_by_date: dict[str, set[str]] = {}
