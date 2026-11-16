@@ -35,6 +35,7 @@ RAW_DIR = "data/raw"
 EXPECTED_ARTIFACTS: list[tuple[str, bool]] = [
     # (파일명 접두사, optional)
     ("economic_indicators", False),
+    ("cot_positions", True),              # R-043: CFTC COT 대두유(G2 변동성 선행축)
     ("commodity_data", False),
     ("climate_data", False),
     ("climate_forecast", True),           # A-263: 산지 15일 예보 — 별도 파일·참고 전용(CLIMATE_FORECAST=0 시 결번)

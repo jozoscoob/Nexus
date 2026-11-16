@@ -1,0 +1,19 @@
+# G2 Preview 로컬 실행 이미지 의존성 — 버전 고정(2026-11-16 검증: 기존 pytest 188 통과)
+numpy==2.3.5
+pandas==3.0.5
+pyarrow==22.0.0
+duckdb==1.4.4
+pyyaml==6.0.3
+openpyxl==3.1.5
+xlrd==2.0.2
+httpx==0.28.1
+scikit-learn==1.8.0
+lightgbm==4.6.0
+statsmodels==0.14.6
+arch==8.0.0
+mapie==1.2.0
+databento==0.70.0
+yfinance==0.2.66
+curl_cffi==0.13.0
+pdfplumber==0.11.7
+pytest==8.4.2

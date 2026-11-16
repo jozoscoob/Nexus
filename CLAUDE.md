@@ -23,9 +23,9 @@
 | **Goals** | G1: 동인 순위+**과거 유사국면 실측 참조** — 차별점: **대두유 시장·유통 구조를 통합해 실무에서 놓치기 쉬운 요인까지 정량 지표로 제시**(README §QR, 상시 원칙) · G2: 확률 가격밴드(P10/P50/P90) · G3: 레짐 확률+**3-시뮬레이션**(per-MT regret) — 정본: README §QR (2026-08-28 재정립) |
 | **Horizons** | 1 · 5 · 20 · 60 거래일 직접 예측 (≈1일·1주·1개월·3개월). 60일 = 약 3개월 조달 의사결정 지평 |
 | **Model policy** | 단일 거대 모델 확정 금지 — **Champion–Challenger 포트폴리오**. 승격은 사전 등록된 규칙으로만 (→ `docs/research_desk/2026-08/model_strategy_2026_08_12/`) |
-| **Data scope** | 외부 파이프라인 데이터 **전용**(MEMORY **D-021**이 D-006을 대체 — 내부 S&OP/ERP는 학습·검증·피처·proxy 어디에도 투입 금지). G2 학습은 Azure ML Studio |
+| **Data scope** | 외부 파이프라인 데이터 **전용**(MEMORY **D-021**이 D-006을 대체 — 내부 S&OP/ERP는 학습·검증·피처·proxy 어디에도 투입 금지). G2 학습은 개인 노트북 Docker(로컬) |
 | **as-of rule** | 모델의 t일 입력 = `available_at ≤ t`인 최근값. `available_at` 없는 피처는 투입 금지 |
-| **Environment** | No CLI inside corporate firewall. Cloud-native only: Azure ML · Snowflake · GitHub Actions. |
+| **Environment** | 개인 노트북(퇴사 후 개인 프로젝트 — 2026-11-16 승인자). Docker + n8n 로컬 실행. 사내 방화벽·DRM·클라우드 이관(Azure/AWS/Snowflake) 제약 해제. 저장소 용량 초과 시 원본은 Google Drive 보관 |
 
 ---
 
@@ -33,12 +33,12 @@
 
 | Constraint | Rule |
 |---|---|
-| **Firewall** | Never suggest `pip install`, `brew install`, or local terminal commands. Propose Azure ML / Snowflake Snowpark / GitHub Actions alternatives. |
+| **Runtime** | 의존성은 Docker 이미지 안에서 버전 고정 설치(호스트 전역 설치 지양). 실행·스케줄은 n8n → 컨테이너 |
 | **Human gate** | All Buy/Hold outputs require human approval. Use **Plan Mode** for any procurement-affecting analysis. |
-| **Secrets** | Never commit credentials. Use GitHub Secrets + Azure Key Vault. Always reference `os.environ['KEY']`. |
+| **Secrets** | Never commit credentials. 키는 로컬 `.env`(gitignore) + GitHub Secrets. Always reference `os.environ['KEY']`. |
 | **Scope lock** | Do not extend to commodities other than soybean oil without explicit written instruction. |
 | **Serialization** | Never use `pickle`. Use `joblib` (sklearn) or `mlflow.log_model()`. |
-| **Data I/O** | Never use `openpyxl` or Excel for pipelines. Snowflake is the single source of truth. |
+| **Data I/O** | Never use `openpyxl` or Excel for pipelines. 정본은 저장소 parquet + DuckDB(Snowflake 폐기 2026-11-16). 수동 업로드 xlsx 판독은 허용 |
 | **Shell access** | Never use `os.system()` or `subprocess` for data access. Use SDK connectors only. |
 
 ---
