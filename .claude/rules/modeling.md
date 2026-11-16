@@ -56,7 +56,7 @@
 > 학습 스크립트는 parquet 경로(로컬·S3) 입력의 순수 CLI이며 실행 표면을 가정하지 않는다. 산출은
 > 모델 아티팩트 + `metrics.json` + 매니페스트(입력 스냅샷 SHA256·git SHA·lockfile 해시 — 3중 동결).
 > 추적은 `mlflow`(추적 DB=EBS/EFS, 아티팩트 루트=S3), 레지스트리는 `OPS.MODEL_REGISTRY`(Snowflake Model
-> Registry는 포인터 후보). 운영 학습 표면은 ETL#2 Python 배치 또는 Dev EC2(결정 대기 DQ-16).
+> Registry는 포인터 후보). 운영 학습 표면은 개인 노트북 Docker(2026-11-16 DQ-39 해소 — 사내 ETL#2·EC2 안 철회).
 > **9/10 G2 Preview는 현 표면(Actions CPU) 임시 예외** — 재현 조건 "동일 스냅샷에서 이관 표면 재실행 시
 > 지표 차 <0.5%". GPU가 필요한 Challenger는 GPU 표면 배정 시까지 **동결('미평가', 기각 아님)**.
 

@@ -18,16 +18,16 @@ EDA(C-06), 데이터 과학(C-03), 코드 리뷰(C-05), 보고·시각화(C-07),
   (`data/raw/Databento/GLBX.MDP3/ZL_ohlcv-1d_2010-06-06_2026-08-12.csv`), 학습 입력 마트(parquet)는 Actions에서만 만들어졌는데
   Actions는 2026-09-30 이후 실행이 없다. → **Docker 실행 + n8n 스케줄로 대체하는 것이 오늘의 첫 작업**이다.
 - **신규 유료 구매 없이 가능**: 이미 결제 중인 Databento로 목표변수·대두박·대두를 갱신하고, 나머지는 공개 데이터로 채운다.
-- **승인 필요 6건**(§4). 그중 **오늘 필요한 3건**: ①동결(DQ-22) 부분 해제 ②개인 PC Docker 실행 허용(클라우드 전용 규칙 개정)
-  ③Databento 인출 범위·상한.
+- **승인 필요 6건**(§4) 중 2건은 승인자 확인으로 해소(D-2 로컬 Docker·D-4 parquet 정본 — 2026-11-16 퇴사·개인 노트북 확인).
+  **오늘 남은 2건**: ①동결(DQ-22) 부분 해제 ②Databento 인출 범위·상한.
 
 ---
 
 ## 1. PM 관점 전체 방향 (C-01)
 
 **전제 사실**(CONFIRMED): 2026-09-13 승인(DQ-22)으로 9/10 'G2 Preview'는 'G2 준비 패키지 동결'로 재정의됐다. 재개 조건 4종 —
-①승인된 Databento 3종(ZM·ZS·옵션) 반입 ②TE 일별 밀도(DQ-21, 9/13 종결) ③운영 표면 확정 ④인수 측 해석 훈련 — 중 ①③은 아직
-미충족이다. 따라서 이번 목업은 조건 충족이 아니라 **승인자 판단으로 '선택지 B(백테스트 전용 Preview)'를 여는 것**이며, 결정
+①승인된 Databento 3종(ZM·ZS·옵션) 반입 ②TE 일별 밀도(DQ-21, 9/13 종결) ③운영 표면 확정 ④인수 측 해석 훈련 — 중 ①은 아직 미충족이고, ③은 개인 노트북 Docker로 확정됐다(D-2 해소).
+사내 인프라(AWS 이관·Snowflake·방화벽 허용 목록) 전제는 퇴사로 무관해졌다(2026-11-16 승인자). 따라서 이번 목업은 조건 충족이 아니라 **승인자 판단으로 '선택지 B(백테스트 전용 Preview)'를 여는 것**이며, 결정
 D-1로 기록한다.
 
 **원칙**
@@ -124,9 +124,9 @@ $5~25 — INFERENCE).
 | # | 결정 | 왜 필요한가 | 선택지 | 권고 | 기한 |
 |---|---|---|---|---|---|
 | **D-1** (DQ-38) | **G2 동결(DQ-22) 부분 해제 — 백테스트 전용 Preview** | 9/13 승인으로 G2는 동결 상태. 재개 조건 ①③ 미충족 | A 동결 유지 / B 백테스트 전용 Preview(주장 범위 §1 고정) / C 전면 재개(실시간 운영) | **B** | **오늘** |
-| **D-2** (DQ-39) | **실행 표면: 개인 PC Docker + n8n** | CLAUDE.md §1(Environment)·§2(Firewall: 로컬 명령·pip 금지, 클라우드 전용)·D-052(AWS 이관)와 충돌 — 규칙 개정 필요. 개인 PC는 켜져 있어야 스케줄이 돈다 | A 로컬 Docker 허용·규칙 개정 / B 같은 compose를 소형 클라우드 VM에서 / C Actions 복구(계정 결제 잠금 확인) | **A**(목업) — 상시 운영은 B 재검토 | **오늘** |
+| ~~D-2~~ (DQ-39) | ✅ **해소(11/16)** — 개인 노트북 Docker + n8n | 승인자: 퇴사로 사내 클라우드·이관 무관, 개인 노트북은 보안 제약(DRM 등) 없음. CLAUDE.md §1 Environment·§2 Runtime·Data I/O 개정 반영 | — | A 확정 | — |
 | **D-3** (DQ-40) | **Databento 인출 범위·상한** | 기결제 계정이나 종량 과금 | ZL `statistics`+일봉·ZM·ZS 지금 / 옵션은 목업 후 | 실행 전 견적 출력 후 진행, 상한 $25 제안(INFERENCE — 견적 후 확정) | **오늘** |
-| **D-4** (DQ-41) | **정본 저장소: Snowflake(§2) → 로컬 parquet + DuckDB** | Snowflake 미가동 — §2 "Snowflake 단일 정본" 규칙과 충돌 | A parquet/DuckDB 정본(목업 기간) / B Snowflake 연결 | **A** | 화 |
+| ~~D-4~~ (DQ-41) | ✅ **해소(11/16)** — 저장소 parquet + DuckDB 정본, 용량 초과 시 원본은 Google Drive | 사내 Snowflake 전제 소멸(D-2와 같은 근거) | — | A 확정 | — |
 | **D-5** (DQ-42) | **Trading Economics 구독 갱신 여부** | 3개월 구독 만료 추정(INFERENCE) | 갱신 / 미갱신·공개 대체(World Bank·MPOB) | **미갱신** — 목업은 15개년 보유본 + 공개 대체로 충분 | 수 |
 | **D-6** (DQ-43) | **목업 공개 범위** | 미검증 범위가 외부로 퍼지면 오용 위험 | 저장소 커밋 / 비공개 아티팩트 + 저장소엔 성적표만 | **비공개 아티팩트 + 성적표 md** | 목 |
 
@@ -140,7 +140,7 @@ $5~25 — INFERENCE).
 
 | 순위 | 작업 | 의존 | 소요(INFERENCE) | 비고 |
 |---|---|---|---|---|
-| **1** | `docker/` 스택 작성 — `Dockerfile`(python:3.11-slim + pandas·pyarrow·duckdb·lightgbm·mapie·statsmodels·arch·scikit-learn·databento·httpx) + `compose.yml`(n8n + Python 포함 n8n 이미지, 저장소 볼륨, `.env`) | D-2 | 2~3시간 | 코드는 브랜치에서 작성 — 되돌릴 수 있음 |
+| **1** | `docker/` 스택 작성(D-2 해소 — 즉시 착수) — `Dockerfile`(python:3.11-slim + pandas·pyarrow·duckdb·lightgbm·mapie·statsmodels·arch·scikit-learn·databento·httpx) + `compose.yml`(n8n + Python 포함 n8n 이미지, 저장소 볼륨, `.env`) | — | 2~3시간 | 코드는 브랜치에서 작성 — 되돌릴 수 있음 |
 | **2** | 승인자: Docker Desktop 확인·`.env` 키 입력 | — | 30분 | §4 하단 |
 | **3** | Databento 갱신 확장 — ZL `statistics`(정산가) + ZM·ZS, 실행 전 비용 견적 출력, 기존 `ingest_databento_bo.py` 재사용 | D-3·2 | 2시간 | 목표변수 원천 일원화(DQ-37 A) |
 | **4** | 무료 커넥터 일괄 재실행 잡(economic·climate·gpr·wasde·production·commodity·customs) — `BACKFILL_MODE`·`HISTORICAL_START_YEAR` 환경변수 그대로 | 1·2 | 1시간 + 수집 시간 | 신규 코드 거의 없음 |
@@ -154,7 +154,8 @@ $5~25 — INFERENCE).
 **요일별**: 월 1~5 · 화 6~8 착수 · 수 8~9 · 목 10 + 승인자 검토.
 
 **위험**
-- 개인 PC가 꺼지면 스케줄이 멈춘다 — 목업 기간엔 수동 버튼으로 충분, 상시 운영은 D-2 B안 재검토.
+- 개인 노트북이 꺼지면 스케줄이 멈춘다 — 목업 기간엔 수동 버튼으로 충분. 상시 운영은 목업 이후 재검토.
+- 저장소 용량: 원본 PDF·xlsx가 늘면 Google Drive에 원본을 두고 저장소엔 parquet·요약만 남긴다(승인자 확보 공간).
 - Databento 신규 구간에서 롤일·일요일 세션 처리(A-130·A-131) 재검증 필요 — 기존 후처리 함수 재사용으로 대응.
 - LightGBM이 기준선을 못 이길 수 있다(중앙 경로는 최근값이 강함 — R-038·A-224). 목업의 가치는 "범위 폭과 레짐 붕괴 개선 여부의
   정직한 보고"에 있으며, 실패도 결과로 보고한다.
