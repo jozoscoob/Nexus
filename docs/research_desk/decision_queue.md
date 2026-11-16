@@ -89,3 +89,4 @@
 | ~~DQ-41~~ | ✅**해소(11/16 — A: parquet + DuckDB, 용량 초과 시 원본은 Google Drive)** — **정본 저장소: Snowflake → 로컬 parquet + DuckDB(목업 기간)** | Snowflake 미가동 — §2 단일 정본 규칙과 충돌 | A parquet/DuckDB(권고) / B Snowflake 연결 | 무료 | 11/17 |
 | DQ-42 | **Trading Economics 구독 갱신 여부** | 8월 재등록 3개월 구독 만료 추정(INFERENCE) | 갱신 / 미갱신·World Bank Pink Sheet·MPOB 공개 대체(권고) | $65~200/월 | 11/18 |
 | DQ-43 | **G2 목업 공개 범위** | 미검증 범위의 외부 확산 시 오용 위험 | 저장소 커밋 / 비공개 아티팩트 + 저장소엔 성적표 md(권고) | 무료 | 11/19 |
+| DQ-44 | **기업 설비 추론(S8) LLM 추출 비용** | 시장 구조(대두 유통 과점) 반영 — 공시·IR·기사에서 설비·용량 추출(계획 §6.4) | 규칙 추출만 / 규칙 우선 + LLM 상한 $10(권고) / 전량 LLM | 기결제 LLM 키 종량 | 11/20 |
