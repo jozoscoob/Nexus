@@ -63,3 +63,6 @@ data/gold/*.parquet
 
 # 로컬 실행 로그 (D-053)
 docker/logs/
+
+# n8n-mcp 로컬 설정 — 실제 API 키가 들어가므로 커밋 금지(승인자가 로컬에서만 입력)
+docker/.mcp.json
