@@ -13,7 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 PY = sys.executable
-CONNECTORS = ["economic", "climate", "gpr", "wasde", "production", "commodity", "customs"]
+CONNECTORS = ["economic", "climate", "gpr", "wasde", "production", "commodity", "customs", "cot"]
 MANUAL_PARSERS = ["ingest_te_xlsx", "ingest_wasde_xlsx", "ingest_psd_data", "ingest_gats_data",
                   "ingest_ice_volumes", "ingest_nasa_power_xlsx", "ingest_customs_gw_uploads",
                   "ingest_fx_brl_usd_xlsx", "ingest_enso_oni_xlsx"]

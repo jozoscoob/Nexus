@@ -105,8 +105,8 @@ $5~25 — INFERENCE).
 | 산지 기후 ERA5-Land | Open-Meteo·NASA POWER | 계절·수급 충격 | 커넥터 보유(Open-Meteo 약관 DQ-26) | ✅ 재실행 |
 | 지정학 GPR·GeoIntel | Iacoviello xls·USGS·NOAA·GDELT | 스트레스 피처 | 커넥터 보유 | ✅ 재실행 |
 | 관세청 수입 실적 | data.go.kr(무료 키) | 도착가 잔차층 | 커넥터 보유(당년 증분) | ✅ 재실행 |
-| **CFTC COT 대두유 포지션**(주간) | cftc.gov 공개 CSV | 변동성 선행축(B-9, P0) | **미구현 → 신규** | ✅ 신규 |
-| **EIA 바이오연료 원료 사용량**(월간) | EIA API(무료 키) | 미국 재생디젤용 대두유 수요 — RVO 축 정량화 | **미구현 → 신규** | ✅ 신규 |
+| **CFTC COT 대두유 포지션**(주간) | cftc.gov 공개 API(키 불요) | 변동성 선행축(B-9, P0) | ✅ **구현 완료(11/16)** — `cot_connector.py`, 2010~ 879주 실수집 검증 | ✅ |
+| **EIA 바이오연료 원료 사용량**(월간) | EIA API(무료 키) | 미국 재생디젤용 대두유 수요 — RVO 축 정량화 | 미구현 — 키 발급 후 API 경로 검증 필요 | 목요일 이후 |
 | World Bank Pink Sheet 유지 가격(월간) | 세계은행 공개 xlsx | TE 대체 — 대두유·팜유·해바라기유·유채유 | 미구현 | 목요일 이후 |
 | MPOB 팜유 가격·재고 | MPOB 공개 | 스프레드 공급 측(B-10) | 미구현 | 목요일 이후 |
 | NASS 월간 압착(Fats & Oils) | NASS Quick Stats(키 보유) | 압착 실측 | 미구현 | 목요일 이후 |

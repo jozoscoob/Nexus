@@ -1,0 +1,13 @@
+dataset: cot_positions
+source_connector: src/pipeline/connectors/cot_connector.py (CFTC Disaggregated Futures-Only, 시장 007601 — R-043)
+output_path: data/raw/cot_positions_YYYYMMDD.parquet
+description: "CBOT 대두유 주간 포지션 2010~ — 미결제약정·관리자금(MM)·생산자(PROD)·스왑(SWAP) 롱/숏/순"
+columns:
+  - {name: price_date, dtype: "datetime64[ns]", nullable: false, description: "포지션 기준일(화요일)"}
+  - {name: indicator_code, dtype: object, nullable: false, description: "COT_SBO_{OI|MM|PROD|SWAP}_{LONG|SHORT|NET}, COT_SBO_MM_NET_PCT_OI"}
+  - {name: value, dtype: float64, nullable: false, description: "계약 수 또는 % of OI"}
+  - {name: unit, dtype: object, nullable: false, description: "contracts | % of OI"}
+  - {name: source_name, dtype: object, nullable: false, description: "CFTC_COT_DISAGG"}
+  - {name: ingested_at, dtype: "datetime64[ns, UTC]", nullable: false, description: "수집 시각"}
+  - {name: event_time, dtype: "datetime64[ns]", nullable: false, description: "기준일"}
+  - {name: available_at, dtype: "datetime64[ns]", nullable: false, description: "기준일+7일(as-of 규칙 COT_)"}

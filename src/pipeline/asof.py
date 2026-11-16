@@ -141,6 +141,8 @@ RELEASE_RULES: dict[str, ReleaseRule] = {
     #   Bursa 팜유 06:00 ET · Baltic/Drewry 지수 런던 오전
     "TE_":       ReleaseRule("immediate", note="Trading Economics 시장 시세 — ZL 마감 이전 확정 계열"),
     "BDI":       ReleaseRule("immediate", note="Baltic Exchange 일별 발표(런던 시간)"),
+    "COT_":      ReleaseRule("lag_days", lag_days=7,
+                             note="CFTC COT: 화요일 기준·금 15:30 ET 공개(ZL 마감 후) — 연휴 월요일 공개 포함 보수 적용(R-043)"),
     "BCAA":      ReleaseRule("immediate"),
     "CPO":       ReleaseRule("immediate"),
     "VIXCLS":    ReleaseRule("immediate", lag_days=1,
