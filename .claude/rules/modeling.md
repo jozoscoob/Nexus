@@ -99,6 +99,7 @@ GAS-t(관측 구동 변동성 — Python 구현 부재로 구현 비용 유의, 
 재귀 예측은 보조 실험으로만 둔다.
 
 ### Training Workflow (컴퓨트 중립 — 2026-09-02 개정, 구 Azure ML Studio 절 대체)
+> 2026-11-16: S3·Snowflake·ETL#2 단계는 퇴사로 무효(D-053) — 로컬 parquet 스냅샷 + Docker 배치로 대체, G2 Preview 구현 시 개정.
 ```
 1. strict gates → `data/gold/feature_mart.parquet` + contract
 2. immutable snapshot + SHA256 manifest → S3 (`snapshot_date` 경로 · overwrite 금지)

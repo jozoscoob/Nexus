@@ -35,7 +35,7 @@
 |---|---|
 | **Runtime** | 의존성은 Docker 이미지 안에서 버전 고정 설치(호스트 전역 설치 지양). 실행·스케줄은 n8n → 컨테이너 |
 | **Human gate** | All Buy/Hold outputs require human approval. Use **Plan Mode** for any procurement-affecting analysis. |
-| **Secrets** | Never commit credentials. Use GitHub Secrets + Azure Key Vault. Always reference `os.environ['KEY']`. |
+| **Secrets** | Never commit credentials. 키는 로컬 `.env`(gitignore) + GitHub Secrets. Always reference `os.environ['KEY']`. |
 | **Scope lock** | Do not extend to commodities other than soybean oil without explicit written instruction. |
 | **Serialization** | Never use `pickle`. Use `joblib` (sklearn) or `mlflow.log_model()`. |
 | **Data I/O** | Never use `openpyxl` or Excel for pipelines. 정본은 저장소 parquet + DuckDB(Snowflake 폐기 2026-11-16). 수동 업로드 xlsx 판독은 허용 |
