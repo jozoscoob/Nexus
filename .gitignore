@@ -60,3 +60,6 @@ data/gold/*.parquet
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/
+
+# 로컬 실행 로그 (D-053)
+docker/logs/

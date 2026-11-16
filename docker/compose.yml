@@ -1,0 +1,25 @@
+# 실행: 저장소 루트에서 `docker compose -f docker/compose.yml up -d --build`
+services:
+  runner:
+    build: {context: .., dockerfile: docker/Dockerfile}
+    volumes: ["..:/repo"]
+    env_file: [{path: ../.env, required: false}]
+    environment:
+      TZ: Asia/Seoul
+      HISTORICAL_START_YEAR: "2010"
+    expose: ["8000"]
+    restart: unless-stopped
+  n8n:
+    image: n8nio/n8n:2.22.6
+    ports: ["127.0.0.1:5678:5678"]
+    environment:
+      TZ: Asia/Seoul
+      GENERIC_TIMEZONE: Asia/Seoul
+      N8N_DIAGNOSTICS_ENABLED: "false"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n:/workflows:ro
+    depends_on: [runner]
+    restart: unless-stopped
+volumes:
+  n8n_data:
