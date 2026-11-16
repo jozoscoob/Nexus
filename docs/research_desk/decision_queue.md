@@ -76,3 +76,16 @@
 | DQ-35 | **실시간 수집 실행 표면** | GitHub Actions cron은 5분 최소·지연 수십 분 가능 — 뉴스 '준실시간'까지만. 시세 실시간은 크롤링이 아닌 스트리밍 API 영역(CBOT ZL: Databento 기존 키 Live 요금제, ICE: 라이선스). D-052로 크롤링은 사내 AWS 이관 예정 | A 뉴스 2시간 간격 Actions cron(무료·즉시) / B 사내 AWS 상주 워커(Scrapling Spider 일시정지·재개) — D-052 이관과 묶음 / C 시세 Databento Live 추가 | A 무료 · B 사내 인프라 · C 유료 | 11월 |
 | DQ-37 | **CBOT 정산가 목표변수의 yfinance 경로 정리** | 차단 사이트 대체 경로 조사(R-025)에서 확인: `CBOT_BO_CLOSE`(G1·G2 목표변수)가 yfinance ZL=F 정산가를 원천으로 쓰며, 수집기가 레이트리밋 회피를 위해 Chrome을 흉내 내는 curl_cffi 세션을 사용함. Yahoo 데이터는 거래소 라이선스 하 개인 이용 전제 — 현 파이프라인에서 법적 근거가 가장 약한 지점. 스크린샷·OCR은 대안이 아님(약관·저작권·거래소 라이선스 판단이 동일) | A Databento(GLBX.MDP3)를 정산가 원천으로 전환, yfinance는 수동 교차검증 전용(권고) / B CME DataMine 정산가 이력 1회 구매 + 이후 Databento / C 현행 유지·위험 기록 | A 기존 키 · B 유료(견적) · C 무료 | 11월 |
 
+
+## 신규 등재 (2026-11-16 — G2 Preview 목업 계획 R-043)
+
+> 근거 문서: `docs/research_desk/2026-11/g2_preview_plan_2026_11_16.md` §4. DQ-38~40은 목요일(11/19) 목업 일정상 오늘 결정 필요.
+
+| ID | 항목 | 목적·근거 | 선택지 | 비용 | 시한 |
+|---|---|---|---|---|---|
+| DQ-38 | **G2 동결(DQ-22) 부분 해제 — 백테스트 전용 Preview** | 9/13 승인으로 동결. 재개 조건 ①Databento 3종 반입 ③운영 표면 미충족 — 승인자 판단으로 선택지 B를 여는 것 | A 동결 유지 / B 백테스트 전용 Preview(문구 "과거 표본 성적표·참고 범위", 상승·초과확률 비표시)(권고) / C 전면 재개 | 무료 | 11/16 |
+| DQ-39 | **실행 표면: 개인 PC Docker + n8n** | CLAUDE.md §1 Environment·§2 Firewall(클라우드 전용)·D-052와 충돌 — 규칙 개정 필요. PC 전원 의존 | A 로컬 Docker 허용·규칙 개정(목업 권고) / B 같은 compose를 소형 클라우드 VM에서 / C Actions 복구 | A 무료 · B 소액 | 11/16 |
+| DQ-40 | **Databento 인출 범위·상한** | 목표변수 원천 CSV 2026-08-12 정지. ZM·ZS는 9/1 승인분 | ZL `statistics`+일봉·ZM·ZS 지금, 옵션은 목업 후 — 실행 전 `get_cost` 견적, 상한 $25 제안(권고) | 종량(기결제 계정) | 11/16 |
+| DQ-41 | **정본 저장소: Snowflake → 로컬 parquet + DuckDB(목업 기간)** | Snowflake 미가동 — §2 단일 정본 규칙과 충돌 | A parquet/DuckDB(권고) / B Snowflake 연결 | 무료 | 11/17 |
+| DQ-42 | **Trading Economics 구독 갱신 여부** | 8월 재등록 3개월 구독 만료 추정(INFERENCE) | 갱신 / 미갱신·World Bank Pink Sheet·MPOB 공개 대체(권고) | $65~200/월 | 11/18 |
+| DQ-43 | **G2 목업 공개 범위** | 미검증 범위의 외부 확산 시 오용 위험 | 저장소 커밋 / 비공개 아티팩트 + 저장소엔 성적표 md(권고) | 무료 | 11/19 |
