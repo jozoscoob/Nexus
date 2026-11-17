@@ -66,3 +66,6 @@ docker/logs/
 
 # n8n-mcp 로컬 설정 — 실제 API 키가 들어가므로 커밋 금지(승인자가 로컬에서만 입력)
 docker/.mcp.json
+
+# 학술지 PDF 원문 — 저작권 문제로 로컬에만 보관, 커밋 금지 (추출 텍스트는 repo 밖 scratchpad에 있음)
+data/raw/Market Structure (Production & Distribution)/PDF/
