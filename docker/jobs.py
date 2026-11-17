@@ -24,7 +24,10 @@ JOBS: dict[str, tuple[list[list[str]], bool]] = {
     "collect_free": ([[PY, f"src/pipeline/connectors/{c}_connector.py"] for c in CONNECTORS], False),
     "manual_parsers": ([[PY, f"scripts/{s}.py"] for s in MANUAL_PARSERS]
                        + [[PY, "-m", "src.features.structural_indicators"]], False),
-    "mart": ([[PY, "scripts/data_readiness.py"],
+    # 목표변수(CBOT_BO_CLOSE) 발행이 선행돼야 준비도 게이트가 열림 — Actions 전용이던 단계를 로컬에도
+    #   배치(2026-11-17). 무료 경로: 커밋된 Databento CSV + yfinance 정산가 교차검증(유료 API 미호출).
+    "mart": ([[PY, "scripts/validate_session_close.py"],
+              [PY, "scripts/data_readiness.py"],
               [PY, "-m", "src.features.build_feature_mart", "--self-test"],
               [PY, "-m", "src.features.build_feature_mart"],
               [PY, "scripts/validate_asof.py"]], True),

@@ -10,4 +10,7 @@ columns:
   - {name: source_name, dtype: object, nullable: false, description: "CFTC_COT_DISAGG"}
   - {name: ingested_at, dtype: "datetime64[ns, UTC]", nullable: false, description: "수집 시각"}
   - {name: event_time, dtype: "datetime64[ns]", nullable: false, description: "기준일"}
+  - {name: period_end, dtype: "datetime64[ns]", nullable: true, description: "집계 기간 종료일(주간 포지션 — attach_asof 부여)"}
+  - {name: release_time, dtype: "datetime64[ns]", nullable: true, description: "원천 공표 시점(CFTC 금요일 공표 — 미제공 시 규칙 추정)"}
   - {name: available_at, dtype: "datetime64[ns]", nullable: false, description: "기준일+7일(as-of 규칙 COT_)"}
+  - {name: source_vintage, dtype: object, nullable: true, description: "개정본 식별자(미보존 시 null — vintage_known 참조)"}
