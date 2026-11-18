@@ -115,3 +115,11 @@
 | `PalmOil_2025_global_trade_complex_network.pdf` | Zhang 외, Sustainability 17:3062, 2025(파일명 연도 개명) | 2026-08-30 | ★MY+ID 80%+ 집중 21년 불변·단일 커뮤니티 — **CE-015 배경 evidence 등재**(팜유=2-노드 집중 리스크). 네트워크 지표 예측 사용 불가(TGL 전례) |
 | `Ukraine_grain_seed_trade_global_position.pdf` | Panfilova 외, Scientific Horizons 28(5), 2025 | 2026-08-30 | ★해바라기 취약점=압착+물류(씨 21.1% 유지·설비 피해 10억$·운송비 70~100$/t) — **CE-013·014 evidence 등재**(물량·비용 축, Adaptation 2025와 병렬). ⚠️우크라 자국 저널·전망치 혼용 금지 |
 | `summaries/Avileis_2026_commodity_volatility_biofuel_era.md` (원문 PDF 미회수 — 열람 차단, 발췌 기반 골격) | Avileis, UC Davis ARE 세미나 워킹페이퍼 2026-01(저자 소속 UNL) · 선행판 NCCC-134 2025 | 2026-09-25 | 배경 — 의무수요가 수요곡선을 가파르게 → 대두유 내재변동성 +19%(저자 추정·판본 의존). **CE-020 evidence · methods.yaml MP-18**. 원문 회수 후 정식 변환·요약 교체(A-281) |
+
+### 포르투갈어 시장구조 논문 4편 (2026-11-18 · 승인자 업로드 — 원문 PDF는 저작권상 로컬 보관, 요약만 반입 · R-045)
+| 파일 | 출처 | 공유일 | 연결 문서 |
+|---|---|---|---|
+| `summaries/Aguiar_2024_guerra_das_rotas.md` (원문: data/raw/…/PDF/Market Structure/, git 제외) | Aguiar, Estudos Sociedade e Agricultura 32(2) e2432206, 2024 | 2026-11-17 | 배경 — Arco Norte(TERM-233)·Amaggi(TERM-234) candidate · RT-USG-KR 파나마 context_note · 해석 규칙 '인프라 계획 ≠ 가동 능력' · 대두유 선적 근거 없음(DATA GAP) |
+| `summaries/Miranda_2025_agronegocio_cerrado.md` (同) | Miranda, Ágora 27(1), 2025 | 2026-11-17 | 배경 — MATOPIBA(TERM-235)·Itaqui/TEGRAM(TERM-236)·일본 종합상사(TERM-237) candidate · ADM·Bunge 연도 고정 이력 메모 · 원곡 전용 |
+| `summaries/Alves_2022_cadeia_soja_transmissao_precos.md` (同, 영문 파일명·포르투갈어 본문) | Alves 외(CEPEA), Desenvolvimento em Questão 20(58) e12723, 2022 | 2026-11-17 | ★**CE-023 evidence 2건**(조유 국내 흡수 58→82% p.8 · 바이오디젤 원료 대두유 ≈70%·혼합 단계 p.17) · CE-023 entity_terms 정정(TERM-071→068/065) · MP-19(배경) |
+| `summaries/Figueira_2023_competitividade_exportacoes_soja.md` (同, 영문 파일명·포르투갈어 본문) | Figueira & Galache, RESR 61(1) e245403, 2023 | 2026-11-17 | CE-003·CE-011 evidence(아르헨 압착 74.10% p.14 · 중국 관세 역진 p.13) · TERM-105 해석 규칙 보강 · MP-20(배경) · 내부 불일치 5건 판정 |

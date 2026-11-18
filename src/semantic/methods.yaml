@@ -629,3 +629,38 @@ method_precedents:
       quote_ko: 바이오연료 의무가 수요곡선을 가파르게 만들어 대두유 가격 변동성을 구조적으로 높였고, 재생디젤 붐 이후 수출 대체 국면에서 변동성이 상승했다(초록 발췌 기준).
     linked_contract: G2 변동성 층(EGARCH-X) — 정책 국면 더미·에너지 전이 항 설계 참고
     status: 등재
+  # ── R-045(2026-11-18) 포르투갈어 시장구조 논문 — 원문 PDF는 저작권상 로컬 보관, 요약만 references/summaries
+  - id: MP-19
+    title: 구조 VEC 기반 대두→소매 가격전이(브라질, 명목)
+    authors_year: Alves·Sanches·Adami·Barros·Osaki (ESALQ/USP·CEPEA), Desenvolvimento em Questão 20(58), 2022
+    ref: summaries/Alves_2022_cadeia_soja_transmissao_precos.md
+    method: DF-GLS·Johansen → 동시점 제약 구조 VEC(1시차) → 12개월 누적 충격반응 탄성·FEVD
+    target_goal: ['배경']
+    verdict: 배경
+    applies_to: ['AM-05']
+    constraints:
+      - '브라질 명목 BRL 소매(IPCA) 층위 — 한국 CIF·국제 대두유로 탄성 이전 금지'
+      - 'IRF 신뢰구간 미제시·λmax/trace 불일치(닭·수산물)·I(1) 경계 판정 — 수치는 본문 서술값만 인용, 파라미터 사용 금지'
+      - '전이 지속기간(FEVD 3~5기 수렴) 정성 대조에 한정 — 인과엣지 lag 근거 아님'
+    evidence:
+      locator: Alves_2022 요약 §3 표 8(p.19)·p.17
+      quote_ko: 대두 10% 충격은 12개월 누적 소매 대두유 +2%로 품목 중 최대이며, 분산분해는 3기 이후 사실상 고정된다.
+    linked_contract: AM-05 국소투영 — 시차별 반응 지속기간 해석의 대조 사례
+    status: 대기
+  - id: MP-20
+    title: Constant Market Share — 대두 원곡 수출 점유율 변화 분해(브라질·미국·아르헨티나)
+    authors_year: Figueira & Galache, Rev. Econ. Sociol. Rural 61(1) e245403, 2023
+    ref: summaries/Figueira_2023_competitividade_exportacoes_soja.md
+    method: 2기간 CMS 회계 분해(세계 무역 성장·수출 시장 분포·경쟁력=잔차), 물량 기준
+    target_goal: ['배경']
+    verdict: 배경
+    applies_to: []
+    constraints:
+      - '항등식 분해 — 인과·예측 근거로 인용 금지, 경쟁력 효과는 정책(수출세 등)을 흡수한 잔차'
+      - '기간 길이 비대칭(7년 vs 9년) 시 성장 효과 과대 — 연평균 정규화 없이 비교 금지'
+      - '분모 소형 국가의 % 효과(아르헨티나 465%·−641%)는 해석 불가 · 원곡 전용(대두유 확장 금지 — 저자 명시)'
+    evidence:
+      locator: 'p.8 식 7~9 · p.12 표 2 (표 1 원값으로 전량 재현)'
+      quote_ko: 경쟁력 효과는 실제 증가와 점유율 유지 가정하의 잠재 증가의 차이로 정의된다.
+    linked_contract: 원산지 점유율 사후 기술(진단) — 모델 입력 아님
+    status: 대기

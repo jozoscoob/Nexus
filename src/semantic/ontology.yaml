@@ -1004,6 +1004,7 @@ supply_chain:
     alternatives: [WP-SUEZ, 희망봉 우회]   # v3.2 — 파나마 통항 제약 시 대안(해석 · 소요일 미검증)
     disruption_semantics: 파나마 통항 제한은 대안 경로가 존재하므로 차단이 아닌 지연·비용 사건이다(해석).
     disruption_edges: []           # 파나마 단독 인과엣지 미등재 — 후보 등재는 P1-04 검증 대기
+    context_note: '파나마 운하는 브라질 북부(Arco Norte, TERM-233) 곡물 화물의 대중국 경로로도 서술됨(Aguiar 2024 p.10) — 통항 제약 시 병목을 공유하나 물량 DATA GAP. 한국향 브라질 항로(RT-SANTOS-KR)는 파나마 비경유 — 대두유 직접 영향은 본 항로에만 해당(해석 · R-045)'
   - route_id: RT-SANTOS-KR
     label_ko: 브라질 산투스·파라나과 → 한국
     origin: PORT-SANTOS
@@ -1274,6 +1275,11 @@ causal_edges:
     ref: docs/research_desk/2026-09/market_structure_update_2026_09_25.md
     locator: '§2 G-11 · 검증 ②-9 — Decreto 423/2026(관보 2026-06-03 게재·06-05 발효)'
     note: '공식 일정 확정(복수 매체 일치 · USDA GAIN 2026-06-05 · 검증 ②-9/③-7): 대두 24% → 2027-01부터 월 0.25%p → 2027-12 21% → 2028년 월 0.5%p → 2028-12 15%. 조대두유·대두박 22.5% → 2027-12 19.5% → 2028-12 14%, 정제유 13.5%(대두와 병행 경로 — 구 "비례 인하" 서술을 종착 수치로 정정). "2025-12부터 22.5%(종전 24.5%)" 부분은 미검증(DATA GAP). 대체유(홍화·유채·카리나타·카멜리나) 바이오디젤 수출세 0%. 정책 캘린더 시작일 2027-01-01 (A-281)'
+  - source_type: research_doc
+    ref: docs/research_desk/references/summaries/Figueira_2023_competitividade_exportacoes_soja.md
+    locator: 'Figueira & Galache 2023, RESR 61(1) e245403, p.14 · p.16 · p.2'
+    exact_quote: 'a Argentina direcionou 40,73 milhões de toneladas de soja em grão para o esmagamento, representando 74,10% de toda a soja produzida pelo país'
+    note: '수출세의 공급 ''구성'' 효과 — 원곡 수출세가 국내 압착을 우대(Song 2006 재인용, p.14·p.16). AR 원곡 수출/생산 20.54→13.46%(2002→2017, p.2)·원곡 CMS 경쟁력 −98.19 Mt(표 2) — 원곡 지표 하락을 대두유 공급 약화로 읽지 말 것. 세율·가격 결과 미제시 → 강도·승격 근거 아님. 원곡 전용 논문(저자 범위 한정 p.1·p.14) (R-045)'
 - edge_id: CE-004
   label_ko: EUDR 팜유 규제 강화 → EU 팜유 접근 차단 → EU 내 SBO 대체 수요 증가 → 국제가 상승
   category: 정책·규제
@@ -1466,6 +1472,11 @@ causal_edges:
     ref: docs/research_desk/2026-09/market_structure_update_2026_09_25.md
     locator: "§3 1-14~1-15 · §4 A10 · 검증 ①-2 — USDA FAS GAIN China Oilseeds Update CH2026-0113(2026-09-04, Post 전망)"
     note: "2026 vintage 채널 분리: 국유기업(SOE)은 부산 합의에 따라 미국산 신곡 5.7 MMT(+미상 목적지 3.8 MMT, 2026-08-13 기준) 구매 vs 상업 수입상은 10% 보복관세로 남미산 의존(브라질 6~8월 사상 최대 선적). 중국 대두유 수출 MY25/26 사상 최대 1 MMT 전망(사료용 압착↑·내수 둔화 — Post 전망, USDA 공식 PSD 여부 미확인). 국가 매집과 상업 채널을 분리 해석하는 규율(A-219)의 실측 사례. 2018 에피소드 DID 정량(Han·Wu·Chen, Front. Sustain. Food Syst. 2025-07: 분쟁 전 미국 점유 34.4%)은 배경 (A-281)"
+  - source_type: research_doc
+    ref: docs/research_desk/references/summaries/Figueira_2023_competitividade_exportacoes_soja.md
+    locator: 'Figueira & Galache 2023, p.13(Wesz Junior 2011 재인용) · p.2 · 표 1'
+    exact_quote: 'existência de escalada tarifária nas importações da soja pela China, tendo menor incidência sobre tributos sobre importações de soja em grão'
+    note: '무역전쟁 이전(2002~2017) 중국 수입 구조 배경 — 원곡 우대 관세(세율 수치 없음 = DATA GAP)·3국이 중국 원곡 수입의 93.64% 공급(p.2)·브라질 점유 29→44%(p.10). 후보 엣지 ''중국 관세 역진 → 수입 원곡 자국 압착 → 중국 대두유 수입 저위''는 MOFCOM 세율·PSD 순수입 확보 전 보류 (R-045)'
 - edge_id: CE-012
   label_ko: 중국 SBO 비축 발표 → 수입 기대 형성 → 재고 감소 우려 → 선물 단기 급등
   category: 지정학·무역
@@ -1825,7 +1836,7 @@ causal_edges:
   category: "정책·규제"
   cause:
     node: BR_BIODIESEL_MANDATE_UP
-    entity_terms: ["TERM-071", "TERM-033"]
+    entity_terms: ["TERM-068", "TERM-065", "TERM-033"]   # R-045: TERM-071(B40)은 브라질 엣지와 불일치 → 혼합의무·바이오디젤 원료로 정정
   mechanisms:
     - node: BR_DOMESTIC_CRUSH_ABSORPTION_UP
       relation: CAUSES_MECHANISM
@@ -1847,6 +1858,16 @@ causal_edges:
       ref: docs/research_desk/2026-09/market_structure_update_2026_09_25.md
       locator: "§4 M15 · 검증 ③-6 — Argus 2026-07-16: 브라질 2026년(역년) 대두유 수출 2.0 Mt 전망(가공업계) vs Abiove 연초 1.6 Mt · 상반기 수출 1.0 Mt(Mdic)"
       note: "역방향 뉘앙스 — B15 하에서도 수출이 늘어 국내 바이오디젤 원가 긴장 유발: '의무 인상 = 수출 잉여 축소'는 조건부(압착 증가·수출 채산성이 의무 흡수를 초과할 수 있음). B16 전환 시점 DATA GAP · COFCO Rondonópolis 10,000 t/day 확장(2028)은 브라질 공급 여력 축 (A-281)"
+    - source_type: research_doc
+      ref: docs/research_desk/references/summaries/Alves_2022_cadeia_soja_transmissao_precos.md
+      locator: 'Alves et al. 2022, Desenvolvimento em Questão 20(58) e12723, p.8 · p.2 — USDA PSD 2020-04 빈티지'
+      exact_quote: 'para o óleo bruto, o consumo interno passou a representar 82% da produção nacional de 2014 a 2018, enquanto absorvia cerca de 58%'
+      note: '첫 정량 구조 근거 — 브라질 조유 국내 흡수 ≈58%(2001~05)→82%(2014~18). 압착 3.47%/년 vs 원두 수출 9.62%/년(2000~2019, p.2) = 대두유 수출 여력이 원두보다 구조적으로 얇음(착유지 이전이라 국제 공급 총량 축소 아님 — 별도 엣지 대신 본 note로 흡수). 흡수 상승기는 B2(2008)→B10(2018-03)과 시기 동행일 뿐 인과 미검정·국제가 미검증 → candidate 유지. 1−흡수≈수출 여력(42→18%)은 INFERENCE(재고·수입 무시) (R-045)'
+    - source_type: research_doc
+      ref: docs/research_desk/references/summaries/Alves_2022_cadeia_soja_transmissao_precos.md
+      locator: '同 p.17 — 혼합 단계 2005 B2 허용·2008 의무·2010 B5·2014 B6→B7·2017-03 B8·2018-03 B10·2019 B11·2020 B12'
+      exact_quote: 'Do total de biodiesel produzido no Brasil, cerca de 70% têm como base o óleo de soja.'
+      note: '의무 → 대두유 산업수요 경로의 원료 비중 근거(≈70%, 기간 미기재 → 연도별 ANP 원료 통계로 대체 권고). B3/B4/B9 누락·시행일 기준 서술(공포일 미기재) — 단계 시계열(BR_BIODIESEL_BLEND_PCT 후보)은 ANP/CNPE 원문 대조 후 published_at(available_at)·effective_from 분리 저장(D-023) (R-045)'
 - edge_id: CE-024
   label_ko: "한국 압착 채산성 악화(대두박가 압박) → 국내 압착 축소 → 조유 수입 수요 증가 → 한국 수입 CIF 상방"
   category: "시장 구조"
