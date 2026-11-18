@@ -2214,7 +2214,7 @@ logistics_and_supply_chain:
   synonyms:
   - Brazil export ports
   definition: 브라질 주요 농산물 수출항이다.
-  interpretation_rules: 두 항만을 하나로 합치지 않고 혼잡·운임을 별도 기록할 수 있게 한다.
+  interpretation_rules: 두 항만을 하나로 합치지 않고 혼잡·운임을 별도 기록할 수 있게 한다. · 2014~2020 처리 증가율 Santos +77% · Paranaguá +96%(Aguiar 2024 p.11) — 증가율만으로 점유율 하락을 단정하지 않는다(기저 물량 DATA GAP).
   impact_target: Route
   price_direction: CONTEXT
   unit_range: location
@@ -2301,7 +2301,7 @@ diplomacy,_policy_and_regulation:
   synonyms:
   - Argentine export duties
   definition: 아르헨티나 농산물·유지류에 적용되는 수출세의 현지 정책 용어다.
-  interpretation_rules: 일반 세금이 아닌 품목별 수출세율과 적용일을 확인한다.
+  interpretation_rules: 일반 세금이 아닌 품목별 수출세율과 적용일을 확인한다. · 원곡 > 가공품 세율 차는 국내 압착을 우대하므로 아르헨티나 원곡 수출 비중 하락(수출/생산 20.54→13.46%, 2002→2017, Figueira 2023 p.2)은 대두유 공급 약화가 아니다 — 공급 신호는 대두유·대두박 수출로 판정한다(2017 압착 74.10%, p.14).
   impact_target: Export Supply/Price
   price_direction: UP_RISK
   unit_range: '%'
@@ -3695,6 +3695,8 @@ market_structure_and_trade:
   - "2Q26(2026-08-04 8-K Ex.99.1): AS&O 영업이익 US$867M(+129%) · 압착 하위부문 US$363M(전년 33M) · 2026 조정 EPS 가이던스 5.15~5.60 [CONFIRMED]"
   - "2026-07-30 북미 압착 증설 4곳(Frankfort IN·Deerfield MO·Lincoln NE·Spiritwood ND=Green Bison JV, Marathon) 합계 약 700,000 t/yr(>25M bu) · 완공 2028말~2029초 — 설계 능력·announced [CONFIRMED]"
   - "45Z 기대효과 2026년 약 US$250M(종전 150M) · 4Q26 북미 압착 마진 확정률 약 30%(3Q 약 90%) [CONFIRMED · 2Q26 earnings call 발언 — 보도자료 본문 아님]"
+  history_notes_2026_11:   # R-045 · 포르투갈어 논문 2차 보도 재인용 포함 — 1차 공시 검증 전 역할 필드 미반영
+  - '2018 Algar Agro 자산 인수 합의 보도(Miranda 2025 p.14 각주 8 재인용) — 인수 범위·Porto Franco 압착 포함 여부 DATA GAP · 검증 전 role_midstream 미반영 [INFERENCE]'
   status: confirmed
   owner_agent: P1-06
 - term_id: TERM-154
@@ -3729,6 +3731,9 @@ market_structure_and_trade:
   - "2Q26(2026-07-29 8-K): Softseed P&R 조정 EBIT US$255M(전년 14M) · Viterra 비용 시너지 목표 US$250M→350M(콜 발언) · 2026 조정 EPS 가이던스 9.25~9.75 · 보고 부문 4개(Soybean P&R·Softseed P&R·Tropical Oils & Specialty Ingredients·Grain Merchandising & Milling, 10-Q 2026-06-30) [CONFIRMED]"
   - "아르헨티나 2Q26: 에너지 비용이 압착 마진 압박 속 6분기 최고 대두 압착 마진 · 2026-09-16 법원이 Nueva Vicentin(Grassi)에 대한 Bunge 최대 US$50M 회전 신용 승인(Renova 8.33% 주식 담보·의결권 행사 금지) [CONFIRMED]"
   - "2026-09-01 브라질 제당소 2곳(구 Viterra, Junqueirópolis·Guararapes) COFCO International 매각 합의 — 규제 승인 조건부 pending·금액 미공개 [CONFIRMED]"
+  history_notes_2026_11:   # R-045 · 포르투갈어 논문 2차 보도 재인용 포함 — 1차 공시 검증 전 역할 필드 미반영
+  - '1997 CEVAL 인수 · 마라냥 압착 협상(세제 감면) 불발 후 피아우이와 협상(Miranda 2025 p.13) — 공장 소재지·완공 DATA GAP [INFERENCE]'
+  - 'Amaggi와 합작으로 Itaituba(PA) 항 설립(Aguiar 2024 p.17) [CONFIRMED — 원문 서술]'
   status: confirmed
   owner_agent: P1-06
 - term_id: TERM-155
@@ -3762,6 +3767,8 @@ market_structure_and_trade:
   - "FY2026(2025-06~2026-05) 매출 US$164B(연차보고서 2026-08-04; FY2025 154B·FY2024 160B) · 조정 영업이익 +10% ≈US$3.8B(Bloomberg 2026-08-17) · 순이익 미공개 [CONFIRMED — 역년 분기 실적과 NOT COMPARABLE]"
   - "Regina(SK) 카놀라 압착소 가동 2026-04-21(완전 가동 05-21) · 능력 1 Mt/yr · 투자 C$350M(2021 발표, 캐나다달러) [CONFIRMED]"
   - "중국 Nantong 항 인근 유지종자·유지 가공시설 약 US$500M 착공(2025-09-12) — 능력 DATA GAP · 조직 재편 5→3 엔터프라이즈(2026) [CONFIRMED]"
+  history_notes_2026_11:   # R-045 · 포르투갈어 논문 2차 보도 재인용 포함 — 1차 공시 검증 전 역할 필드 미반영
+  - 'Santarém(PA) 항 2003년 개장 — BR-163 포장 이전 선투자(Aguiar 2024 p.15) [CONFIRMED — 원문 서술]'
   status: confirmed
   owner_agent: P1-06
 - term_id: TERM-156
@@ -4277,6 +4284,124 @@ market_structure_and_trade:
   relations: MEASURED_BY,ORIGIN_OF
   source_code: abcd_trading_structure_2026_08_15.md
   status: confirmed
+  owner_agent: P1-06
+# ── 2026-11-18 포르투갈어 시장구조 논문 4편 반영(R-045) — 전부 candidate · 원문 PDF는 저작권상 로컬 보관
+#    (data/raw/Market Structure (Production & Distribution)/PDF/Market Structure/ — git 제외). 근거 요약은
+#    docs/research_desk/references/summaries/{Aguiar_2024,Miranda_2025,Alves_2022,Figueira_2023}_*.md
+- term_id: TERM-233
+  canonical: Arco Norte (Brazil northern export ports)
+  canonical_ko: 아르쿠노르치(브라질 북부 수출항군)
+  class: PortRegion
+  category: 물류·공급망
+  subcategory: 계약·리드타임
+  abbr: 'ARCO_NORTE'
+  synonyms:
+  - Arco Norte
+  - Northern Arc
+  - portos do Arco Norte
+  members: ['Itaituba/Miritituba (PA)', 'Santarém (PA)', 'São Luís (MA)', 'Itacoatiara (AM)']
+  definition: '브라질 북부·북동부 대서양 연안의 대두 수출항군. 2014~2020 처리 증가율 Itaituba +990% · São Luís +714% · Santarém +440% vs Santos +77% · Paranaguá +96%(Aguiar 2024 p.11). 저자는 북부항 대중국 화물의 파나마 경유를 서술함(p.10).'
+  interpretation_rules: '대두 원곡·복합체(complexo soja) 수출 축이며 대두유 선적항 근거 없음(SBO DATA GAP) · 증가율(%)은 기저 물량이 없으므로 점유율·물량으로 환산하지 않음 · 한국향 대두유 항로(supply_chain.routes)에 연결하지 않음 · 인프라 계획 등재(PAC/PIL/PPI)·착공 보도 ≠ 가동 능력(p.6·p.15).'
+  impact_target: Route
+  price_direction: CONTEXT
+  unit_range: location
+  alert_criteria: 'ANTAQ·Comex Stat로 HS 1507 북부항 선적 확인 시 재검토'
+  priority: C
+  ambiguity_risk: 중
+  relations: ORIGIN_OF
+  source_code: summaries/Aguiar_2024_guerra_das_rotas.md
+  status: candidate
+  owner_agent: P1-06
+- term_id: TERM-234
+  canonical: Amaggi
+  canonical_ko: 아마기
+  class: TradingHouse
+  category: 시장구조·기업
+  subcategory: 트레이딩하우스
+  abbr: ''
+  synonyms:
+  - Amaggi
+  - Ammagi
+  definition: '브라질 곡물 트레이딩사. 1997년 Itacoatiara(AM)항 운영 개시, Bunge와 합작으로 Itaituba(PA)항 설립(Aguiar 2024 p.15·p.17 — 원문 표기 Ammagi).'
+  interpretation_rules: '본 출처는 항만 운영자로서만 다룸 — 압착·정제 능력은 DATA GAP · 정치 관련 주장(p.17)은 조건법 2차 인용이므로 사실로 등재하지 않음.'
+  korea_relevance: DATA GAP
+  impact_target: Supply/Channel
+  price_direction: CONTEXT
+  unit_range: company
+  alert_criteria: '-'
+  priority: C
+  ambiguity_risk: 중
+  relations: OPERATED_BY
+  source_code: summaries/Aguiar_2024_guerra_das_rotas.md
+  status: candidate
+  owner_agent: P1-06
+- term_id: TERM-235
+  canonical: MATOPIBA (Brazil frontier region)
+  canonical_ko: 마토피바
+  class: TradeRegion
+  category: 시장구조·기업
+  subcategory: 생산 권역
+  abbr: 'MATOPIBA'
+  synonyms:
+  - MAPITOBA
+  - MAPITO
+  definition: '마라냥 남부·토칸칭스·피아우이 남부·바이아 서부의 대두 확장 프런티어 권역(Miranda 2025 PDF p.13). 마라냥 대두 면적 1980년대 평균 9,560 ha → 2011~2022 평균 967,997 ha(p.12).'
+  interpretation_rules: 'MAPITO는 바이아 제외 3주 권역이므로 MATOPIBA와 수치를 합산·대체하지 않음 · 기후 수집 지역이 아님(production_regions 미편입 — 좌표·공식 생산 점유 미확보) · 생산 점유는 CONAB/IBGE로 별도 확보 · 압착 입지는 주 세제 감면을 따름(Bunge가 마라냥 감면 불발 후 피아우이와 협상, p.13).'
+  impact_target: Supply
+  price_direction: CONTEXT
+  unit_range: region
+  alert_criteria: '-'
+  priority: C
+  ambiguity_risk: 중
+  relations: LOCATED_AT
+  source_code: summaries/Miranda_2025_agronegocio_cerrado.md
+  status: candidate
+  owner_agent: P1-06
+- term_id: TERM-236
+  canonical: Port of Itaqui / TEGRAM (São Luís, Brazil)
+  canonical_ko: 이타키항·TEGRAM(마라냥 곡물터미널)
+  class: Port
+  category: 물류·공급망
+  subcategory: 계약·리드타임
+  abbr: 'TEGRAM'
+  synonyms:
+  - Terminal de Grãos do Maranhão
+  - TELEGRAM
+  definition: 'São Luís 항만단지의 곡물 수출 터미널 — Porto Franco와 도로·철도 연계(Miranda 2025 PDF p.13·p.14). 1992-07-07 Balsas산 대두 첫 선적이 São Luís에서 스페인으로 출항(p.9).'
+  interpretation_rules: '원두 수출 회랑으로만 기록 — 대두유 선적·한국향 항로 근거 없음(route 신설 금지) · 지분 사실은 연도 고정: CGG Trading 지분 → IG4 Capital(2020, p.14 2차 보도) — 1차 출처 검증 전 CONFIRMED 승격 금지 · 원문 TELEGRAM은 오기.'
+  impact_target: Route
+  price_direction: CONTEXT
+  unit_range: location
+  alert_criteria: '-'
+  priority: C
+  ambiguity_risk: 중
+  relations: ORIGIN_OF
+  source_code: summaries/Miranda_2025_agronegocio_cerrado.md
+  status: candidate
+  owner_agent: P1-06
+- term_id: TERM-237
+  canonical: Japanese sogo shosha in Brazil grain (Mitsubishi · Mitsui · Sojitz)
+  canonical_ko: 일본 종합상사(브라질 곡물 사업)
+  class: TradingHouse
+  category: 시장구조·기업
+  subcategory: 트레이딩하우스
+  abbr: ''
+  synonyms:
+  - Mitsubishi / Agrex do Brasil
+  - Mitsui / Multigrain
+  - Sojitz / CGG Trading
+  definition: '브라질 원곡 생산·매집·터미널 지분을 인수한 일본 상사군 — Mitsubishi: Ceagro 20%(2012)+60%(2013)→Agrex · Mitsui: Multigrain 100%(2013) · Sojitz: CGG Trading 43.13%(2017)(Miranda 2025 PDF p.14, 2차 보도 재인용).'
+  interpretation_rules: '원두 사업 근거만 있음 — 압착·대두유 역할로 서술 금지 · 한국 채널 관련성 DATA GAP("아시아향 화물에서 한국과 경쟁"은 해석) · 지분은 연도 고정, 2020 이후 변동 미반영 — 1차 공시로 갱신 전 "현재"로 쓰지 않음 · "일본이 중국 토지 매입에 대항" 결론은 본문 근거 부재(인용 주의).'
+  korea_relevance: DATA GAP
+  impact_target: Supply/Channel
+  price_direction: CONTEXT
+  unit_range: company
+  alert_criteria: '-'
+  priority: C
+  ambiguity_risk: 상
+  relations: OPERATED_BY
+  source_code: summaries/Miranda_2025_agronegocio_cerrado.md
+  status: candidate
   owner_agent: P1-06
 media_and_collection_channels:
 # v3.3(2026-09-13) 신설 — 매체·수집 채널 층: 일별 다이제스트 '전문 매체' 계열의 발행 주체(MediaSource)와

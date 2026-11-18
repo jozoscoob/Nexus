@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import io
 import os
+import re
 import time
 import zipfile
 from datetime import date
@@ -287,12 +288,21 @@ def fetch_psd_bulk_csv(start_year: int = 2010) -> pd.DataFrame:
         attr = sub[attr_col].astype(str).str.strip().str.replace(r"[^0-9A-Za-z]+", "_", regex=True)
         commodity = (sub[cdesc_col].astype(str).str.strip()
                      if cdesc_col else pd.Series("SOYBEAN", index=sub.index))
+        # 2026-11-17: 품목(대두·대두박·대두유)·국가 축을 코드에 반영 — 미분리 시 mart 값충돌 하드 실패
+        #   (PSD_Total_Supply@2026-10-01 209개 값). API 경로의 국가 접미(A-173)와 같은 원칙.
+        comm_code = commodity.str.lower().map(
+            lambda s: "SBO" if "oil" in s else "SBM" if "meal" in s else "SOY" if "seed" in s
+            else re.sub(r"[^0-9A-Za-z]+", "_", s).strip("_").upper())
+        ctry_src = _find_col(cols, "Country_Code") or ctry_col
+        ctry_code = (sub[ctry_src].astype(str).str.strip()
+                     .str.replace(r"[^0-9A-Za-z]+", "_", regex=True)
+                     if ctry_src else pd.Series("ALL", index=sub.index))
         out = pd.DataFrame({
             # Market_Year 기준: 마케팅연도 시작(10월)을 price_date로 (기존 규약과 동일)
             "price_date":     pd.to_datetime(
                 sub["_year"].astype(int).astype(str) + "-10-01", errors="coerce"),
             "source_name":    "USDA_PSD_BULK",
-            "indicator_code": "PSD_" + attr,
+            "indicator_code": "PSD_BULK_" + comm_code + "_" + attr + "_" + ctry_code,
             "country":        sub[ctry_col].astype(str) if ctry_col else "",
             "value":          pd.to_numeric(sub[val_col], errors="coerce"),
             "unit":           sub[unit_col].astype(str) if unit_col else "1000 MT",
