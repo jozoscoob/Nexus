@@ -183,12 +183,16 @@ def run(dry_run: bool = False, today: date | None = None) -> int:
         print("[경고] 대상 쌍 없음 — 업로드본 폴더 확인")
         return 0
     released = cc._last_released_month(today)
-    # 커버리지 = 업로드본 ∪ 동반 파일의 마지막 값 월(전 쌍 최대) — 창을 닫아 이미 받은 월의 재조회를 막는다
+    # 커버리지는 쌍별로 판정한다(2026-11-19 수정): 전 쌍 최대값을 쓰면 일부 쌍만 갱신된 뒤 나머지 쌍의
+    #   창이 닫혀 영구 누락된다(재실행 재개 불가). 쌍별 시작 = max(업로드본, 해당 동반 파일 마지막 월) + 1.
     cov_base = cc._upload_coverage_month() or "000000"
     cov_api = max((_last_value_month(p["companion"]) or "000000" for p in pairs if p["companion"].exists()),
                   default="000000")
-    cov = max(cov_base, cov_api)
-    start = cc._ym_add(cov, 1) if cov != "000000" else f"{today.year:04d}01"
+    def _pair_start(pair: dict) -> str:
+        pc = max(cov_base, (_last_value_month(pair["companion"]) or "000000") if pair["companion"].exists() else "000000")
+        return cc._ym_add(pc, 1) if pc != "000000" else f"{today.year:04d}01"
+    starts = {id(p): _pair_start(p) for p in pairs}
+    start = min(starts.values())
     print(f"[정보] 대상 {len(pairs)}쌍 · 커버리지 업로드본 {cov_base} / 동반 {cov_api} · 공개 완료 월 {released} "
           f"→ 조회 구간 {start}~{released}")
     if start > released:
@@ -202,18 +206,22 @@ def run(dry_run: bool = False, today: date | None = None) -> int:
         return 0
 
     # 연도 경계는 분할(관세청 API는 1년 이내 조회만 허용 — A-101)
-    windows: list[tuple[str, str]] = []
-    for ym in _months_between(start, released):
-        if windows and windows[-1][1][:4] == ym[:4]:
-            windows[-1] = (windows[-1][0], ym)
-        else:
-            windows.append((ym, ym))
+    def _windows(s0: str) -> list[tuple[str, str]]:
+        ws: list[tuple[str, str]] = []
+        for ym in _months_between(s0, released):
+            if ws and ws[-1][1][:4] == ym[:4]:
+                ws[-1] = (ws[-1][0], ym)
+            else:
+                ws.append((ym, ym))
+        return ws
 
     def _one(pair: dict) -> tuple[dict, dict[str, list[float | None]], str]:
+        if starts[id(pair)] > released:
+            return pair, {}, "current"
         if cc._budget_exceeded() or cc._circuit_open():
             return pair, {}, "skipped"
         months: dict[str, list[float | None]] = {}
-        for w0, w1 in windows:
+        for w0, w1 in _windows(starts[id(pair)]):
             items = cc._fetch_customs_range(key, w0, w1, pair["hs"], pair["country"])
             time.sleep(0.3)
             if items:
@@ -228,19 +236,21 @@ def run(dry_run: bool = False, today: date | None = None) -> int:
     if cc._circuit_open():
         print(f"[경고] 연속 실패 {cc._CONSECUTIVE_FAILS}회 — data.go.kr 응답 없음으로 판단, 남은 쌍 중단(다음 런 재시도)")
 
-    written, empty, skipped = 0, 0, 0
+    written, empty, skipped, current = 0, 0, 0, 0
     lines = [f"# 관세청 API 월 증분 — {today}", "",
              f"조회 구간 {start}~{released} · 대상 {len(pairs)}쌍 · 커버리지(업로드 {cov_base}·동반 {cov_api})", "",
              "| 품목 | HS | 국가 | 상태 | 기록 월 |", "|---|---|---|---|---|"]
     for pair, months, status in results:
         existing = _read_companion(pair["companion"])
         existing = {ym: v for ym, v in existing.items() if ym > cov_base}   # 업로드본이 덮는 월은 제거
-        new_months = {ym: v for ym, v in months.items() if start <= ym <= released}
+        new_months = {ym: v for ym, v in months.items() if starts[id(pair)] <= ym <= released}
         if status == "ok" and new_months:
             existing.update(new_months)
             _write_companion(pair["companion"], existing)
             written += 1
             lines.append(f"| {pair['commodity']} | {pair['hs']} | {pair['country']} | 기록 | {', '.join(sorted(new_months))} |")
+        elif status == "current":
+            current += 1
         elif status == "empty":
             empty += 1
             lines.append(f"| {pair['commodity']} | {pair['hs']} | {pair['country']} | 응답 없음(무역 부재 또는 미공개) | — |")
@@ -250,7 +260,7 @@ def run(dry_run: bool = False, today: date | None = None) -> int:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     rp = REPORT_DIR / f"customs_api_increment_{today.isoformat()}.md"
     rp.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"[완료] 동반 파일 기록 {written}쌍 · 응답 없음 {empty} · 미시도 {skipped} → {rp}")
+    print(f"[완료] 동반 파일 기록 {written}쌍 · 이미 최신 {current} · 응답 없음 {empty} · 미시도 {skipped} → {rp}")
     return 0
 
 

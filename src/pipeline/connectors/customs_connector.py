@@ -342,6 +342,11 @@ def _fetch_customs_range(
     items = _parse_items(data)
     if items:
         return items
+    # 정상 응답(resultCode 00)인데 item이 0건이면 '해당 월 무역 없음/미공개'다 — 키 형식 폴백을 돌리면
+    #   URL 직삽 경로가 401을 내며 '인증 실패'로 오진된다(2026-11-19 실측). 여기서 종료한다.
+    header = ((data or {}).get("response") or {}).get("header") or {}
+    if str(header.get("resultCode", "")).strip() == "00":
+        return []
 
     # 2차: 원본 키 그대로 params (일반 hex 서비스키인 경우 decoded = original)
     if decoded_key != service_key:
