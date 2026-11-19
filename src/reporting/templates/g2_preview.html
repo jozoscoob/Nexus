@@ -1,0 +1,585 @@
+<title>Nexus G2 대두유 범위</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
+<style>
+/* 레이아웃: 거래 단말 3구역 — 상단 시세 레일 · 가격 차트+범위 사다리(호가창 자리) · 하단 탭 데크(성적표·해상 경로·인과 지도·방법) */
+:root {
+  --bg: #0c1315; --panel: #121c1f; --panel-2: #172428; --line: #22343a; --fg: #e4ebe8; --muted: #8aa09c;
+  --oil: #e9a23b; --oil-soft: rgba(233,162,59,.16); --oil-mid: rgba(233,162,59,.34);
+  --up: #f0524f; --down: #4b93ff; --ok: #3fbf8f; --warn: #e9a23b; --bad: #f0524f; --grid: rgba(138,160,156,.12);
+  --f-display: "Noto Serif KR", "Nanum Myeongjo", Georgia, serif;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #eef3f2; --panel: #ffffff; --panel-2: #f5f8f7; --line: #d6e0dd; --fg: #13201e; --muted: #566865;
+  --oil: #b06d0c; --oil-soft: rgba(176,109,12,.13); --oil-mid: rgba(176,109,12,.28);
+  --up: #cf2b2b; --down: #1f63d6; --ok: #1d8a62; --warn: #b06d0c; --bad: #cf2b2b; --grid: rgba(86,104,101,.14);
+  color-scheme: light; } }
+:root[data-theme="light"] {
+  --bg: #eef3f2; --panel: #ffffff; --panel-2: #f5f8f7; --line: #d6e0dd; --fg: #13201e; --muted: #566865;
+  --oil: #b06d0c; --oil-soft: rgba(176,109,12,.13); --oil-mid: rgba(176,109,12,.28);
+  --up: #cf2b2b; --down: #1f63d6; --ok: #1d8a62; --warn: #b06d0c; --bad: #cf2b2b; --grid: rgba(86,104,101,.14);
+  color-scheme: light; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 14px; line-height: 1.5;
+  margin: 0; padding-block: 0 32px; padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px)); font-variant-numeric: tabular-nums; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--oil); outline-offset: 2px; }
+.wrap { max-width: 1320px; margin: 0 auto; display: grid; gap: 14px; }
+header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding-top: 18px; }
+.brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.brand h1 { font-family: var(--f-display); font-size: 22px; margin: 0; letter-spacing: -.01em; }
+.brand .sub { color: var(--muted); font-size: 13px; }
+.top .spacer { flex: 1; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px;
+  padding: 3px 10px; font-size: 12px; color: var(--muted); background: var(--panel); }
+.chip b { color: var(--fg); font-weight: 600; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+.seg button { border: 0; background: transparent; padding: 5px 11px; font-size: 13px; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--oil-soft); color: var(--fg); box-shadow: inset 0 -2px 0 var(--oil); }
+/* 시세 레일 */
+.rail { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.tick { flex: 0 0 auto; min-width: 168px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 12px; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; }
+.tick .n { font-size: 12px; color: var(--muted); grid-column: 1 / -1; }
+.tick .v { font-weight: 600; font-size: 15px; }
+.tick .c { font-size: 12px; align-self: center; }
+.tick svg { grid-column: 1 / -1; width: 100%; height: 22px; }
+.up { color: var(--up); } .down { color: var(--down); } .flat { color: var(--muted); }
+/* 히어로 */
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; min-width: 0; }
+.chart-card { padding: 14px 16px 10px; }
+.chart-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 18px; }
+.sym { font-size: 13px; color: var(--muted); }
+.price-big { font-size: 34px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.price-big small { font-size: 14px; font-weight: 500; color: var(--muted); margin-left: 4px; }
+.chart-head .ctl { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+#chart { width: 100%; height: 380px; display: block; margin-top: 10px; touch-action: pan-y; }
+#chart text { fill: var(--muted); font-size: 11px; font-family: var(--f-body); }
+.fan-outer { fill: var(--oil-soft); } .fan-inner { fill: var(--oil-mid); }
+.fan-mid { stroke: var(--oil); stroke-width: 1.6; stroke-dasharray: 5 4; fill: none; }
+.pline { stroke: var(--fg); stroke-width: 1.5; fill: none; }
+.parea { fill: url(#pgrad); }
+.gridl { stroke: var(--grid); stroke-width: 1; }
+.xhair { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+#fanclip rect { animation: pour 1.1s cubic-bezier(.2,.7,.2,1) both; transform-origin: left; }
+@keyframes pour { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.tip { position: absolute; pointer-events: none; background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 9px; font-size: 12px; white-space: nowrap; transform: translate(-50%, -110%); }
+.chart-box { position: relative; }
+.chart-foot { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font-size: 12px; padding-top: 6px; }
+.chart-foot i { display: inline-block; width: 18px; height: 8px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+/* 범위 사다리 */
+.ladder { padding: 14px 16px; display: grid; gap: 12px; align-content: start; }
+.ladder h2, .deck h2 { font-size: 15px; margin: 0; font-weight: 600; }
+.ladder .hint { color: var(--muted); font-size: 12px; margin-top: -6px; }
+.rung { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 10px; padding: 7px 10px;
+  border-radius: 8px; background: var(--panel-2); }
+.rung .q { font-size: 12px; color: var(--muted); }
+.rung .p { font-weight: 600; text-align: right; }
+.rung .bar { height: 6px; border-radius: 3px; background: var(--grid); position: relative; overflow: hidden; }
+.rung .bar span { position: absolute; top: 0; bottom: 0; background: var(--oil); border-radius: 3px; }
+.rung.mid { box-shadow: inset 3px 0 0 var(--oil); }
+.rung.now { background: transparent; border: 1px dashed var(--line); }
+.rung .d { font-size: 11px; color: var(--muted); display: block; text-align: right; font-weight: 400; }
+.score { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 8px; }
+.gauge { height: 10px; background: var(--grid); border-radius: 5px; position: relative; }
+.gauge span { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--ok); }
+.gauge i { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--fg); left: 80%; }
+.score p { margin: 0; font-size: 12.5px; color: var(--muted); }
+.score strong { color: var(--fg); }
+/* 하단 데크 */
+.deck { padding: 0; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); padding: 0 10px; overflow-x: auto; }
+.tabs button { background: transparent; border: 0; padding: 12px 14px; color: var(--muted); font-size: 14px;
+  border-bottom: 2px solid transparent; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--oil); }
+.pane { padding: 16px; display: grid; gap: 14px; }
+.tblwrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--muted); font-weight: 500; }
+tr.cur td { background: var(--oil-soft); }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; border: 1px solid currentColor; }
+.pill.ok { color: var(--ok); } .pill.bad { color: var(--bad); } .pill.warn { color: var(--warn); } .pill.mute { color: var(--muted); }
+.note { color: var(--muted); font-size: 12.5px; margin: 0; max-width: 78ch; }
+/* 해상 경로 */
+.scen { display: flex; flex-wrap: wrap; gap: 6px; }
+.scen button { border: 1px solid var(--line); background: var(--panel-2); border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+.scen button[aria-pressed="true"] { border-color: var(--oil); color: var(--fg); background: var(--oil-soft); }
+.scen button .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--bad); margin-right: 6px; vertical-align: 1px; }
+.routes-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (min-width: 1180px) { .routes-grid { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); } }
+.mapbox { overflow-x: auto; background: var(--panel-2); border-radius: 10px; }
+#routemap { width: 100%; min-width: 620px; height: 330px; display: block; }
+#routemap text { fill: var(--fg); font-size: 11.5px; font-family: var(--f-body); }
+#routemap .lane { fill: none; stroke: var(--muted); stroke-width: 1.6; opacity: .55; }
+#routemap .lane.flow { stroke: var(--ok); opacity: .9; stroke-dasharray: 6 6; animation: flow 2.4s linear infinite; }
+#routemap .lane.hit { stroke: var(--bad); opacity: .9; stroke-dasharray: 2 5; }
+#routemap .lane.detour { stroke: var(--oil); opacity: 1; stroke-width: 2.2; stroke-dasharray: 8 5; animation: flow 1.6s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -24; } }
+#routemap .node circle { fill: var(--panel); stroke: var(--muted); stroke-width: 1.5; }
+#routemap .node.korea circle { fill: var(--oil); stroke: var(--oil); }
+#routemap .strait circle { stroke-width: 2; }
+#routemap .strait.normal circle { stroke: var(--ok); fill: var(--panel); }
+#routemap .strait.disrupted circle { stroke: var(--bad); fill: var(--bad); }
+#routemap .strait.elevated circle { stroke: var(--warn); fill: var(--panel); }
+#routemap .strait.unknown circle { stroke: var(--muted); fill: var(--panel); }
+#routemap .sub { fill: var(--muted); font-size: 10.5px; }
+#routemap .tag { fill: var(--oil); font-weight: 600; }
+.straits { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.st { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; }
+.st .k { font-size: 12.5px; font-weight: 600; } .st .m { font-size: 11.5px; color: var(--muted); }
+.side { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.side h3 { font-size: 13.5px; margin: 0; }
+.side ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13px; }
+.side .eff { font-size: 13px; color: var(--fg); margin: 0; }
+/* 인과 지도 */
+.graph-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; }
+#graph { width: 100%; height: 440px; display: block; background: radial-gradient(ellipse at 50% 45%, var(--panel-2), var(--panel) 70%);
+  border-radius: 10px; cursor: grab; touch-action: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+.edges { display: grid; gap: 6px; max-height: 440px; overflow-y: auto; padding-right: 4px; }
+.edge { font-size: 12.5px; background: var(--panel-2); border-radius: 8px; padding: 7px 9px; border: 1px solid transparent; }
+.edge.on { border-color: var(--oil); }
+.edge .h { display: flex; gap: 6px; align-items: center; margin-bottom: 2px; color: var(--muted); font-size: 11.5px; }
+.method { display: grid; gap: 10px; max-width: 80ch; }
+.method p, .method li { font-size: 13.5px; margin: 0; }
+.method ul { padding-left: 18px; display: grid; gap: 6px; margin: 0; }
+footer.hitl { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 12px; }
+@media (max-width: 980px) {
+  .hero, .graph-grid { grid-template-columns: minmax(0, 1fr); }
+  #chart { height: 300px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #fanclip rect, #routemap .lane.flow, #routemap .lane.detour { animation: none; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Nexus G2</h1><span class="sub">대두유 가격 참고 범위</span></div>
+    <span class="chip">정산가 기준일 <b id="asof">—</b></span>
+    <span class="chip">방법 <b>기준선 B2(경험 분위)</b></span>
+    <span class="spacer"></span>
+    <div class="seg" role="group" aria-label="가격 단위">
+      <button type="button" id="u-usc" aria-pressed="true">USc/lb</button>
+      <button type="button" id="u-mt" aria-pressed="false">$/MT</button>
+    </div>
+    <button type="button" class="chip" id="theme">화면 밝기 전환</button>
+  </header>
+
+  <div class="rail" id="rail" aria-label="관련 시장 시세"></div>
+
+  <section class="hero">
+    <div class="card chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="sym">CBOT 대두유 선물 · 근월 정산가 (ZL)</div>
+          <div class="price-big"><span id="last">—</span><small id="unit-lbl">USc/lb</small></div>
+          <div id="chg" class="flat">—</div>
+        </div>
+        <div class="ctl">
+          <div class="seg" role="group" aria-label="표시 기간">
+            <button type="button" data-span="63" aria-pressed="false">3개월</button>
+            <button type="button" data-span="252" aria-pressed="true">1년</button>
+            <button type="button" data-span="1300" aria-pressed="false">5년</button>
+          </div>
+          <div class="seg" role="group" aria-label="예측 지평">
+            <button type="button" data-h="1" aria-pressed="false">1일</button>
+            <button type="button" data-h="5" aria-pressed="false">1주</button>
+            <button type="button" data-h="20" aria-pressed="false">1개월</button>
+            <button type="button" data-h="60" aria-pressed="true">3개월</button>
+          </div>
+        </div>
+      </div>
+      <div class="chart-box"><svg id="chart" role="img" aria-label="정산가 추이와 지평별 참고 범위"></svg><div class="tip" id="tip" hidden></div></div>
+      <div class="chart-foot">
+        <span><i style="background:var(--oil-soft)"></i>P10~P90 참고 범위</span>
+        <span><i style="background:var(--oil-mid)"></i>P25~P75</span>
+        <span><i style="background:transparent;border-top:2px dashed var(--oil);height:0"></i>P50 중앙값</span>
+        <span>범위는 과거 수익률 분포의 요약이며 가격 전망이 아닙니다.</span>
+      </div>
+    </div>
+
+    <aside class="card ladder" aria-label="범위 사다리">
+      <h2 id="lad-title">3개월 뒤 참고 범위</h2>
+      <p class="hint" id="lad-hint">최근 250개 구간의 실제 변동을 지금 가격에 적용한 값</p>
+      <div id="rungs" style="display:grid;gap:6px"></div>
+      <div class="score">
+        <h2>이 방식의 과거 성적</h2>
+        <div class="gauge" aria-hidden="true"><span id="g-fill"></span><i title="목표 80%"></i></div>
+        <p id="g-text">—</p>
+      </div>
+    </aside>
+  </section>
+
+  <section class="card deck">
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" aria-selected="true" data-tab="card">과거 성적표</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="routes">해상 경로·비상 상황</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="graph">인과 지도</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="method">산출 방법·한계</button>
+    </div>
+
+    <div class="pane" data-pane="card">
+      <p class="note" id="card-note"></p>
+      <div class="tblwrap"><table id="card-tbl"></table></div>
+    </div>
+
+    <div class="pane" data-pane="routes" hidden>
+      <div class="scen" id="scen" role="group" aria-label="상황 선택"></div>
+      <div class="routes-grid">
+        <div class="mapbox"><svg id="routemap" viewBox="0 0 760 330" role="img" aria-label="한국향 해상 경로 모식도"></svg></div>
+        <div class="side" id="scen-side"></div>
+      </div>
+      <h2>해협 현재 상태 <span class="note" id="st-asof" style="font-weight:400"></span></h2>
+      <div class="straits" id="straits"></div>
+    </div>
+
+    <div class="pane" data-pane="graph" hidden>
+      <div class="legend" id="legend"></div>
+      <div class="graph-grid">
+        <canvas id="graph" aria-label="인과 엣지 그래프 — 노드를 끌어 배치할 수 있음"></canvas>
+        <div class="edges" id="edges"></div>
+      </div>
+      <p class="note">노드 크기는 연결된 인과 사슬 수, 주황 테두리는 지금 차질이 관측된 해협과 이어진 사슬입니다. 실선은 검증 완료, 점선은 후보 엣지입니다.</p>
+    </div>
+
+    <div class="pane" data-pane="method" hidden>
+      <div class="method" id="method"></div>
+    </div>
+  </section>
+
+  <footer class="hitl">이 화면은 참고용 미리보기입니다. 구매·보류 판단은 담당자 승인 절차를 거치며, 여기 나온 범위로 자동 실행되는 주문은 없습니다. 생성 <span id="gen"></span></footer>
+</div>
+
+<script>
+const D = /*__G2_DATA__*/null;
+(function () {
+  if (!D) { document.querySelector(".wrap").insertAdjacentHTML("afterbegin", "<p class='note'>데이터가 비어 있습니다. g2_preview.py로 생성하세요.</p>"); return; }
+  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const NS = "http://www.w3.org/2000/svg";
+  const st = { unit: "usc", span: 252, h: 60 };
+  try { const s = JSON.parse(localStorage.getItem("g2prefs") || "{}"); Object.assign(st, s); } catch (e) {}
+  const save = () => { try { localStorage.setItem("g2prefs", JSON.stringify(st)); } catch (e) {} };
+  const conv = v => st.unit === "usc" ? v : v * D.meta.to_usd_mt;
+  const fmt = v => st.unit === "usc" ? conv(v).toFixed(2) : Math.round(conv(v)).toLocaleString("ko-KR");
+  const ulbl = () => st.unit === "usc" ? "USc/lb" : "$/MT";
+  const cls = c => c > 0 ? "up" : c < 0 ? "down" : "flat";
+  const sign = c => (c > 0 ? "+" : "") + c.toFixed(2) + "%";
+  const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+  const P = D.price.map(([d, v]) => ({ d: new Date(d + "T00:00:00"), s: d, v }));
+  const last = P[P.length - 1];
+
+  $("#asof").textContent = D.meta.as_of; $("#gen").textContent = D.meta.generated;
+
+  // 시세 레일
+  $("#rail").innerHTML = D.tickers.map(t => {
+    const mn = Math.min(...t.spark), mx = Math.max(...t.spark), w = 150, h = 22;
+    const pts = t.spark.map((v, i) => `${(i / (t.spark.length - 1) * w).toFixed(1)},${(h - 2 - (v - mn) / ((mx - mn) || 1) * (h - 4)).toFixed(1)}`).join(" ");
+    return `<div class="tick" title="${t.date} 기준 · ${t.unit}"><span class="n">${t.name}</span><span class="v">${t.last.toLocaleString("ko-KR")}</span>`
+      + `<span class="c ${cls(t.chg)}">${sign(t.chg)}</span><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="currentColor" class="${cls(t.chg)}" stroke-width="1.4" points="${pts}"/></svg></div>`;
+  }).join("") || `<span class="note">관련 시장 시세 자료 없음</span>`;
+
+  // 영업일 더하기
+  const addBiz = (d, n) => { const x = new Date(d); let k = 0; while (k < n) { x.setDate(x.getDate() + 1); const w = x.getDay(); if (w && w !== 6) k++; } return x; };
+  const iso = d => d.toISOString().slice(0, 10);
+
+  function drawChart() {
+    const svg = $("#chart"); svg.innerHTML = "";
+    const W = svg.clientWidth || 800, H = svg.clientHeight || 380, m = { l: 8, r: 64, t: 12, b: 24 };
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const view = P.slice(-st.span), b = D.bands[String(st.h)].q;
+    const end = addBiz(last.d, st.h);
+    const t0 = view[0].d.getTime(), t1 = end.getTime();
+    const vals = view.map(p => p.v).concat([b.p10, b.p90]);
+    let lo = Math.min(...vals), hi = Math.max(...vals); const pad = (hi - lo) * .06; lo -= pad; hi += pad;
+    const x = d => m.l + (d.getTime() - t0) / (t1 - t0) * (W - m.l - m.r);
+    const y = v => m.t + (hi - v) / (hi - lo) * (H - m.t - m.b);
+    const defs = el("defs", {}, svg);
+    const g = el("linearGradient", { id: "pgrad", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    el("stop", { offset: "0%", "stop-color": "currentColor", "stop-opacity": ".18" }, g);
+    el("stop", { offset: "100%", "stop-color": "currentColor", "stop-opacity": "0" }, g);
+    const cp = el("clipPath", { id: "fanclip" }, defs);
+    el("rect", { x: x(last.d), y: 0, width: W - x(last.d), height: H }, cp);
+    // 격자·축
+    const ticks = 5;
+    for (let i = 0; i <= ticks; i++) {
+      const v = lo + (hi - lo) * i / ticks, yy = y(v);
+      el("line", { x1: m.l, x2: W - m.r, y1: yy, y2: yy, class: "gridl" }, svg);
+      const tx = el("text", { x: W - m.r + 6, y: yy + 4 }, svg); tx.textContent = fmt(v);
+    }
+    const months = []; let prev = "";
+    view.forEach(p => { const k = p.s.slice(0, 7); if (k !== prev) { months.push(p); prev = k; } });
+    const step = Math.ceil(months.length / 7);
+    months.forEach((p, i) => { if (i % step) return; const tx = el("text", { x: x(p.d), y: H - 6, "text-anchor": "middle" }, svg); tx.textContent = p.s.slice(2, 7).replace("-", "."); });
+    // 가격 면·선
+    const line = view.map((p, i) => `${i ? "L" : "M"}${x(p.d).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
+    el("path", { d: `${line}L${x(last.d)},${H - m.b}L${x(view[0].d)},${H - m.b}Z`, class: "parea", style: "color:var(--fg)" }, svg);
+    el("path", { d: line, class: "pline" }, svg);
+    // 범위 부채꼴
+    const fan = el("g", { "clip-path": "url(#fanclip)" }, svg);
+    const x0 = x(last.d), x1 = x(end), y0 = y(last.v);
+    el("path", { d: `M${x0},${y0}L${x1},${y(b.p90)}L${x1},${y(b.p10)}Z`, class: "fan-outer" }, fan);
+    el("path", { d: `M${x0},${y0}L${x1},${y(b.p75)}L${x1},${y(b.p25)}Z`, class: "fan-inner" }, fan);
+    el("path", { d: `M${x0},${y0}L${x1},${y(b.p50)}`, class: "fan-mid" }, fan);
+    el("line", { x1: x0, x2: x0, y1: m.t, y2: H - m.b, class: "xhair", opacity: .5 }, svg);
+    el("circle", { cx: x0, cy: y0, r: 4, fill: "var(--oil)" }, svg);
+    [["p90", "P90"], ["p50", "P50"], ["p10", "P10"]].forEach(([k, n]) => {
+      const tx = el("text", { x: x1 - 4, y: y(b[k]) - 5, "text-anchor": "end", style: "fill:var(--oil);font-weight:600" }, svg);
+      tx.textContent = `${n} ${fmt(b[k])}`;
+    });
+    const et = el("text", { x: x1, y: m.t + 10, "text-anchor": "end" }, svg); et.textContent = `${iso(end)} (${D.bands[String(st.h)].label})`;
+    // 십자선
+    const vx = el("line", { class: "xhair", y1: m.t, y2: H - m.b, visibility: "hidden" }, svg);
+    const dot = el("circle", { r: 3.5, fill: "var(--fg)", visibility: "hidden" }, svg);
+    const tip = $("#tip");
+    const move = ev => {
+      const r = svg.getBoundingClientRect(), px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+      const tt = t0 + (px - m.l) / (W - m.l - m.r) * (t1 - t0);
+      if (tt > last.d.getTime()) {
+        vx.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden");
+        tip.hidden = false; tip.style.left = px + "px"; tip.style.top = y(b.p50) + "px";
+        tip.innerHTML = `${D.bands[String(st.h)].label} 뒤 참고 범위<br>P10 ${fmt(b.p10)} · P50 ${fmt(b.p50)} · P90 ${fmt(b.p90)}`;
+        return;
+      }
+      let k = 0, best = Infinity; view.forEach((p, i) => { const dd = Math.abs(p.d.getTime() - tt); if (dd < best) { best = dd; k = i; } });
+      const p = view[k], xx = x(p.d), yy = y(p.v);
+      vx.setAttribute("x1", xx); vx.setAttribute("x2", xx); vx.setAttribute("visibility", "visible");
+      dot.setAttribute("cx", xx); dot.setAttribute("cy", yy); dot.setAttribute("visibility", "visible");
+      tip.hidden = false; tip.style.left = xx + "px"; tip.style.top = yy + "px";
+      const pv = view[k - 1]; const c = pv ? (p.v / pv.v - 1) * 100 : 0;
+      tip.innerHTML = `${p.s} · <b>${fmt(p.v)}</b> <span class="${cls(c)}">${sign(c)}</span>`;
+    };
+    svg.onmousemove = move; svg.ontouchmove = move;
+    svg.onmouseleave = () => { tip.hidden = true; vx.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); };
+  }
+
+  function drawHead() {
+    $("#last").textContent = fmt(last.v); $("#unit-lbl").textContent = ulbl();
+    const pv = P[P.length - 2], c = (last.v / pv.v - 1) * 100, w = P[P.length - 6], cw = (last.v / w.v - 1) * 100;
+    const ch = $("#chg"); ch.className = cls(c);
+    ch.innerHTML = `전일 대비 ${sign(c)} · <span class="${cls(cw)}">1주 ${sign(cw)}</span> <span class="flat">(${last.s})</span>`;
+  }
+
+  function drawLadder() {
+    const bd = D.bands[String(st.h)], b = bd.q;
+    $("#lad-title").textContent = `${bd.label} 뒤 참고 범위`;
+    $("#lad-hint").textContent = `최근 ${bd.n}개 ${bd.label} 구간의 실제 변동을 지금 정산가에 적용 (${ulbl()})`;
+    const span = b.p90 - b.p10 || 1;
+    const rows = [["P90", b.p90], ["P75", b.p75], ["P50", b.p50, "mid"], ["지금", last.v, "now"], ["P25", b.p25], ["P10", b.p10]]
+      .sort((a, c) => c[1] - a[1]);
+    $("#rungs").innerHTML = rows.map(([q, v, k]) => {
+      const pct = (v / last.v - 1) * 100, left = Math.max(0, Math.min(100, (v - b.p10) / span * 100));
+      return `<div class="rung ${k || ""}"><span class="q">${q}</span><div class="bar"><span style="left:${Math.min(left, 50)}%;right:${100 - Math.max(left, 50)}%"></span></div>`
+        + `<span class="p">${fmt(v)}${k === "now" ? "" : `<span class="d ${cls(pct)}">${sign(pct)}</span>`}</span></div>`;
+    }).join("");
+    const rows2 = (D.card.horizons || {})[String(st.h)] || [];
+    const b2 = rows2.find(r => String(r.model).startsWith("B2"));
+    if (b2 && b2.cov80 != null) {
+      const v = b2.cov80 * 100, f = $("#g-fill");
+      f.style.width = Math.min(100, v) + "%"; f.style.background = v >= 75 ? "var(--ok)" : v >= 65 ? "var(--warn)" : "var(--bad)";
+      $("#g-text").innerHTML = `과거 ${b2.n.toLocaleString("ko-KR")}회 중 <strong>${v.toFixed(1)}%</strong>가 P10~P90 안에 들어왔습니다(목표 80%). `
+        + `최근 반년 점검 구간(lockbox)에서는 ${(b2.lock_cov80 * 100).toFixed(1)}%.`;
+    } else {
+      $("#g-fill").style.width = "0"; $("#g-text").textContent = `${bd.label} 지평은 아직 과거 성적을 계산하지 않았습니다(백테스트 지평은 1주·1개월·3개월).`;
+    }
+  }
+
+  function drawCard() {
+    const c = D.card; if (!c.horizons) { $("#card-tbl").innerHTML = "<tr><td>성적표 자료 없음</td></tr>"; return; }
+    $("#card-note").textContent = `평가 기간 ${c.window[0]}~${c.window[1]}, 마지막 반년(${c.lockbox[0]}~${c.lockbox[1]})은 손대지 않은 점검 구간입니다. 80% 범위가 실제 값을 담은 비율이 80%에 가까울수록 정직한 범위입니다. 같은 방식이라도 지평이 길수록 맞힌 비율이 떨어집니다.`;
+    const lbl = { "5": "1주", "20": "1개월", "60": "3개월" };
+    let h = "<thead><tr><th>지평 · 방식</th><th>80% 범위 포함률</th><th>50% 범위 포함률</th><th>80% 범위 폭</th><th>중앙값 오차</th><th>점검 구간 80% 포함률</th></tr></thead><tbody>";
+    for (const [hz, rows] of Object.entries(c.horizons)) {
+      rows.forEach(r => {
+        const v = r.cov80 * 100, p = v >= 75 ? "ok" : v >= 65 ? "warn" : "bad";
+        h += `<tr class="${String(r.model).startsWith("B2") ? "cur" : ""}"><td>${lbl[hz] || hz} · ${r.model}</td>`
+          + `<td><span class="pill ${p}">${v.toFixed(1)}%</span></td><td>${(r.cov50 * 100).toFixed(1)}%</td>`
+          + `<td>±${(r.width80 / 2).toFixed(1)}%</td><td>${r.mae.toFixed(2)}%</td><td>${(r.lock_cov80 * 100).toFixed(1)}%</td></tr>`;
+      });
+    }
+    $("#card-tbl").innerHTML = h + "</tbody>";
+  }
+
+  // 해상 경로 모식도
+  const R = D.routes || {};
+  const ST = R.status || {};
+  const KO = { HORMUZ: "호르무즈", BAB_EL_MANDEB: "바브엘만데브", SUEZ: "수에즈", PANAMA: "파나마", MALACCA: "말라카",
+    CAPE_GOOD_HOPE: "희망봉", KOREA_STRAIT: "대한해협", TAIWAN_STRAIT: "대만해협", LOMBOK: "롬복", SUNDA: "순다" };
+  const POS = { USG: [40, 70, "미국 걸프"], SANTOS: [40, 190, "브라질 산투스"], ROSARIO: [40, 265, "아르헨 로사리오"],
+    BLACKSEA: [300, 30, "흑해"], VN: [610, 255, "베트남"], CN: [640, 70, "중국"], KR: [715, 150, "한국"],
+    PANAMA: [170, 95, ""], CAPE_GOOD_HOPE: [300, 255, ""], SUEZ: [390, 60, ""], BAB_EL_MANDEB: [440, 95, ""],
+    HORMUZ: [480, 40, ""], MALACCA: [560, 210, ""], LOMBOK: [585, 290, ""], SUNDA: [530, 270, ""], TAIWAN_STRAIT: [660, 205, ""] };
+  const LANES = {
+    "RT-USG-KR": [["USG", "PANAMA", "KR"]], "RT-SANTOS-KR": [["SANTOS", "CAPE_GOOD_HOPE", "MALACCA", "KR"]],
+    "RT-ROSARIO-KR": [["ROSARIO", "CAPE_GOOD_HOPE", "MALACCA", "KR"]], "RT-VN-KR": [["VN", "TAIWAN_STRAIT", "KR"]],
+    "RT-CN-KR": [["CN", "KR"]], "RT-BLACKSEA-KR": [["BLACKSEA", "SUEZ", "BAB_EL_MANDEB", "MALACCA", "KR"]] };
+  const DETOUR = { via_cape: { "RT-USG-KR": ["USG", "CAPE_GOOD_HOPE", "MALACCA", "KR"], "RT-BLACKSEA-KR": ["BLACKSEA", "CAPE_GOOD_HOPE", "MALACCA", "KR"] },
+    via_suez: { "RT-USG-KR": ["USG", "SUEZ", "BAB_EL_MANDEB", "MALACCA", "KR"] },
+    via_lombok: { "RT-SANTOS-KR": ["SANTOS", "CAPE_GOOD_HOPE", "LOMBOK", "KR"], "RT-ROSARIO-KR": ["ROSARIO", "CAPE_GOOD_HOPE", "LOMBOK", "KR"] },
+    via_sunda: { "RT-SANTOS-KR": ["SANTOS", "CAPE_GOOD_HOPE", "SUNDA", "KR"], "RT-ROSARIO-KR": ["ROSARIO", "CAPE_GOOD_HOPE", "SUNDA", "KR"] },
+    via_luzon: { "RT-VN-KR": ["VN", "KR"] } };
+  const curve = pts => pts.map((k, i) => { const [x, y] = POS[k]; if (!i) return `M${x},${y}`; const [px, py] = POS[pts[i - 1]]; const mx = (px + x) / 2; return `C${mx},${py} ${mx},${y} ${x},${y}`; }).join("");
+  const conts = (R.contingencies || []);
+  let scen = conts.find(c => (c.active_now || []).length) ? conts.find(c => (c.active_now || []).length).id : "normal";
+
+  function drawRoutes() {
+    const svg = $("#routemap"); svg.innerHTML = "";
+    const c = conts.find(k => k.id === scen);
+    const aff = new Set(c ? c.affected : []);
+    const routes = R.routes || [];
+    routes.forEach(r => (LANES[r.id] || []).forEach(path => {
+      const hit = path.some(k => aff.has(k));
+      el("path", { d: curve(path), class: "lane " + (hit ? "hit" : scen === "normal" ? "flow" : "") }, svg);
+    }));
+    const tags = [];
+    if (c && c.id === "hormuz_us_iran") {   // 물리 항로는 없음 — 선복·운임으로 번지는 간접 경로만 점선 표시
+      el("path", { d: curve(["HORMUZ", "MALACCA"]), class: "lane hit" }, svg);
+      tags.push([548, 160, "간접: 탱커 수급·운임·보험료"]);
+    }
+    if (c) {
+      c.route_impacts.forEach(im => {
+        const r = routes.find(x => x.id === im.route); if (!r || !im.detours.length) return;
+        const alt = r.alternatives.find(a => a.name === im.detours[0].name); if (!alt) return;
+        const path = (DETOUR[alt.id] || {})[r.id]; if (!path) return;
+        el("path", { d: curve(path), class: "lane detour" }, svg);
+        const mid = POS[path[Math.floor(path.length / 2)]];
+        tags.push([mid[0], mid[1] - 12, `+${im.detours[0].extra_days[0]}~${im.detours[0].extra_days[1]}일`]);
+      });
+    }
+    Object.entries(POS).forEach(([k, [x, y, nm]]) => {
+      const isStrait = !nm;
+      const g = el("g", { class: isStrait ? `strait ${(ST[k] || {}).state || "unknown"}` : `node ${k === "KR" ? "korea" : ""}` }, svg);
+      el("circle", { cx: x, cy: y, r: isStrait ? 6 : k === "KR" ? 9 : 6 }, g);
+      const t = el("text", { x: x + (k === "KR" ? 0 : 10), y: y + (k === "KR" ? 24 : 4), "text-anchor": k === "KR" ? "middle" : "start" }, g);
+      t.textContent = isStrait ? KO[k] : nm;
+      if (isStrait && ST[k] && ST[k].change_pct != null) {
+        const s = el("text", { x: x + 10, y: y + 17, class: "sub" }, g); s.textContent = `${ST[k].change_pct > 0 ? "+" : ""}${ST[k].change_pct}%`;
+      }
+    });
+    tags.forEach(([x, y, s]) => { const t = el("text", { x, y, class: "tag", "text-anchor": "middle" }, svg); t.textContent = s; });
+
+    const side = $("#scen-side");
+    if (!c) {
+      side.innerHTML = `<h3>평시 경로</h3><ul>${routes.map(r => `<li>${r.name} — 리드타임 ${r.base_lead_days[0]}~${r.base_lead_days[1]}일${r.blocked_now.length ? ` <span class="pill bad">경유 해협 차질</span>` : ""}</li>`).join("")}</ul><p class="note">초록 점선은 평시 항로 흐름입니다. 위 상황을 고르면 막히는 구간과 우회로·추가 항해일이 표시됩니다.</p>`;
+    } else {
+      const imp = c.route_impacts.length ? c.route_impacts.map(i => `<li>${i.name}: ${i.detours.length ? i.detours.map(d => `${d.name} +${d.extra_days[0]}~${d.extra_days[1]}일${d.via_disrupted_now.length ? ` <span class="pill bad">우회로도 차질</span>` : ""}`).join(" / ") : "가용 우회로 없음(대기 또는 공급원 전환)"}</li>`).join("") : "<li>한국향 대두유 항로의 물리적 우회 없음</li>";
+      const pre = c.precedents.map(p => `<li><b>${p.name}</b> (${p.event[0]}~${p.event[1]}): ${Object.entries(p.changes).map(([k, v]) => `${KO[k] || k} ${v == null ? "—" : (v > 0 ? "+" : "") + v + "%"}`).join(" · ")}</li>`).join("");
+      side.innerHTML = `<h3>${c.name}${c.active_now.length ? ' <span class="pill bad">현재 관측</span>' : ""}</h3><p class="eff">${c.lane_effect}</p><h3>영향 경로·예상 추가 항해일</h3><ul>${imp}</ul><h3>과거 선례 — 탱커 통과 척수 변화(실측)</h3><ul>${pre}</ul>`;
+    }
+  }
+
+  function drawScenarios() {
+    const items = [{ id: "normal", name: "평시", active_now: [] }].concat(conts);
+    $("#scen").innerHTML = items.map(c => `<button type="button" data-scen="${c.id}" aria-pressed="${c.id === scen}">${(c.active_now || []).length ? '<span class="dot"></span>' : ""}${c.name}</button>`).join("");
+    $$("#scen button").forEach(b => b.onclick = () => { scen = b.dataset.scen; drawScenarios(); drawRoutes(); });
+    const lab = { normal: ["ok", "평시"], disrupted: ["bad", "차질"], elevated: ["warn", "우회 유입"], unknown: ["mute", "자료 없음"] };
+    $("#st-asof").textContent = R.as_of ? `· PortWatch ${R.as_of} 기준(주간 갱신, 4~7일 지연) · 최근 28일 vs 2019~2022 평시` : "· 자료 없음";
+    $("#straits").innerHTML = Object.entries(ST).sort((a, b) => (a[1].change_pct ?? 0) - (b[1].change_pct ?? 0)).map(([k, s]) => {
+      const [p, t] = lab[s.state] || lab.unknown;
+      return `<div class="st"><span class="k">${KO[k] || k} <span class="pill ${p}">${t}</span></span><span class="m">탱커 ${s.recent_mean ?? "—"}척/일 · 평시 ${s.baseline_median ?? "—"}</span><span class="m">${s.change_pct == null ? "" : (s.change_pct > 0 ? "+" : "") + s.change_pct + "%"}</span></div>`;
+    }).join("");
+  }
+
+  // 인과 지도 (힘-배치 그래프)
+  const CAT = { "정책·규제": "#4b93ff", "기후·작황": "#3fbf8f", "지정학·무역": "#f0524f", "시장 구조": "#b58cff" };
+  function graph() {
+    const cv = $("#graph"), ctx = cv.getContext("2d"), G = D.graph;
+    const dpr = window.devicePixelRatio || 1;
+    let W = cv.clientWidth, H = cv.clientHeight; cv.width = W * dpr; cv.height = H * dpr; ctx.scale(dpr, dpr);
+    const N = G.nodes.map((n, i) => ({ ...n, x: W / 2 + Math.cos(i * 2.4) * (40 + i * 2.2), y: H / 2 + Math.sin(i * 2.4) * (30 + i * 1.6), vx: 0, vy: 0 }));
+    const idx = Object.fromEntries(N.map((n, i) => [n.id, i]));
+    const L = G.links.map(l => ({ ...l, a: N[idx[l.s]], b: N[idx[l.t]] }));
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let hover = null, drag = null, focusEdge = null, t = 0;
+    const css = getComputedStyle(document.documentElement);
+    $("#legend").innerHTML = Object.entries(CAT).map(([k, c]) => `<span><i style="background:${c}"></i>${k}</span>`).join("") + `<span><i style="background:var(--oil)"></i>가격 결과 노드</span>`;
+    $("#edges").innerHTML = G.edges.map(e => `<div class="edge" data-e="${e.id}" tabindex="0"><div class="h"><span class="pill ${e.status === "validated" ? "ok" : "mute"}">${e.status === "validated" ? "검증" : "후보"}</span>${e.id} · ${e.cat} · ${e.dir === "UP" ? "상승 요인" : e.dir === "DOWN" ? "하락 요인" : e.dir}</div>${e.label}</div>`).join("");
+    $$("#edges .edge").forEach(d => { d.onmouseenter = d.onfocus = () => { focusEdge = d.dataset.e; $$("#edges .edge").forEach(x => x.classList.toggle("on", x === d)); }; });
+    const R0 = n => (n.outcome ? 9 : 3.5) + Math.sqrt(n.deg) * 2;
+    function step() {
+      for (let i = 0; i < N.length; i++) for (let j = i + 1; j < N.length; j++) {
+        const a = N[i], b = N[j], dx = a.x - b.x, dy = a.y - b.y, d = Math.hypot(dx, dy) || .1;
+        if (d > 220) continue; const f = 1800 / (d * d), ux = dx / d, uy = dy / d;
+        a.vx += ux * f; a.vy += uy * f; b.vx -= ux * f; b.vy -= uy * f;
+      }
+      L.forEach(l => { const dx = l.b.x - l.a.x, dy = l.b.y - l.a.y, d = Math.hypot(dx, dy) || .1, f = (d - 52) * .03, ux = dx / d, uy = dy / d;
+        l.a.vx += ux * f; l.a.vy += uy * f; l.b.vx -= ux * f; l.b.vy -= uy * f; });
+      N.forEach(n => { if (n === drag) return; n.vx += (W / 2 - n.x) * .006; n.vy += (H / 2 - n.y) * .008;
+        n.vx = Math.max(-6, Math.min(6, n.vx * .82)); n.vy = Math.max(-6, Math.min(6, n.vy * .82));
+        n.x = Math.max(14, Math.min(W - 14, n.x + n.vx)); n.y = Math.max(14, Math.min(H - 14, n.y + n.vy)); });
+    }
+    function draw() {
+      const fg = css.getPropertyValue("--fg").trim(), mut = css.getPropertyValue("--muted").trim(), oil = css.getPropertyValue("--oil").trim();
+      ctx.clearRect(0, 0, W, H);
+      L.forEach(l => {
+        const on = focusEdge ? l.edge === focusEdge : hover ? (l.a === hover || l.b === hover) : false;
+        ctx.globalAlpha = on ? .95 : l.hot ? .55 : .22; ctx.strokeStyle = on || l.hot ? oil : mut; ctx.lineWidth = on ? 2 : 1;
+        ctx.setLineDash(l.status === "validated" ? [] : [3, 3]); ctx.beginPath(); ctx.moveTo(l.a.x, l.a.y); ctx.lineTo(l.b.x, l.b.y); ctx.stroke();
+      });
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+      N.forEach(n => {
+        const r = R0(n), pulse = n.hot && !reduce ? 2 + Math.sin(t / 18) * 2 : 0;
+        if (n.hot) { ctx.beginPath(); ctx.arc(n.x, n.y, r + 3 + pulse, 0, 7); ctx.strokeStyle = oil; ctx.globalAlpha = .6; ctx.lineWidth = 1.5; ctx.stroke(); ctx.globalAlpha = 1; }
+        ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 7); ctx.fillStyle = n.outcome ? oil : (CAT[n.cat] || mut); ctx.fill();
+        if (n === hover || n.outcome || (focusEdge && L.some(l => l.edge === focusEdge && (l.a === n || l.b === n)))) {
+          ctx.fillStyle = fg; ctx.font = `${n.outcome ? 600 : 400} 12px ${css.getPropertyValue("--f-body")}`; ctx.fillText(n.label, n.x + r + 4, n.y + 4);
+        }
+      });
+    }
+    let frames = 0;
+    (function loop() { if (!cv.isConnected) return; if (frames < 400 || drag) step(); frames++; t++; draw(); if (!reduce || frames < 400) requestAnimationFrame(loop); })();
+    const pos = ev => { const r = cv.getBoundingClientRect(); const p = ev.touches ? ev.touches[0] : ev; return [p.clientX - r.left, p.clientY - r.top]; };
+    const pick = (x, y) => N.find(n => Math.hypot(n.x - x, n.y - y) < R0(n) + 4) || null;
+    cv.onpointerdown = ev => { const [x, y] = pos(ev); drag = pick(x, y); if (drag) cv.setPointerCapture(ev.pointerId); };
+    cv.onpointermove = ev => { const [x, y] = pos(ev); if (drag) { drag.x = x; drag.y = y; frames = 300; } hover = pick(x, y); focusEdge = null; if (reduce) draw(); };
+    cv.onpointerup = () => { drag = null; };
+  }
+
+  function drawMethod() {
+    $("#method").innerHTML = `
+      <p><b>범위는 어떻게 만드나.</b> 최근 250개 구간에서 실제로 나타난 h거래일 가격 변화율을 모아 하위 10%·25%·50%·75%·90% 값을 구하고, 지금 정산가에 그대로 곱합니다. 미래를 추정하는 모델이 아니라 "최근 1년의 변동 폭을 지금에 대어 본 것"입니다.</p>
+      <ul>
+        <li>가격 기준: CBOT 대두유 근월물 일일 정산가(USc/lb). $/MT 환산은 1 USc/lb = 22.0462 $/MT로 단순 환산한 값이며 운임·basis는 포함하지 않습니다.</li>
+        <li>성적표: 같은 방식을 ${D.card.window ? D.card.window[0] + "~" + D.card.window[1] : "과거"} 전 기간에 걸어 놓고, 그날 만든 범위가 실제 값을 담았는지 하루씩 확인한 결과입니다. 마지막 반년은 방식을 고칠 때 보지 않은 점검 구간입니다.</li>
+        <li>다음 단계: 분위수 회귀(Quantile LightGBM)와 범위 보정(CQR)을 같은 성적표로 비교해, 기준선을 이기는 지평만 교체합니다. 이기지 못하면 그 결과를 그대로 보여 줍니다.</li>
+        <li>해상 경로: 실시간 선박 위치가 아니라 IMF PortWatch의 해협별 일일 통과 척수(주간 갱신, 4~7일 지연)와 항로 거리 차이로 계산합니다. 추가 항해일은 탱커 경제 속력 12.5~14노트 기준 근사치이며, 운하 대기나 선박 확보 지연은 포함하지 않습니다.</li>
+        <li>표시하지 않는 것: 상승 확률, 특정 가격을 넘을 확률, 구매·보류 권고. 이 화면의 범위는 조달 판단의 근거로 쓰지 않습니다.</li>
+      </ul>`;
+  }
+
+  // 컨트롤
+  function sync() {
+    $$("[data-span]").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.span === st.span)));
+    $$("[data-h]").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.h === st.h)));
+    $("#u-usc").setAttribute("aria-pressed", String(st.unit === "usc")); $("#u-mt").setAttribute("aria-pressed", String(st.unit === "mt"));
+    drawHead(); drawChart(); drawLadder(); save();
+  }
+  $$("[data-span]").forEach(b => b.onclick = () => { st.span = +b.dataset.span; sync(); });
+  $$("[data-h]").forEach(b => b.onclick = () => { st.h = +b.dataset.h; sync(); });
+  $("#u-usc").onclick = () => { st.unit = "usc"; sync(); };
+  $("#u-mt").onclick = () => { st.unit = "mt"; sync(); };
+  $("#theme").onclick = () => {
+    const r = document.documentElement, cur = r.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    r.setAttribute("data-theme", cur === "dark" ? "light" : "dark"); sync();
+  };
+  let graphOn = false;
+  function showTab(name) {
+    $$(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+    $$("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== name);
+    if (name === "graph" && !graphOn) { graphOn = true; graph(); }
+  }
+  $$(".tabs button").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(drawChart, 120); });
+  drawCard(); drawScenarios(); drawRoutes(); drawMethod(); sync();
+})();
+</script>

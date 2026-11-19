@@ -39,6 +39,12 @@ JOBS: dict[str, tuple[list[list[str]], bool]] = {
                    [PY, "scripts/ingest_te_xlsx.py"]], False),
     # 일별 비정형 다이제스트(RSS·GDELT·신호 아카이브) — Actions external_data_refresh 다이제스트 잡 대체
     "digest": ([[PY, "scripts/daily_unstructured_digest.py"]], False),
+    # TE 시세 공백 복구(수집 중단 기간을 historical 창으로 재조회 — 일별 스냅샷이 공백을 가리는 문제 대응)
+    "te_repair": ([[PY, "scripts/update_te_xlsx_from_api.py", "--mode", "historical", "--repair-gap"],
+                   [PY, "scripts/ingest_te_xlsx.py"]], False),
+    # G2 Preview 화면: 해상 경로 시나리오 → 화면 생성(portwatch 수집·마트 이후)
+    "g2_preview": ([[PY, "-m", "src.logistics.route_scenarios"],
+                    [PY, "-m", "src.reporting.g2_preview"]], False),
     "baseline": ([[PY, "-m", "src.evaluation.band_backtest"]], True),
     "tests": ([[PY, "-m", "pytest", "-q", "tests"]], True),
 }

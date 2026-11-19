@@ -1,10 +1,10 @@
 dataset: portwatch_chokepoints
 source_connector: src/pipeline/connectors/portwatch_connector.py (IMF PortWatch Daily Chokepoints, 키 불필요)
 output_path: data/raw/portwatch_chokepoints_YYYYMMDD.parquet
-description: "대두유 해상 경로 해협 7곳 일별 통과 척수 2019~ (탱커·건화물·전체) — AISstream 해협 집계 대체, 주간 갱신·4~7일 지연(실시간 아님)"
+description: "대두유 해상 경로 해협 10곳(우회로 포함) 일별 통과 척수 2019~ (탱커·건화물·전체) — AISstream 해협 집계 대체, 주간 갱신·4~7일 지연(실시간 아님)"
 columns:
   - {name: price_date, dtype: "datetime64[ns]", nullable: false, description: "통과 관측일"}
-  - {name: indicator_code, dtype: object, nullable: false, description: "PW_{SUEZ|PANAMA|BAB_EL_MANDEB|MALACCA|HORMUZ|CAPE_GOOD_HOPE|KOREA_STRAIT}_{TANKER|DRY_BULK|TOTAL}_TRANSITS"}
+  - {name: indicator_code, dtype: object, nullable: false, description: "PW_{SUEZ|PANAMA|BAB_EL_MANDEB|MALACCA|HORMUZ|CAPE_GOOD_HOPE|KOREA_STRAIT|TAIWAN_STRAIT|LOMBOK|SUNDA}_{TANKER|DRY_BULK|TOTAL}_TRANSITS"}
   - {name: value, dtype: float64, nullable: false, description: "일별 통과 척수"}
   - {name: unit, dtype: object, nullable: false, description: "vessels/day"}
   - {name: source_name, dtype: object, nullable: false, description: "IMF_PORTWATCH"}
