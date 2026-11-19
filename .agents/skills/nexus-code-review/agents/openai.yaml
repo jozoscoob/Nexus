@@ -1,0 +1,3 @@
+interface:
+  display_name: "Nexus Code Review"
+  short_description: "Read-only Nexus defect and regression review"

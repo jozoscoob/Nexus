@@ -1,0 +1,3 @@
+interface:
+  display_name: "Nexus Pipeline Verification"
+  short_description: "Verify Docker pipelines and model-entry gates"
