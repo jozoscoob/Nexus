@@ -5,11 +5,13 @@
 name: Trading Economics xlsx Update (API → 연도 시트 append)
 
 on:
-  schedule:
-    - cron: "30 21 * * 1-5"     # 평일 21:30 UTC = KST 06:30 (미국 장 마감 후 · 일별 파이프라인 전)
-  push:
-    paths:
-      - ".github/workflows/te_xlsx_update.yml"
+  # 2026-11-19: 정기 실행은 로컬 n8n → runner로 이관(docs/operations/actions_scope.md) — 수동 실행만 유지.
+  # schedule:
+  #   - cron: "30 21 * * 1-5"     # 평일 21:30 UTC = KST 06:30 (미국 장 마감 후 · 일별 파이프라인 전)
+  # 2026-11-19: push 자동 발화 해제 — 사내망 우회용 트리거였으며 로컬 runner에서 직접 실행(docs/operations/actions_scope.md).
+  # push:
+  #   paths:
+  #     - ".github/workflows/te_xlsx_update.yml"
   workflow_dispatch:
     inputs:
       mode:

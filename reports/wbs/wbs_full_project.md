@@ -25,7 +25,7 @@
 ### 1.1 External Data Pipeline (~160h)
 | WBS ID | 작업명 | 담당 | 공수 | 상태 |
 |---|---|---|---|---|
-| 1.1.1 | Design Snowflake Raw Schema for External Indicators (SQL DDL) | C-04 | 16h | ✅ |
+| 1.1.1 | Design DW Raw Schema for External Indicators (SQL DDL) | C-04 | 16h | ✅ |
 | 1.1.2 | Implement Economic Indicators API Connector (Fed, CPI, FX, WTI) | C-04 | 24h | ✅ |
 | 1.1.3 | Implement Shipping Index Connector (BDI, SCFI via Perplexity) | C-04 | 16h | ✅ |
 | 1.1.4 | Implement WASDE/USDA Crop Data Connector (FAS PSD) | C-04 | 24h | ✅ |
@@ -88,10 +88,10 @@
 
 | WBS ID | 작업명 | 담당 | 공수 | 상태 |
 |---|---|---|---|---|
-| 1.2.1 | Design Snowflake Schema for S&OP Data | C-04 | 16h | ⏸ 전략적 보류 |
-| 1.2.2 | Design Snowflake Schema for Procurement History | C-04 | 16h | ⏸ 전략적 보류 |
-| 1.2.3 | Design Snowflake Schema for Inventory and Logistics | C-04 | 16h | ⏸ 전략적 보류 |
-| 1.2.4 | Implement Snowflake ERP Sync Pipeline | C-04 | 40h | ⏸ 전략적 보류 |
+| 1.2.1 | Design DW Schema for S&OP Data | C-04 | 16h | ⏸ 전략적 보류 |
+| 1.2.2 | Design DW Schema for Procurement History | C-04 | 16h | ⏸ 전략적 보류 |
+| 1.2.3 | Design DW Schema for Inventory and Logistics | C-04 | 16h | ⏸ 전략적 보류 |
+| 1.2.4 | Implement DW ERP Sync Pipeline | C-04 | 40h | ⏸ 전략적 보류 |
 | 1.2.5 | Validate Internal Pipeline Data Quality | C-08 | 8h | ⏸ 전략적 보류 |
 | 1.2.6 | Document Internal Data Schemas | C-07 | 8h | ⏸ 전략적 보류 |
 
@@ -173,7 +173,7 @@
 | WBS ID | 작업명 | 담당 | 공수 | 상태 |
 |---|---|---|---|---|
 | 2.5.1 | Compile G1/G2/G3 Validation Report | C-07 | 16h | ⬜ |
-| 2.5.2 | Register All Production Models in Azure ML Registry | C-04 | 24h | ⬜ |
+| 2.5.2 | Register All Production Models in 클라우드 학습 환경 Registry | C-04 | 24h | ⬜ |
 | 2.5.3 | Conduct Human Review of Model Outputs (HITL Gate) | C-01 → Human | 40h | ⬜ |
 
 ---
@@ -222,7 +222,7 @@
 | WBS ID | 작업명 | 담당 | 공수 | 상태 |
 |---|---|---|---|---|
 | 4.1.1 | Implement Daily Data Refresh GitHub Actions Workflow | C-04 | 32h | ⬜ |
-| 4.1.2 | Implement Model Re-training Schedule (Azure ML Pipeline) | C-04 | 32h | ⬜ |
+| 4.1.2 | Implement Model Re-training Schedule (클라우드 학습 환경 Pipeline) | C-04 | 32h | ⬜ |
 | 4.1.3 | Test End-to-End Pipeline Reliability | C-08 | 16h | ⬜ |
 
 ### 4.2 Buy/Hold Dashboard (~120h)

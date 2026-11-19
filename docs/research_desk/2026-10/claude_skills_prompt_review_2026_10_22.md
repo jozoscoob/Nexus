@@ -52,7 +52,7 @@
 
 | 요소 | 하는 일 | Nexus 판정 | 근거 |
 |---|---|---|---|
-| **mcp-builder** (anthropics/skills) | MCP 서버를 설계·구현하는 절차 안내서 | **조건부 도입 — 필요 시점에 반입** | Nexus는 이미 MCP(`.mcp.json` — Graft)를 쓴다. Snowflake 마트·일별 브리프를 Claude가 읽기 전용으로 조회하는 서버를 만들 때 쓸모가 있다. 문서형 스킬이라 실행 코드·키가 없어 위험이 낮다. 그 서버를 만들기로 하기 전에는 쓰이지 않는다 |
+| **mcp-builder** (anthropics/skills) | MCP 서버를 설계·구현하는 절차 안내서 | **조건부 도입 — 필요 시점에 반입** | Nexus는 이미 MCP(`.mcp.json` — Graft)를 쓴다. DW 마트·일별 브리프를 Claude가 읽기 전용으로 조회하는 서버를 만들 때 쓸모가 있다. 문서형 스킬이라 실행 코드·키가 없어 위험이 낮다. 그 서버를 만들기로 하기 전에는 쓰이지 않는다 |
 | **agent-browser** (vercel-labs) | Claude가 헤드리스 브라우저로 웹 페이지를 열고 클릭·캡처 | **조건부 — 검증 전용, 수집 금지** | 수집은 Scrapling(A-292)과 공식 API가 맡는다. 쓸모는 ①JS로 그려지는 페이지의 사람 확인 대체(예: 거래소 정산가 확인, DQ-30) ②발행된 HTML 브리프의 화면 점검. 다만 크로미움 설치가 필요해 Actions에서만 가능하고, 약관상 차단 도메인(Reuters·AP·Investing.com·CME·ICE)은 브라우저로도 접근하지 않는다 |
 | **find-skills** (vercel-labs/skills) | 스킬 마켓에서 필요한 스킬을 검색·설치 | **미도입** | Nexus는 승인된 도구만 쓰는 고정 정책(tooling.md). 자동 탐색·설치는 승인 절차를 우회한다. 새 도구가 필요하면 그때 사람이 검토한다 |
 | **design-taste-frontend** (Leonxlnx/taste-skill) | React·Next 등 웹 화면의 디자인 품질 지침 | **미도입** | Nexus 산출물은 데이터 파이프라인과 브리프다. 배포 형식도 Power BI + 데이터 계약 우선으로 정해졌다(R-026). 웹 프론트엔드가 없다 |

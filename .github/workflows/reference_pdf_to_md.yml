@@ -1,9 +1,10 @@
 name: Reference PDF → Markdown (승인자 업로드 자동 변환)
 # 승인자 지시(2026-09-09): 공유 PDF는 Markdown 변환 후 .md 요약으로 처리. references/ 아래 PDF push 시 자동 변환·커밋.
 on:
-  push:
-    branches: [main]
-    paths: ["docs/research_desk/references/**.pdf", "scripts/pdf_to_markdown.py"]
+  # 2026-11-19: push 자동 발화 해제 — 사내망 우회용 트리거였으며 로컬 runner에서 직접 실행(docs/operations/actions_scope.md).
+  # push:
+  #   branches: [main]
+  #   paths: ["docs/research_desk/references/**.pdf", "scripts/pdf_to_markdown.py"]
   workflow_dispatch:
     inputs:
       force:

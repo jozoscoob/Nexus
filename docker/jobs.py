@@ -13,7 +13,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 PY = sys.executable
-CONNECTORS = ["economic", "climate", "gpr", "wasde", "production", "commodity", "customs", "cot"]
+# 2026-11-19: Actions 정지(09-29~)로 Actions 전용이던 geointel·shipping 수집을 로컬로 이관 +
+#   portwatch(IMF 해협 통과 척수 — AISstream 해협 집계 대체) 신규. Perplexity 키 부재 시 각 커넥터가 건너뜀.
+CONNECTORS = ["economic", "climate", "gpr", "wasde", "production", "commodity", "customs", "cot",
+              "geointel", "shipping", "portwatch"]
 MANUAL_PARSERS = ["ingest_te_xlsx", "ingest_wasde_xlsx", "ingest_psd_data", "ingest_gats_data",
                   "ingest_ice_volumes", "ingest_nasa_power_xlsx", "ingest_customs_gw_uploads",
                   "ingest_fx_brl_usd_xlsx", "ingest_enso_oni_xlsx"]
@@ -31,6 +34,11 @@ JOBS: dict[str, tuple[list[list[str]], bool]] = {
               [PY, "-m", "src.features.build_feature_mart", "--self-test"],
               [PY, "-m", "src.features.build_feature_mart"],
               [PY, "scripts/validate_asof.py"]], True),
+    # TE 시세 xlsx 증분 갱신(TRADING_ECONOMICS_API_KEY) → 정형화 — Actions te_xlsx_update.yml 대체
+    "te_update": ([[PY, "scripts/update_te_xlsx_from_api.py", "--mode", "snapshot"],
+                   [PY, "scripts/ingest_te_xlsx.py"]], False),
+    # 일별 비정형 다이제스트(RSS·GDELT·신호 아카이브) — Actions external_data_refresh 다이제스트 잡 대체
+    "digest": ([[PY, "scripts/daily_unstructured_digest.py"]], False),
     "baseline": ([[PY, "-m", "src.evaluation.band_backtest"]], True),
     "tests": ([[PY, "-m", "pytest", "-q", "tests"]], True),
 }

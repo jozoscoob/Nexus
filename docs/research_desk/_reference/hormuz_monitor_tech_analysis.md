@@ -21,9 +21,9 @@
 | **상품 가격** | yfinance + EIA API | `commodity_connector.py` (동일 패턴) |
 | **뉴스/이벤트** | RSS 피드 (BBC/Reuters/CNBC) | `gpr_connector.py` 확장 예정 |
 | **AI 요약** | Google Gemini API | Perplexity sonar-pro (현행) |
-| **데이터베이스** | Supabase PostgreSQL | Snowflake (Phase B) |
+| **데이터베이스** | Supabase PostgreSQL | DW (Phase B) |
 | **프론트엔드** | Next.js + Recharts + MapLibre | 미구현 (GitHub Actions 아티팩트 방식) |
-| **배포** | Vercel (FE) + Render (BE) | GitHub Actions + Azure ML |
+| **배포** | Vercel (FE) + Render (BE) | GitHub Actions + 클라우드 학습 환경 |
 
 ### 1.2 복합 위험 지수 공식
 
@@ -84,7 +84,7 @@ SBO Supply Risk Score (0-100) =
 collectors/     → src/pipeline/connectors/
 jobs/           → .github/workflows/ (GitHub Actions cron)
 services/       → src/forecasting/ (G1/G2/G3 분석)
-db/             → Snowflake (Phase B)
+db/             → DW (Phase B)
 utils/          → src/utils/ (gemini_client 등)
 ```
 

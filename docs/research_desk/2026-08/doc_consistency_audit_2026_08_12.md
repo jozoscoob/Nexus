@@ -21,8 +21,8 @@ A-062(GPR 임계) · A-094~A-100(장애 수정)
 | `.claude/rules/modeling.md` 공통 | "ARIMA/GARCH 전 항상 IQR 캡핑" | **데이터 오류·정상 노이즈에만** 적용으로 개정(충격 캡핑은 꼬리위험 학습 방해) |
 | `.claude/rules/modeling.md` 검증 | "최소 24개월" 단일 기준 | 유효 시계열 길이·독립 충격 수·레짐별 사례 수 기준으로 대체, stress slice·lockbox 추가 |
 | `.claude/rules/libraries.md` | `vmdpy` 승인 상태 | 제외 사유 주석 + duckdb·darts·neuralforecast·supabase·neo4j 신규 등재, mapie 용도 EnCQR로 갱신 |
-| `.claude/agents/c03-data-scientist.md` | LASSO·Bayesian·TCN-XGBoost·GPR 0.022·Snowflake 내부데이터 | **전면 재작성** — G1/G2/G3 전 목표 소유, 승격 규칙, 진입 게이트, 실험 카드, 금지 해석 |
-| `.claude/skills/common/03_data_scientist.md` | LASSO·TCN 하이브리드·GPR 0.022·Snowflake 내부데이터 | Elastic Net+Permutation+국소투영, 승격 규칙, D-021 정합, GPR P90 |
+| `.claude/agents/c03-data-scientist.md` | LASSO·Bayesian·TCN-XGBoost·GPR 0.022·DW 내부데이터 | **전면 재작성** — G1/G2/G3 전 목표 소유, 승격 규칙, 진입 게이트, 실험 카드, 금지 해석 |
+| `.claude/skills/common/03_data_scientist.md` | LASSO·TCN 하이브리드·GPR 0.022·DW 내부데이터 | Elastic Net+Permutation+국소투영, 승격 규칙, D-021 정합, GPR P90 |
 | `.claude/skills/phase1/00~04` · `INDEX.md` | 모델 표기 Opus 4.7 · C-04 sonnet-4-6 | L-012·M-006 반영(Opus 4.8 / Sonnet 5) — **잔여 0건** |
 | `.github/workflows/llm_health_check.yml` | Gemini 점검 스텝·google-genai 의존성 | 제거(C-012 이행 완료 → C-013) |
 
@@ -43,7 +43,7 @@ A-062(GPR 임계) · A-094~A-100(장애 수정)
 
 | 항목 | 유지 사유 |
 |---|---|
-| `.claude/rules/data_pipeline.md`의 Snowflake 패턴 | Snowflake는 **도입 보류**이지 금지가 아니다. 향후 재검토 시 참조용으로 유지하되, 내부 데이터 용도는 D-021로 이미 차단 |
+| `.claude/rules/data_pipeline.md`의 DW 패턴 | DW는 **도입 보류**이지 금지가 아니다. 향후 재검토 시 참조용으로 유지하되, 내부 데이터 용도는 D-021로 이미 차단 |
 | `README.md` §3.2 내부 데이터 표 | 이미 "⛔ EXCLUDED (D-021)" 경고와 함께 **참고용**으로 명시됨 — 삭제하면 왜 제외됐는지 맥락이 사라진다 |
 | 아카이브(`docs/memory_archive/*`) | 과거 기록은 **내용 무변경** 원칙(조정자 지시). 갱신 대상 아님 |
 | `.claude/skills/phase2·phase3` | 해당 Phase 미착수 — 착수 시점에 전략 패키지 기준으로 개정 |

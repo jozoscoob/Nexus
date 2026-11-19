@@ -1,0 +1,16 @@
+dataset: portwatch_chokepoints
+source_connector: src/pipeline/connectors/portwatch_connector.py (IMF PortWatch Daily Chokepoints, 키 불필요)
+output_path: data/raw/portwatch_chokepoints_YYYYMMDD.parquet
+description: "대두유 해상 경로 해협 7곳 일별 통과 척수 2019~ (탱커·건화물·전체) — AISstream 해협 집계 대체, 주간 갱신·4~7일 지연(실시간 아님)"
+columns:
+  - {name: price_date, dtype: "datetime64[ns]", nullable: false, description: "통과 관측일"}
+  - {name: indicator_code, dtype: object, nullable: false, description: "PW_{SUEZ|PANAMA|BAB_EL_MANDEB|MALACCA|HORMUZ|CAPE_GOOD_HOPE|KOREA_STRAIT}_{TANKER|DRY_BULK|TOTAL}_TRANSITS"}
+  - {name: value, dtype: float64, nullable: false, description: "일별 통과 척수"}
+  - {name: unit, dtype: object, nullable: false, description: "vessels/day"}
+  - {name: source_name, dtype: object, nullable: false, description: "IMF_PORTWATCH"}
+  - {name: ingested_at, dtype: "datetime64[ns, UTC]", nullable: false, description: "수집 시각"}
+  - {name: event_time, dtype: "datetime64[ns]", nullable: false, description: "관측일"}
+  - {name: period_end, dtype: "datetime64[ns]", nullable: true, description: "집계 기간 종료일(일별 — attach_asof 부여)"}
+  - {name: release_time, dtype: "datetime64[ns]", nullable: true, description: "원천 공표 시점(미제공 — 규칙 추정)"}
+  - {name: available_at, dtype: "datetime64[ns]", nullable: false, description: "관측일+9일(as-of 규칙 PW_ — 주간 배치 최악 지연 보수)"}
+  - {name: source_vintage, dtype: object, nullable: true, description: "개정본 식별자(미보존 시 null)"}

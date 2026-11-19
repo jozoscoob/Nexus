@@ -9,8 +9,9 @@
 name: Weekly WBS Report (월 14:00 KST)
 
 on:
-  schedule:
-    - cron: "0 5 * * 1"        # 월요일 05:00 UTC = KST 월 14:00
+  # 2026-11-19: 정기 실행은 로컬 n8n → runner로 이관(docs/operations/actions_scope.md) — 수동 실행만 유지.
+  # schedule:
+  #   - cron: "0 5 * * 1"        # 월요일 05:00 UTC = KST 월 14:00
   workflow_dispatch:
 
 permissions:

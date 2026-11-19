@@ -1,8 +1,9 @@
 name: LLM & Data API Health Check
 
 on:
-  schedule:
-    - cron: "0 9 */2 * *"   # 2일마다 오전 9시 (UTC) — 조정자 결정(Session 36)
+  # 2026-11-19: 정기 실행은 로컬 n8n → runner로 이관(docs/operations/actions_scope.md) — 수동 실행만 유지.
+  # schedule:
+  #   - cron: "0 9 */2 * *"   # 2일마다 오전 9시 (UTC) — 조정자 결정(Session 36)
   workflow_dispatch:        # 수동 실행 허용
 
 jobs:

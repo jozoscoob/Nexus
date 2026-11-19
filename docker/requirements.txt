@@ -17,3 +17,4 @@ yfinance==0.2.66
 curl_cffi==0.13.0
 pdfplumber==0.11.7
 pytest==8.4.2
+openai==1.51.2   # gpr·production 커넥터 import(Perplexity·OpenAI 호환 클라이언트) — 키 미등록 시에도 import 필요

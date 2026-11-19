@@ -81,8 +81,8 @@ ECB 참조환율(KRW 포함·16:00 CET·인용) · FRED H.10(주간 공표·120�
 | 대안 | 제공 | 적시성 | 라이선스 | 한도 | 구현 | 라벨 |
 |---|---|---|---|---|---|---|
 | Open-Meteo | 예보(다중 모델)·ERA5-Land 아카이브 | 시간별·아카이브 5일 지연 | **"오픈소스·비상업 무료 / 상업 이용은 문의"(공식 README) · Standard $29/월(1M)·Pro $99/월** | 무료 10,000회/일 | 구현 | CONFIRMED(약관)·INFERENCE(가격) |
-| **ECMWF Open Data** | IFS·AIFS 0.25° 0~240/360h, 일 4회 | 실행 후 7~9시간(AIFS 지연 제거) | **CC BY 4.0** | 500 동시 연결·AWS/Azure/GCP 미러 | 미구현(GRIB 점 추출 필요) | CONFIRMED |
-| NOAA GFS/GEFS | 0.25° 16일·31멤버 | 실행 후 ~4시간 | 공공 | NOMADS 120회/분 · AWS 무제한 | 미구현 | INFERENCE |
+| **ECMWF Open Data** | IFS·AIFS 0.25° 0~240/360h, 일 4회 | 실행 후 7~9시간(AIFS 지연 제거) | **CC BY 4.0** | 500 동시 연결·클라우드/클라우드/GCP 미러 | 미구현(GRIB 점 추출 필요) | CONFIRMED |
+| NOAA GFS/GEFS | 0.25° 16일·31멤버 | 실행 후 ~4시간 | 공공 | NOMADS 120회/분 · 클라우드 무제한 | 미구현 | INFERENCE |
 | NASA POWER | 일·시·월 기상 1981~ | 2~4일 지연 | 제한 없음·인용 | 명시 한도 없음 | 구현(6~12지역) | INFERENCE |
 | Copernicus CDS ERA5-Land | 시간별 1950~ | ~5일(ERA5T) | **2025-07-02부터 CC-BY** | 등록 키·큐 | 미구현 | INFERENCE |
 

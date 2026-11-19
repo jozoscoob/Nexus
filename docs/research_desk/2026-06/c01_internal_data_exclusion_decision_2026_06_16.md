@@ -61,10 +61,10 @@ G2 가격 밴드 모델은 일별(daily) 주가/선물 가격을 입력으로 �
 
 | WBS | 현재 상태 | 결정 후 상태 |
 |---|---|---|
-| 1.2.1 Design Snowflake Schema for S&OP Data | ⬜ 미시작 | **전략적 보류 (Phase B 조건부)** |
-| 1.2.2 Design Snowflake Schema for Procurement History | ⬜ 미시작 | **전략적 보류** |
-| 1.2.3 Design Snowflake Schema for Inventory & Logistics | ⬜ 미시작 | **전략적 보류** |
-| 1.2.4 Implement Snowflake ERP Sync Pipeline | 🚫 블로커 | **전략적 보류** (ERP 연동 승인 불필요) |
+| 1.2.1 Design DW Schema for S&OP Data | ⬜ 미시작 | **전략적 보류 (Phase B 조건부)** |
+| 1.2.2 Design DW Schema for Procurement History | ⬜ 미시작 | **전략적 보류** |
+| 1.2.3 Design DW Schema for Inventory & Logistics | ⬜ 미시작 | **전략적 보류** |
+| 1.2.4 Implement DW ERP Sync Pipeline | 🚫 블로커 | **전략적 보류** (ERP 연동 승인 불필요) |
 | 1.2.5 Validate Internal Pipeline Data Quality | ⬜ 미시작 | **전략적 보류** |
 | 1.2.6 Document Internal Data Schemas | ⬜ 미시작 | **전략적 보류** |
 
@@ -92,7 +92,7 @@ Phase B에서 내부 데이터를 재도입할 수 있는 조건:
 |---|---|---|---|
 | 외부 데이터만으로 G2 모델 미수렴 | LOW-MEDIUM | HIGH | MEMORY M-004: 24개월 이상 확보 후 재학습. ETS 폴백. |
 | G3 시뮬레이션 결과가 실제 재고 제약과 충돌 | MEDIUM | MEDIUM | HITL 단계에서 사용자가 재고 상/하한 수동 입력 |
-| Phase A → B 전환 시 데이터 아키텍처 재설계 비용 | LOW | LOW | Snowflake Schema는 Phase B 시작 시 설계 (지금 불필요) |
+| Phase A → B 전환 시 데이터 아키텍처 재설계 비용 | LOW | LOW | DW Schema는 Phase B 시작 시 설계 (지금 불필요) |
 
 ---
 
