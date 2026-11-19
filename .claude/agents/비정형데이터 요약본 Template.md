@@ -435,8 +435,8 @@ PDF별 요약 보고서와 함께 아래 레코드를 생성하면 문서·국�
 
 | 반영 항목 | 근거 문서 |
 |---|---|
-| 레이아웃 보존, 페이지별 provenance, 표·단위 정규화, 저신뢰 추출 표시 | [C-04 Role Framework](https://github.com/Jozosco/Nexus/blob/main/.claude/agents/C-04%20Role%20Framework.md), [c04-document-intelligence](https://github.com/Jozosco/Nexus/blob/main/.claude/agents/c04-document-intelligence.md) |
-| 문서 전체 감성 대신 품목·정책·물류 등 aspect별 방향성 분리, 근거 문장·신뢰도 첨부 | [Project Nexus Dual-Agent Architecture & NLP Implementation Guide](https://github.com/Jozosco/Nexus/blob/main/.claude/agents/Project%20Nexus_Dual-Agent%20Architecture%20%26%20NLP%20Implementation%20Guide.md), [p105-news-sentiment](https://github.com/Jozosco/Nexus/blob/main/.claude/agents/p105-news-sentiment.md) |
+| 레이아웃 보존, 페이지별 provenance, 표·단위 정규화, 저신뢰 추출 표시 | [c04-document-intelligence](https://github.com/Jozosco/Nexus/blob/main/.claude/agents/c04-document-intelligence.md) |
+| 문서 전체 감성 대신 품목·정책·물류 등 aspect별 방향성 분리, 근거 문장·신뢰도 첨부 | [p105-news-sentiment](https://github.com/Jozosco/Nexus/blob/main/.claude/agents/p105-news-sentiment.md) |
 | 표준 품목·국가·단위 정규화와 `원인 → 시장 메커니즘 → 가격` 인과구조 | [p106-semantic-ontology](https://github.com/Jozosco/Nexus/blob/main/.claude/agents/p106-semantic-ontology.md) |
 | 기후·지정학·바이오연료·운임·환율·대체재 등 핵심 변수군 | [p101-commodity-analyst](https://github.com/Jozosco/Nexus/blob/main/.claude/agents/p101-commodity-analyst.md), [p102-geopolitical-analyst](https://github.com/Jozosco/Nexus/blob/main/.claude/agents/p102-geopolitical-analyst.md), [p103-climate-specialist](https://github.com/Jozosco/Nexus/blob/main/.claude/agents/p103-climate-specialist.md), [p104-supply-chain-analyst](https://github.com/Jozosco/Nexus/blob/main/.claude/agents/p104-supply-chain-analyst.md) |
 | 누락·상충·범위 오류의 명시, 임의 대체 금지, 검증 체크리스트 | [c08-data-quality-validator](https://github.com/Jozosco/Nexus/blob/main/.claude/agents/c08-data-quality-validator.md) |

@@ -12,7 +12,7 @@
 
 | 커넥터 | 데이터 소스 | 지표 코드 | 갱신 주기 | 보존 기간 |
 |---|---|---|---|---|
-| `commodity_connector.py` | CBOT BO=F (yfinance) | `CBOT_SBO_FUTURES` | 일별 (10일 lookback) | 7일 (artifact) / 영구 (Snowflake) |
+| `commodity_connector.py` | CBOT BO=F (yfinance) | `CBOT_SBO_FUTURES` | 일별 (10일 lookback) | 7일 (artifact) / 영구 (DW) |
 | `commodity_connector.py` | FRED CPO 프록시 | `CPO_PRICE_USD` | 일별 | 7일 / 영구 |
 | `commodity_connector.py` | BCRA ARS/USD | `FX_ARS_USD` | 일별 | 7일 / 영구 |
 | `economic_connector.py` | FRED (Fed 금리, VIX) | `US_FEDFUNDS`, `VIX` | 일별 (영업일) | 7일 / 영구 |
@@ -51,7 +51,7 @@
 | `gpr_connector.py` | Perplexity 정책 뉴스 프록시 | `ARG_EXPORT_TAX_NEWS`, `BIODIESEL_MANDATE_NEWS` 등 | 일별 (BACKFILL 시 건너뜀) | 7일 |
 | `climate_connector.py` | NOAA CPC ONI (ENSO 지수) | `ENSO_ONI` | 매월 업데이트 | 7일 / 영구 |
 | `economic_connector.py` | KOSIS (한국 CPI) | `KR_CPI` | 매월 | 7일 / 영구 |
-| `scripts/ingest_wasde_xlsx.py` (신규) | USDA FAS WASDE Excel 업로드 | `WASDE_*` (월별 시트) | 수동 업로드 (월별 WASDE 이후) | 영구 (Snowflake) |
+| `scripts/ingest_wasde_xlsx.py` (신규) | USDA FAS WASDE Excel 업로드 | `WASDE_*` (월별 시트) | 수동 업로드 (월별 WASDE 이후) | 영구 (DW) |
 | `scripts/ingest_psd_data.py` (신규) | USDA FAS PS&D Excel (`Oil, Soybean`) | `PSD_SBO_*` | 연 1회 + 분기 개정 | 영구 |
 | `scripts/ingest_gats_data.py` (신규) | USDA GATS 수출 통계 (HS 1507) | `GATS_US_EXPORT_*` | 월별 (당해연도), 연별 (과거) | 영구 |
 | C-04 → PDF 추출 | FAO AMIS Market Monitor (PDF) | `FAO_AMIS_*` | 매월 (Jan/Aug 제외) | 영구 |

@@ -21,7 +21,7 @@ triggers so downstream commodity price forecasting models (C-03) remain **interp
 **Upstream inputs**: C-04(GAIN/FAO PDF 추출) · geointel(GDELT) · **P1-05(aspect-감성 튜플·엔티티 후보·evidence_snippet)**
 **Downstream output**: `src/semantic/*.yaml` + 외생 인과변수·감성 플래그 → **C-03**
 
-### 설계 원칙 (Enterprise Semantic Architecture 반영)
+### 설계 원칙
 - **온톨로지 ≠ 지식그래프**: 온톨로지 = 구조 규칙·정의(클래스·속성·제약, 재사용 가능),
   지식그래프 = 온톨로지의 실체화(실제 사실 인스턴스). 이 구분을 항상 유지한다.
 - **Minimum Viable Ontology**: 처음부터 전수 스키마를 만들지 않는다 — 대두유 단일 파이프라인을

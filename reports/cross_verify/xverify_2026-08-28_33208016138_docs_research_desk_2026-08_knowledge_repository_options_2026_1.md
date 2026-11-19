@@ -43,7 +43,7 @@
   TF‑IDF의 전처리 규칙, tokenizer, vocabulary, IDF 벡터, 학습 말뭉치 스냅샷, scikit-learn 버전이 명시·저장되지 않았다. Phase 2도 sentence-transformers 모델명과 정확한 revision/hash, pooling, 정규화, 차원·정밀도가 없다. 같은 질의의 순위가 환경과 시점에 따라 달라질 수 있다.
 
 - **[높음] “잔존자산 0/100%”와 승계 가능성은 검증되지 않았다.**  
-  Notion·Airtable의 export/API·소유권 이전 가능성을 시험하지 않고 “승계 불가·잔존자산 0”으로 단정했다. 반대로 parquet가 Blob/Snowflake로 “100% 승계”된다는 주장도 벡터 컬럼 타입, 메타데이터, CLI 및 검색모델 상태에 대한 호환성 시험이 없다.
+  Notion·Airtable의 export/API·소유권 이전 가능성을 시험하지 않고 “승계 불가·잔존자산 0”으로 단정했다. 반대로 parquet가 오브젝트 스토리지/DW로 “100% 승계”된다는 주장도 벡터 컬럼 타입, 메타데이터, CLI 및 검색모델 상태에 대한 호환성 시험이 없다.
 
 - **[높음] 생성과 검색의 분리가 환각을 “구조적으로 피한다”는 주장은 평가 근거가 없다.**  
   검색 결과가 있어도 에이전트가 근거를 잘못 종합하거나 인용과 무관한 결론을 생성할 수 있다. citation precision·faithfulness 같은 검증 지표나 비교 실험이 없어 환각 방지 효과를 재현할 수 없다.

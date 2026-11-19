@@ -68,9 +68,9 @@
 | 항목 | 유료/무료 | 사유·조치 |
 |---|---|---|
 | **사내 DRM 클라이언트(Document SAFER)** | 사내 라이선스 | GAIN PDF 130건 DRM 차단 — **DRM 해제 후 재업로드 필요** (`reports/market/drm_blocked_documents.md`) |
-| Azure ML Studio 워크스페이스 | 유료(Azure 구독) | G2 학습 환경 — 구독·리소스그룹·Blob 연결은 포털에서 수동 구성 |
-| Azure Key Vault | 유료(Azure 구독) | 프로덕션 시크릿 이중화 — Phase B |
-| Snowflake 계정·웨어하우스 | 유료 | Phase B 데이터 웨어하우스 — 계정 개설·권한은 수동 |
+| 클라우드 학습 환경 워크스페이스 | 유료(클라우드 구독) | G2 학습 환경 — 구독·리소스그룹·오브젝트 스토리지 연결은 포털에서 수동 구성 |
+| 키 보관소 | 유료(클라우드 구독) | 프로덕션 시크릿 이중화 — Phase B |
+| DW 계정·웨어하우스 | 유료 | Phase B 데이터 웨어하우스 — 계정 개설·권한은 수동 |
 | GitHub Secrets 등록 | 무료 | 신규 API 키 등록·로테이션은 Settings에서 수동(보안상 에이전트 불가) |
 | data.go.kr 활용신청 갱신 | 무료 | 관세청 GW 키 만료 시 포털에서 재승인(A-036 3단계 절차) |
 | Excel + XLGantt 매크로 | 유료(MS Office) | WBS xlsm 열람·VBA Gantt 갱신은 로컬 Excel 필요 |

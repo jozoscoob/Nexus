@@ -94,7 +94,7 @@ API 포함이 필요할 때만 Run workflow에서 `include_api=true`를 지정�
 | NLP(P1-05) | transformers(`ProsusAI/finbert`)·sentence-transformers | ABSA·감성(Phase B) | 목록 등재, 도입 승인 대기 |
 | 시맨틱(P1-06) | PyYAML(현행)·**neo4j 드라이버**(엣지 200+ 시) | 온톨로지·그래프 | YAML 운용 중 |
 | 시각화(C-07) | plotly(HTML 대시보드)·weasyprint(PDF) | G1 리포트·G2 대시보드 | ✅ |
-| 백엔드/DB | GitHub Actions(오케스트레이션)·parquet(스토리지)·Snowflake(보류)·Azure ML(Phase 4 설계) | 인프라 | ✅/예정 |
+| 백엔드/DB | GitHub Actions(오케스트레이션)·parquet(스토리지)·DW(보류)·클라우드 학습 환경(Phase 4 설계) | 인프라 | ✅/예정 |
 | 프런트 | plotly 정적 HTML(현행) → Phase 4에서 필요 시 경량 프레임워크 검토 | 대시보드 | 현행 충분 |
 
 **신규 도입 필요(승인 요청)**: ①`transformers`+`torch` — G2 Preview 감성 레이어(FinBERT) 시점에

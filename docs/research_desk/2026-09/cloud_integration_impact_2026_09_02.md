@@ -1,8 +1,8 @@
-# 클라우드 대통합(Azure→AWS+Snowflake) 대응 — Nexus 영향 판정·지원 범위·정보 요청
+# 클라우드 대통합(클라우드→클라우드+DW) 대응 — Nexus 영향 판정·지원 범위·정보 요청
 
 **작성일**: 2026-09-02 · **성격**: 최종 결정자 보고용 판정 문서 · **협의**: PM 관점 · MLOps 관점 ·
 데이터 과학 관점 · 시맨틱·비정형 관점(4개 관점 의견을 §2에 요약, 종합은 PM 관점)
-**전제**: 승인자가 9/1 공유한 통합 상세 — *Power BI를 제외한 Azure 기능 전부 폐지, 역할별 도구 전면
+**전제**: 승인자가 9/1 공유한 통합 상세 — *Power BI를 제외한 클라우드 기능 전부 폐지, 역할별 도구 전면
 교체*. 라벨 규약: **CONFIRMED**(실측·문서 확인) / **INFERENCE**(추론) / **DATA GAP**(확인 필요).
 
 ---
@@ -12,40 +12,40 @@
 ### 0.1 통합 상세(요약)
 | 영역 | 내용 | Nexus 관련 핵심 |
 |---|---|---|
-| 인프라 | AWS ap-northeast-2 Prd/Dev 분리 · VPC · Palo Alto 방화벽 · TGW · 기존 IDC/사무실 VPN 유지 | 외부 API 56종 호출이 Palo Alto 정책을 통과해야 함 |
-| ETL 서버 | Apache Hop 2대(ETL#1 내부 일별 · **ETL#2 AI 정형·비정형**) · active-standby | Nexus 파이프라인 41잡의 실행 표면 후보 |
-| 저장·분석 | PostgreSQL/ADLS → **Snowflake EDP**(ODS→Mart) · 전용 논리 DB · Private Link · 선구매 크레딧 이월분 | 정형 착지·Power BI 서빙 층 |
-| 포털 | Azure VM → EC2(Prd/Dev) | 브리프 HTML 정적 게시 후보 |
+| 인프라 | 클라우드 리전 Prd/Dev 분리 · VPC · Palo Alto 방화벽 · TGW · 기존 IDC/사무실 VPN 유지 | 외부 API 56종 호출이 Palo Alto 정책을 통과해야 함 |
+| ETL 서버 | ETL 도구 2대(ETL#1 내부 일별 · **ETL 서버 AI 정형·비정형**) · active-standby | Nexus 파이프라인 41잡의 실행 표면 후보 |
+| 저장·분석 | PostgreSQL/중앙 저장소 → **통합 데이터 플랫폼**(ODS→Mart) · 전용 논리 DB · Private Link · 선구매 크레딧 이월분 | 정형 착지·Power BI 서빙 층 |
+| 포털 | 클라우드 VM → 가상 서버(Prd/Dev) | 브리프 HTML 정적 게시 후보 |
 | 파이프라인 이관 | **1차 n건만 이번 프로젝트**(일·월 배치 필수 운영 · 업무 서비스·Power BI 연동 · 즉시 업무 영향) · 잔여는 2027 상반기 SM 계약 | Nexus가 1차에 들어가지 않으면 6개월 공백 |
-| 크롤링 | 외부·공공 데이터 크롤링 기능 Azure→AWS | 커넥터 12종·Perplexity·RSS가 이 범주 |
-| 시스템 통합 | Snowflake Private Link · Platform1(Pentaho)/Platform2(Hop) 논리 분리 · Power BI **새벽 배치 임포트 전용** · 인증 수동 계정 유지(SSO 추후) | 배포 채널·SLA·권한 체계 |
+| 크롤링 | 외부·공공 데이터 크롤링 기능 클라우드→클라우드 | 커넥터 12종·Perplexity·RSS가 이 범주 |
+| 시스템 통합 | DW Private Link · Platform1(Pentaho)/Platform2(Hop) 논리 분리 · Power BI **새벽 배치 임포트 전용** · 인증 수동 계정 유지(SSO 추후) | 배포 채널·SLA·권한 체계 |
 | 일정 | 2026-09 ~ 2027-02(지연 고확률) | Actions 병행 운전 창 장기화 |
 
 ### 0.2 역할별 도구 전환표 (CONFIRMED — 통합 상세 기준)
 | 역할 | 현행 | 이관 후 | Nexus 자산·개정 |
 |---|---|---|---|
-| 오케스트레이션·스케줄 | GitHub Actions cron | Apache Hop(ETL#2) 스케줄 | 워크플로우 6종·41잡 → Hop 잡 사양서 |
-| 수집(크롤링·API) | Actions 러너 + httpx | ETL#2 Execute Process(Python venv) + Palo Alto egress | 커넥터 12종 코드 무변경(순수 httpx+pandas) |
-| 원천·산출물 저장 | git push·아티팩트·ADLS(계획) | **S3** | Actions 종속 R-1·R-4·R-5 치환 · PDF 1.6GB 이전 |
-| 정형 착지·서빙 | parquet/DuckDB(로컬) | **Snowflake EDP 전용 DB**(ODS→SILVER→MART) + DuckDB(컴퓨트 유지) | 업로더 재설계(vintage append) |
-| AI 컴퓨트(G1·G2) | Actions CPU / Azure ML(계획) | ETL#2 Python 배치(Champion) · Dev EC2(실험) · **GPU 표면 없음** | modeling 규칙 개정 |
-| 모델 추적·레지스트리 | mlflow(Azure ML 계획) | mlflow(추적 DB=EBS/EFS, 아티팩트=S3) + Snowflake Model Registry(포인터) | 릴리스 게이트 개정 |
-| 리포트 배포 | Actions 아티팩트·Step Summary | **Power BI**(일 임포트) + 포털 EC2 정적 HTML | 별도 문서(배포 형식 권고) |
-| 시크릿 | GitHub Secrets 32종 | AWS Secrets Manager | `os.environ` 규약 유지 |
+| 오케스트레이션·스케줄 | GitHub Actions cron | ETL 도구(ETL 서버) 스케줄 | 워크플로우 6종·41잡 → Hop 잡 사양서 |
+| 수집(크롤링·API) | Actions 러너 + httpx | ETL 서버 Execute Process(Python venv) + Palo Alto egress | 커넥터 12종 코드 무변경(순수 httpx+pandas) |
+| 원천·산출물 저장 | git push·아티팩트·중앙 저장소(계획) | **S3** | Actions 종속 R-1·R-4·R-5 치환 · PDF 1.6GB 이전 |
+| 정형 착지·서빙 | parquet/DuckDB(로컬) | **통합 데이터 플랫폼 전용 DB**(ODS→SILVER→MART) + DuckDB(컴퓨트 유지) | 업로더 재설계(vintage append) |
+| AI 컴퓨트(G1·G2) | Actions CPU / 클라우드 학습 환경(계획) | ETL 서버 Python 배치(Champion) · 개발 서버(실험) · **GPU 표면 없음** | modeling 규칙 개정 |
+| 모델 추적·레지스트리 | mlflow(클라우드 학습 환경 계획) | mlflow(추적 DB=EBS/EFS, 아티팩트=S3) + DW Model Registry(포인터) | 릴리스 게이트 개정 |
+| 리포트 배포 | Actions 아티팩트·Step Summary | **Power BI**(일 임포트) + 포털 가상 서버 정적 HTML | 별도 문서(배포 형식 권고) |
+| 시크릿 | GitHub Secrets 32종 | 클라우드 Secrets Manager | `os.environ` 규약 유지 |
 | 코드 저장소 | github.com 개인 계정 | 사내 org(또는 CodeCommit) | 결정 요청 |
 | 인증 | 수동 계정 | 수동 유지(SSO 추후) | 포털·Power BI 권한 재사용 |
 
 ### 0.3 기존 결정 처분표
 | 기존 결정 | 처분 | 근거 |
 |---|---|---|
-| Azure Blob 우선 이관 경로(8/12 팀장 지시) | **폐기** | Azure 저장 기능 폐지 — S3 직행. 결선 코드 2건은 실행 이력 0으로 매몰 비용 없음 |
-| Azure Storage 관문 실증(결정 대기 항목) | **중단** | 실증 대상 소멸 |
+| 오브젝트 스토리지 우선 이관 경로(8/12 팀장 지시) | **폐기** | 클라우드 저장 기능 폐지 — 오브젝트 스토리지 직행. 결선 코드 2건은 실행 이력 0으로 매몰 비용 없음 |
+| 클라우드 스토리지 관문 실증(결정 대기 항목) | **중단** | 실증 대상 소멸 |
 | Actions 종속 9종 신규 생성 금지·수용 기준 5종 | **유지** | 이관 대상 목록으로 그대로 유효 |
-| 하드 데드라인 T3(Actions 정지 −30일 = 10월 초) | **재정박**: AWS 컷오버 −30일 | 컷오버가 2027-02 이후이므로 10월 초 근거 소멸 |
-| 2축 분류(수집·컴퓨트=외부 트랙 / 저장·서빙=공통 EDP) | **유지·개정**: AI 컴퓨트 축만 "AWS 내부(ETL#2·Dev)"로 | Snowflake 전용 DB는 상세로 확인됨 |
-| Azure ML을 Challenger 단계로 이연 | **수정**: GPU 표면 배정 시까지 동결(잔여 파이프라인 요청 항목) | 발표 범위에 GPU 없음 |
-| 히스토리 재작성(BFG) 9/11 이후 | **시점 변경**: S3 이전 검증 후·Actions 병행 종료 전 | 파괴적 작업은 착지 확인 후 |
-| Blob 이관 창(9/11~10월 초) | **폐기** | S3 이전은 버킷 발급 즉시(티어 B) |
+| 하드 데드라인 T3(Actions 정지 −30일 = 10월 초) | **재정박**: 클라우드 컷오버 −30일 | 컷오버가 2027-02 이후이므로 10월 초 근거 소멸 |
+| 2축 분류(수집·컴퓨트=외부 트랙 / 저장·서빙=공통 통합 데이터 플랫폼) | **유지·개정**: AI 컴퓨트 축만 "클라우드 내부(ETL 서버·Dev)"로 | DW 전용 DB는 상세로 확인됨 |
+| 클라우드 학습 환경을 Challenger 단계로 이연 | **수정**: GPU 표면 배정 시까지 동결(잔여 파이프라인 요청 항목) | 발표 범위에 GPU 없음 |
+| 히스토리 재작성(BFG) 9/11 이후 | **시점 변경**: 오브젝트 스토리지 이전 검증 후·Actions 병행 종료 전 | 파괴적 작업은 착지 확인 후 |
+| 오브젝트 스토리지 이관 창(9/11~10월 초) | **폐기** | 오브젝트 스토리지 이전은 버킷 발급 즉시(티어 B) |
 
 ---
 
@@ -53,18 +53,18 @@
 
 | # | 카테고리 | 근본원인 | 단계 | 심각도 | 최선 대안 · 선행조건 |
 |---|---|---|---|---|---|
-| ① | 실행 표면 | **기술**: GitHub-hosted 러너는 AWS VPC 밖·고정 IP 없음 → Snowflake Private Link·VPC 엔드포인트 도달 불가(CONFIRMED). **정책**: "AI 프로젝트 AWS 내부 통신 전환" — 외부 SaaS 컴퓨트는 목표 밖 | G1·G2 | 치명 | 목표 = ETL#2 Hop Execute Process(Python venv) · **9월 실행 1순위 = Dev VPC self-hosted 러너**(`runs-on` 1줄 변경으로 수용 기준 즉시 비교) · Snowpark는 변환·레지스트리 한정(HTTP-80·wss 불가라 수집 부적합) · Actions+공개 엔드포인트는 최후 수단. 선행: Dev EC2 1대, ETL#2 Python 3.11 런타임 확인 |
+| ① | 실행 표면 | **기술**: GitHub-hosted 러너는 클라우드 VPC 밖·고정 IP 없음 → DW Private Link·VPC 엔드포인트 도달 불가(CONFIRMED). **정책**: "AI 프로젝트 클라우드 내부 통신 전환" — 외부 SaaS 컴퓨트는 목표 밖 | G1·G2 | 치명 | 목표 = ETL 서버 Hop Execute Process(Python venv) · **9월 실행 1순위 = Dev VPC self-hosted 러너**(`runs-on` 1줄 변경으로 수용 기준 즉시 비교) · Snowpark는 변환·레지스트리 한정(HTTP-80·wss 불가라 수집 부적합) · Actions+공개 엔드포인트는 최후 수단. 선행: 개발 서버 1대, ETL 서버 Python 3.11 런타임 확인 |
 | ② | 외부 통신(egress) | Palo Alto 기본 정책(HTTPS·프록시)이 **관세청 API HTTP-80**(critical)·**AIS WebSocket** 예외 2건을 거부할 수 있음(CONFIRMED — 샌드박스 차단 전례 4건) | G1·G2 | 치명 | 56건 일괄 신청 + 예외 2건 **이번 주 선신청**(1차 등재 심사와 분리). 선행: 신청 양식·리드타임 |
-| ③ | 저장소 패턴 | git push를 데이터 저장소로 쓰는 워크플로우 10개, 아티팩트 보관, Step Summary 리포트 등 Actions 종속 9종 | G1·G2 | 높음 | S3(원천·산출물·리포트) + Snowflake ODS/MART. **DuckDB는 컴퓨트로 유지**(as-of 조인 로직 이식성 100%). 선행: 버킷·DB 명명 규약 |
-| ④ | AI 컴퓨트 | 발표 범위에 학습 컴퓨트 없음(ETL#2는 데이터 처리 서버). Azure ML 명시 문서 6곳 무효 | G2 | 높음 | Champion(SARIMAX·Quantile LightGBM·EGARCH-X·EnCQR, mart 4.3MB) = **ETL#2 Python 배치와 Dev EC2 동순위**(런타임 회신 후 확정) → Snowpark(레지스트리·추론) → SageMaker 범위 밖. 추정 부하: 월 1회 재학습 6시간 이내, 일별 추론 수 분(INFERENCE). Challenger(GPU) **동결** |
+| ③ | 저장소 패턴 | git push를 데이터 저장소로 쓰는 워크플로우 10개, 아티팩트 보관, Step Summary 리포트 등 Actions 종속 9종 | G1·G2 | 높음 | S3(원천·산출물·리포트) + DW ODS/MART. **DuckDB는 컴퓨트로 유지**(as-of 조인 로직 이식성 100%). 선행: 버킷·DB 명명 규약 |
+| ④ | AI 컴퓨트 | 발표 범위에 학습 컴퓨트 없음(ETL 서버는 데이터 처리 서버). 클라우드 학습 환경 명시 문서 6곳 무효 | G2 | 높음 | Champion(SARIMAX·Quantile LightGBM·EGARCH-X·EnCQR, mart 4.3MB) = **ETL 서버 Python 배치와 개발 서버 동순위**(런타임 회신 후 확정) → Snowpark(레지스트리·추론) → SageMaker 범위 밖. 추정 부하: 월 1회 재학습 6시간 이내, 일별 추론 수 분(INFERENCE). Challenger(GPU) **동결** |
 | ⑤ | 크롤링·LLM 이관 | 커넥터 12종·Perplexity 프록시·RSS 8원·LLM 직접 호출(OpenAI·Anthropic)이 '크롤링 기능' 범주 + Secrets 32종 | G1·G2 | 높음 | 코드 무변경 이식 · Secrets Manager 네임스페이스 `nexus/{prd,dev}/{api,llm,snowflake}/{ENV명}` · LLM 호출 멱등 원장(active-standby 이중 과금 방지) · push 트리거 워크플로우 6종은 소멸 수용, 교차검증은 **워터마크 구동 Hop 잡**으로 재정의 |
 | ⑥ | 파이프라인 선정 | 1차 등재 기준 3건 중 **Power BI 연동 미충족**(현재 HTML 아티팩트) | G1·G2 | 치명·**비가역** | 9월 WSJF 최상위. 근거 패키지 = 런 이력(전체 초록 2연속)·3계층 발행 캘린더·사용 부서 확인 + **브리프 Mart 테이블 DDL·데이터 계약·Power BI Desktop 수동 임포트 1회 실증**(리포트 완성이 아니라 데이터셋 존재 입증) |
 | ⑦ | 배치 위상 | cron 지연(실발화 KST 07:52·08:58)과 관세청 잡 55분으로 착지 시각 비결정(CONFIRMED) | G1 | 높음 | SLA를 시각이 아닌 상태로: **"전일 기준 브리프를 임포트 전 착지, 미착지 시 전일분 + stale 표시"** · 관세청 잡은 브리프 경로에서 비차단 분리 |
-| ⑧ | 비정형 원문 1.6GB | PDF 2,107건이 git 추적·.git 1.6GB | G1·G2 | 중간 | S3 직행(`raw/unstructured/{source}/{YYYY}/{MM}/{sha256}.pdf`, Object Lock) · 요약·인덱스 동반 이전(**전량 재판독 금지** — 70분·3GB 전례) · BFG는 이관 후 |
-| ⑨ | 일정·병행 운전 | 컷오버 2027-02+지연 → Actions 병행 창 6개월 이상 | G1·G2 | 높음 | 원칙 **"읽기 병행·쓰기 단일"**: 컷오버 전 Actions가 정본(발행 책임), AWS는 그림자 비교 → 수용 기준 5종 통과 후 단일 스위치 |
+| ⑧ | 비정형 원문 1.6GB | PDF 2,107건이 git 추적·.git 1.6GB | G1·G2 | 중간 | 오브젝트 스토리지 직행(`raw/unstructured/{source}/{YYYY}/{MM}/{sha256}.pdf`, Object Lock) · 요약·인덱스 동반 이전(**전량 재판독 금지** — 70분·3GB 전례) · BFG는 이관 후 |
+| ⑨ | 일정·병행 운전 | 컷오버 2027-02+지연 → Actions 병행 창 6개월 이상 | G1·G2 | 높음 | 원칙 **"읽기 병행·쓰기 단일"**: 컷오버 전 Actions가 정본(발행 책임), 클라우드는 그림자 비교 → 수용 기준 5종 통과 후 단일 스위치 |
 | ⑩ | 인증·저장소 귀속 | 수동 계정 + **코드 저장소가 github.com 개인 계정**(CONFIRMED) | G1·G2 | **높음**(상향) | 포털·Power BI 기존 권한 재사용 · 저장소 사내 org 이전 — 1차 등재 심사에서 자산 소유 주체가 요건이 될 가능성(INFERENCE) |
-| ⑪ | 상태 공유(active-standby) | `data/processed/*.csv` append·서명 스탬프·DuckDB·run 격리 폴더 등 **호스트 로컬 상태**가 전환 시 유실 | G1·G2 | 높음 | 상태 전량 S3/Snowflake · 수집 잠금(lease TTL 필수) · 수동 업로드 입력(xlsx 128+)의 착지 경로(`incoming` 버킷 + SHA256 매니페스트) 신설 |
-| ⑫ | G2 Preview 표면 공백 | 릴리스 게이트가 "Azure ML Command job 한정"으로 정의됨 — 대체 표면 없음 | G2 | 높음 | 9/10 Preview는 **현 표면(Actions CPU) 임시 예외** + 재현 조건("동일 스냅샷에서 ETL#2 재실행 시 지표 차 <0.5%") 명문화 · 방법 스택·전처리·as-of 3중 동결 유지 |
+| ⑪ | 상태 공유(active-standby) | `data/processed/*.csv` append·서명 스탬프·DuckDB·run 격리 폴더 등 **호스트 로컬 상태**가 전환 시 유실 | G1·G2 | 높음 | 상태 전량 오브젝트 스토리지/DW · 수집 잠금(lease TTL 필수) · 수동 업로드 입력(xlsx 128+)의 착지 경로(`incoming` 버킷 + SHA256 매니페스트) 신설 |
+| ⑫ | G2 Preview 표면 공백 | 릴리스 게이트가 "클라우드 학습 환경 Command job 한정"으로 정의됨 — 대체 표면 없음 | G2 | 높음 | 9/10 Preview는 **현 표면(Actions CPU) 임시 예외** + 재현 조건("동일 스냅샷에서 ETL 서버 재실행 시 지표 차 <0.5%") 명문화 · 방법 스택·전처리·as-of 3중 동결 유지 |
 
 추가 발견(협의 중): 발행 모드 판정이 cron 시각(20:30 UTC)을 코드에 하드코딩하고 있어 Hop 이전 시 월별판
 판정이 조용히 오작동함(CONFIRMED) → "직전 성공 런 시각 이후 발표 신규" 기준으로 재정의 필요.
@@ -75,10 +75,10 @@
 
 | 관점 | 동의 | 수정·추가 |
 |---|---|---|
-| PM | ②③⑧⑨⑪⑫ 동의 | ① 9월 1순위는 브리지(self-hosted 러너) · ④ ETL#2 단독 확정 보류(런타임 회신 후) · ⑥ WSJF 최상위·비가역 · ⑩ 심각도 상향 · **유료 API 키 5종 소유권**(개인 귀속이면 이전 시점에 수집 정지) · 신뢰 수치 부재가 심사 취약점 → 경보 사후 성적 첫 집계를 등재 패키지에 동봉 |
-| MLOps | 표면 순위·9종 매핑 동의 | weasyprint만 시스템 의존(PDF를 선택 기능으로 강등하면 부담 소멸) · ODS 롱포맷 단일 테이블 + `row_hash` 멱등키·UPDATE 금지 · mlflow는 추적 DB=EBS/EFS·아티팩트=S3 · Snowflake 레지스트리는 포인터(lightgbm·statsmodels 가용, `arch`·`mapie`는 DATA GAP) · **수동 업로드 입력 착지 경로 부재** · 발행 모드 cron 하드코딩 |
+| PM | ②③⑧⑨⑪⑫ 동의 | ① 9월 1순위는 브리지(self-hosted 러너) · ④ ETL 서버 단독 확정 보류(런타임 회신 후) · ⑥ WSJF 최상위·비가역 · ⑩ 심각도 상향 · **유료 API 키 5종 소유권**(개인 귀속이면 이전 시점에 수집 정지) · 신뢰 수치 부재가 심사 취약점 → 경보 사후 성적 첫 집계를 등재 패키지에 동봉 |
+| MLOps | 표면 순위·9종 매핑 동의 | weasyprint만 시스템 의존(PDF를 선택 기능으로 강등하면 부담 소멸) · ODS 롱포맷 단일 테이블 + `row_hash` 멱등키·UPDATE 금지 · mlflow는 추적 DB=EBS/EFS·아티팩트=S3 · DW 레지스트리는 포인터(lightgbm·statsmodels 가용, `arch`·`mapie`는 DATA GAP) · **수동 업로드 입력 착지 경로 부재** · 발행 모드 cron 하드코딩 |
 | 데이터 과학 | Champion CPU 충분 · Challenger 동결 · 9/10 임시 예외 지지 | '정확도'를 **'신뢰 지표'**로 명명 · 참조 범위 적중률 공표는 확률 밴드 주장이 되므로 '범위 폭 진단'으로 격하 · 경보를 사건이 아닌 **상태**로(진입·해제 전이 시만 통지) · 규칙 버전 관리 + 과거 전용 소급 합성 경보 이력 · **G1 골든 런 회귀 픽스처**(이관 수용 기준의 정박점) |
-| 시맨틱·비정형 | S3 접두사·ODS 4테이블·ETL#2 잡 경계 5단 제안 | 온톨로지 yaml은 저장소 버전 관리 유지(규칙) vs 인스턴스는 ODS(실체) · LLM 멱등 원장 · 교차검증 워터마크 구동 · 일별 신호는 append-only(vintage) · **DRM 재유입 게이트**(매직바이트) · provenance `storage_uri` 없으면 EvidenceSpan 전부 고아 |
+| 시맨틱·비정형 | S3 접두사·ODS 4테이블·ETL 서버 잡 경계 5단 제안 | 온톨로지 yaml은 저장소 버전 관리 유지(규칙) vs 인스턴스는 ODS(실체) · LLM 멱등 원장 · 교차검증 워터마크 구동 · 일별 신호는 append-only(vintage) · **DRM 재유입 게이트**(매직바이트) · provenance `storage_uri` 없으면 EvidenceSpan 전부 고아 |
 
 ---
 
@@ -86,12 +86,12 @@
 
 | 티어 | 항목 | 인일(추정) |
 |---|---|---|
-| **A 즉시·무료** (9월 우선 4건 ★) | ★브리프 Mart 테이블 DDL·데이터 계약·payload 추출 리팩터(1차 등재 결정 요인) 1.5 · ★as-of 5필드 스키마 8종 보강(ODS 설계 전제) 1.5 · ★업로더 vintage append 재설계+전용 DB 명명 1.5 · ★egress Palo Alto 양식 변환+예외 2건 선신청 0.5 · Hop 잡 사양서(41잡 — **ETL#2 런타임 회신 후 착수**, 선착수 시 재작업) 2 · Secrets 32종 대장(소유자·만료·유료 5종 법인 귀속) 0.5 · 이관 패키지(parquet 스냅샷+DDL+SHA256 매니페스트) 1 · 1차 등재 근거 패키지 1 · 운영 런북 1 · 문서 개정(이번 문서로 착수) 1 · G1 골든 런 픽스처 1 | ≈12 |
-| **B 계정·권한 필요** | Dev EC2 self-hosted 러너 실증(수용 기준 5종 비교) 1 · S3 버킷 적재+PDF·요약 이전(SHA256 대조) 1 · 전용 DB DDL 적용·시범 적재 1 · Palo Alto 예외 2건 테스트 0.5 · Power BI Desktop 임포트 실증 0.5 | ≈4 |
-| **C 창 내 불가** | Hop 잡 실구현(ETL 서버 미구축) · Private Link 검증 · ETL#2 런타임 구성 · Power BI 리포트 제작 · BFG · 저장소 org 이전 · 비정형 ABSA(Phase B) | — |
+| **A 즉시·무료** (9월 우선 4건 ★) | ★브리프 Mart 테이블 DDL·데이터 계약·payload 추출 리팩터(1차 등재 결정 요인) 1.5 · ★as-of 5필드 스키마 8종 보강(ODS 설계 전제) 1.5 · ★업로더 vintage append 재설계+전용 DB 명명 1.5 · ★egress Palo Alto 양식 변환+예외 2건 선신청 0.5 · Hop 잡 사양서(41잡 — **ETL 서버 런타임 회신 후 착수**, 선착수 시 재작업) 2 · Secrets 32종 대장(소유자·만료·유료 5종 법인 귀속) 0.5 · 이관 패키지(parquet 스냅샷+DDL+SHA256 매니페스트) 1 · 1차 등재 근거 패키지 1 · 운영 런북 1 · 문서 개정(이번 문서로 착수) 1 · G1 골든 런 픽스처 1 | ≈12 |
+| **B 계정·권한 필요** | 개발 서버 self-hosted 러너 실증(수용 기준 5종 비교) 1 · 오브젝트 스토리지 버킷 적재+PDF·요약 이전(SHA256 대조) 1 · 전용 DB DDL 적용·시범 적재 1 · Palo Alto 예외 2건 테스트 0.5 · Power BI Desktop 임포트 실증 0.5 | ≈4 |
+| **C 창 내 불가** | Hop 잡 실구현(ETL 서버 미구축) · Private Link 검증 · ETL 서버 런타임 구성 · Power BI 리포트 제작 · BFG · 저장소 org 이전 · 비정형 ABSA(Phase B) | — |
 
 9월 순서(PM 관점): 1주 PMO 질의·egress 선신청 → 2주 DDL·계약·payload 리팩터 → 3주 임포트 실증 → 4주
-1차 등재 패키지 제출. 데이터 이관 자체(S3·Snowflake 적재)는 계정 발급 즉시 착수 가능하며, 코드 이식성
+1차 등재 패키지 제출. 데이터 이관 자체(오브젝트 스토리지·DW 적재)는 계정 발급 즉시 착수 가능하며, 코드 이식성
 작업(경로 env화·어댑터)은 계정 없이도 진행된다.
 
 ---
@@ -101,16 +101,16 @@
 | # | 요청 | Nexus에 왜 중요한가 |
 |---|---|---|
 | 1 | GitHub Actions **계속 사용 가부·기간**(SaaS 컨트롤플레인 허용 여부) | 브리지 표면·병행 운전 성립 조건 |
-| 2 | Snowflake 계정 **network policy**(공개 엔드포인트 허용? Private Link 전용?) | ① 근본원인 확정 |
+| 2 | DW 계정 **network policy**(공개 엔드포인트 허용? Private Link 전용?) | ① 근본원인 확정 |
 | 3 | **1차 등재 목록 제출 시한·양식·심사자** + '연동'의 정의(데이터셋 존재로 충족?) + 미등재 시 SM 인계 조건 | 9월 창의 실제 마감 |
-| 4 | ETL#2 Python 런타임(버전·venv·시스템 패키지 정책·잡 시간 상한·standby 전환 방식) | 목표 표면 실현성 |
+| 4 | ETL 서버 Python 런타임(버전·venv·시스템 패키지 정책·잡 시간 상한·standby 전환 방식) | 목표 표면 실현성 |
 | 5 | Palo Alto 신청 양식·리드타임·HTTP-80/WebSocket 예외 절차 | 관세청·AIS 축 존속 |
 | 6 | 전용 DB 명명·롤·전용 웨어하우스·크레딧 예산 귀속(Platform2) | DDL·비용 방어선 |
-| 7 | S3 버킷 규약·KMS·VPC 엔드포인트·TGW 과금 경계 | 원천·PDF·산출물 착지, 백필 1.6GB 비용 |
+| 7 | 오브젝트 스토리지 버킷 규약·KMS·VPC 엔드포인트·TGW 과금 경계 | 원천·PDF·산출물 착지, 백필 1.6GB 비용 |
 | 8 | Power BI 새벽 임포트 시각·데이터셋 소유·게이트웨이 | 착지 SLA |
 | 9 | Secrets 관리 방식(네임스페이스·로테이션·유료 API 키 소유자) | 32종 이전 |
 | 10 | 크롤링 기능 이관 담당 조직·도구·목록 양식 | 커넥터 12종·Perplexity 등재 |
-| 11 | Dev 계정 EC2 배정 가부(self-hosted 러너·G2 실험) | 티어 B 전제 |
+| 11 | Dev 계정 가상 서버 배정 가부(self-hosted 러너·G2 실험) | 티어 B 전제 |
 | 12 | 코드 저장소 목적지(사내 org / CodeCommit)·포털 정적 디렉터리 호스팅 가부 | 자산 귀속·배포 채널 |
 | 13 | 변경 동결(freeze) 기간·컷오버 리허설 일정 | 병행 운전 창 설계 |
 
@@ -121,13 +121,13 @@
 | 코드 | 항목 | 처분 |
 |---|---|---|
 | DQ-11 | 클라우드 이관 예고 | **해소**(상세 수령 → 본 문서) |
-| DQ-8 | Azure Storage 관문 실증 | **중단** |
+| DQ-8 | 클라우드 스토리지 관문 실증 | **중단** |
 | DQ-15 | Nexus 일별 파이프라인 **1차 등재 요청**(Power BI 연동 실증 동봉) | 신규 — 최종 결정자 |
-| DQ-16 | G2 Champion 컴퓨트 2안(ETL#2 배치 / Dev EC2) | 신규 — 런타임 회신 후 |
+| DQ-16 | G2 Champion 컴퓨트 2안(ETL 서버 배치 / 개발 서버) | 신규 — 런타임 회신 후 |
 | DQ-17 | Challenger GPU 표면 — 잔여 파이프라인(2027 상반기) 요청 등재 | 신규 |
 | DQ-18 | 코드 저장소 사내 org 이전 | 신규 |
 | DQ-19 | 유료 API 키 5종(Databento·TE·Perplexity·OpenAI·Anthropic) 법인 귀속 확인 | 신규 — PM 관점 발견 |
 
-**개정 대상 문서(이번 회차 반영)**: modeling 규칙(컴퓨트 중립 계약) · 릴리스 게이트(Azure 인증 계약 →
+**개정 대상 문서(이번 회차 반영)**: modeling 규칙(컴퓨트 중립 계약) · 릴리스 게이트(클라우드 인증 계약 →
 실행 표면 계약) · 승인 라이브러리(azure 3종 제거·boto3 등재) · MLOps 관점 에이전트 정의 · 위키 방법론 ·
-이관 계획 문서 상단 폐기 배너 · egress 목록(Azure 조건부 2종 폐기).
+이관 계획 문서 상단 폐기 배너 · egress 목록(클라우드 조건부 2종 폐기).

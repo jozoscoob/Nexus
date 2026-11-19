@@ -7,7 +7,7 @@ These instructions apply repository-wide to any coding assistant.
 1. Read `README.md §QR` for commodity scope and G1/G2/G3 definitions.
 2. Read `CLAUDE.md` for hard constraints and HITL rules.
 3. Load only the path-scoped rule relevant to the files being changed.
-4. Read `.claude/agents/Guide.md` when coordinating named project agents.
+4. Read the relevant `.claude/agents/*.md` role file when coordinating named project agents.
 
 If a referenced file or fact is absent, report `정보 없음` rather than inferring it.
 

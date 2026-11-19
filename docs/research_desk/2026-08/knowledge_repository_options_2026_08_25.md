@@ -28,7 +28,7 @@ GAIN 요약·MEMORY·research_desk에서 동시에")의 수행 경로가 없다.
 | 1 | **NotebookLM** (Google) | ❌ **배제 확정** | 조정자 지시로 Gemini 전면 배제(C-012·C-013). NotebookLM은 API도 없음(LLM-004) — UX 은유로만 참조 |
 | 2 | **외부 SaaS DB** (Notion·Airtable 등) | ❌ 부적합 | **D-025 판정 논리 그대로 적용**: "사외 3rd-party에·이관 3개월 전 신설"의 역행 + 잔존자산 0(이관 시 승계 불가) + egress allowlist 미등재(8/29 마감) |
 | 3 | **벡터 DB 신설** (FAISS·Chroma·LanceDB) | ❌ 시기상조 | 승인 라이브러리 목록에 없음(libraries.md — "the only approved libraries") + 별도 인프라 = D-025 유형. 규모(문서 ~5천)에서 벡터DB 전용 엔진은 과잉 |
-| 4 | **Azure AI Search** (관리형 RAG) | ⏸️ 11월 이후 후보 | 방향은 이관 정합(D-028 Azure)이나 **유료**+Actions 종속 신규(D-026 금지 유형)+현시점 계정 없음. Phase 3에서 재평가 |
+| 4 | **클라우드 검색 서비스** (관리형 RAG) | ⏸️ 11월 이후 후보 | 방향은 이관 정합(D-028 클라우드)이나 **유료**+Actions 종속 신규(D-026 금지 유형)+현시점 계정 없음. Phase 3에서 재평가 |
 | 5 | **현상 유지** (grep+JIT 포인터) | ❌ 갭 방치 | 비용 0이나 위 갭 실측이 보여주듯 지식이 파일에 잠김 — 세션마다 같은 조사를 반복하는 비용이 이미 발생 중 |
 | 6 | ★ **Knowledge Mart** — DuckDB+parquet 지식 인덱스 | ✅ **권장** | 아래 상술 |
 
@@ -42,7 +42,7 @@ GAIN 요약·MEMORY·research_desk에서 동시에")의 수행 경로가 없다.
 ```
 [정규화] 요약 md 2,175 + MEMORY 결정 300+ + research_desk 66 + 시맨틱 용어 152
              ↓  (문서id · 유형 · 날짜 · 태그 · 엔티티 · 본문 · 출처경로)
-[저장]   data/gold/knowledge_mart.parquet  ← 단일 파일, git/Blob 어디든 승계
+[저장]   data/gold/knowledge_mart.parquet  ← 단일 파일, git/오브젝트 스토리지 어디든 승계
              ↓
 [질의]   scripts/knowledge_search.py "아르헨티나 수출세 인하 근거"
              ↓  DuckDB(메타 필터) + TF-IDF(scikit-learn — 승인됨) 랭킹
@@ -59,7 +59,7 @@ GAIN 요약·MEMORY·research_desk에서 동시에")의 수행 경로가 없다.
    **provenance.yaml EvidenceSpan**(page·원문 인용 100% 일치 강제)으로 성문화돼
    있다 — 새로 설계할 것이 없고 준수만 하면 된다.
 4. **비용 0·승인 범위 내**: duckdb·scikit-learn 전부 승인 라이브러리, 서버·계정·
-   구독 없음. 11월 이관 시 parquet 그대로 Blob/Snowflake 승계(잔존자산 100%).
+   구독 없음. 11월 이관 시 parquet 그대로 오브젝트 스토리지/DW 승계(잔존자산 100%).
 5. **인수인계 내성**: 단일 parquet + 단일 CLI — 사람이 바뀌어도 `knowledge_search.py
    "질문"` 한 줄이면 5개월치 축적이 검색된다.
 
@@ -69,7 +69,7 @@ GAIN 요약·MEMORY·research_desk에서 동시에")의 수행 경로가 없다.
 |---|---|---|---|
 | **1** | 카탈로그 빌더 + TF-IDF 검색 CLI + 에이전트 공용 진입점 | 조정자 승인만 | ~반나절 |
 | **2** | 의미(임베딩) 검색 — sentence-transformers(승인됨), 임베딩은 parquet 컬럼로 저장(벡터DB 불요) | **HF egress 2종**(8/29 신청서 v2.1에 추가 완료) 승인 후 | ~반나절 |
-| **3** | Azure AI Search 재평가(관리형 전환 여부) | 11월 이관 후 | 별도 |
+| **3** | 클라우드 검색 서비스 재평가(관리형 전환 여부) | 11월 이관 후 | 별도 |
 
 ### 한계(정직하게)
 

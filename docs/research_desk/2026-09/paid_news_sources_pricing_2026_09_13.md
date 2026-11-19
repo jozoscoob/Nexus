@@ -52,7 +52,7 @@ Nexus 적합성(일별 기사 수·원문 링크·재현성·이관 용이) | �
 | Perigon | Perigon | 실시간 뉴스+엔티티·감성(AI 인텔리전스) | REST | **스타트업 $550/mo(50k req, 제한적 상업 라이선스) · 맞춤 플랜 $24,000/yr~**(https://perigon.io/products/pricing/apis). 제3자: Free $0 · Basic $250/mo · Plus $550/mo(TrustRadius https://www.trustradius.com/products/perigon-news-api/pricing) | 상업 라이선스는 Business 이상 | 감성·엔티티가 P1-05 ABSA와 중복 | 보류 | CONFIRMED(공식 2건)·INFERENCE(하위 티어) |
 | Quantexa News API(구 Aylien) | Quantexa | 9만+ 소스·NLP 강화·8년 아카이브 | REST(용도별 라이선스) | 견적 필요(공개 가격 없음 — "use case 기반 라이선스"). **14일 무료 체험** 게시(https://aylien.com/product/plans) | 용도 기반 계약 | 신규 가입이 Quantexa 고객 안내로 전환 중 — 제품 재편 리스크 | 보류 | DATA GAP(체험 CONFIRMED) |
 | GNews API | GNews | 6만+ 매체 헤드라인(본문 없음) | REST | **$49.99/mo 시작(최대 30,000 req)**(https://gnews.io/pricing); 제3자: Essential €49.99 · Business €99.99 · Enterprise €249.99/mo(APITube — 통화 표기가 $/€로 엇갈려 페이지 확인 필요) | 무료 티어 비상업, 재배포 금지 | 무료 체인과 중복 | 부적합 | CONFIRMED(시작가)·INFERENCE(티어) |
-| Bing News Search API(Azure) | Microsoft | — | REST | **2025-08-11 서비스 종료(HTTP 410)**(Microsoft Learn https://learn.microsoft.com/en-us/lifecycle/announcements/bing-search-api-retirement). 후속 "Grounding with Bing Search"(Foundry Agent 전용) **$35 / 1,000 transactions**(https://www.microsoft.com/en-us/bing/apis/grounding-pricing); 제3자 보고 $14/1K도 존재(SKU 상이 가능) | 에이전트 그라운딩 용도 — 구조화 검색 결과 반환 아님 | **Nexus 3단 체인의 Bing News RSS(무료·API 아님)와 무관** — 영향 없음 | 부적합(종료) | CONFIRMED |
+| Bing News Search API(클라우드) | Microsoft | — | REST | **2025-08-11 서비스 종료(HTTP 410)**(Microsoft Learn https://learn.microsoft.com/en-us/lifecycle/announcements/bing-search-api-retirement). 후속 "Grounding with Bing Search"(ML 플랫폼 Agent 전용) **$35 / 1,000 transactions**(https://www.microsoft.com/en-us/bing/apis/grounding-pricing); 제3자 보고 $14/1K도 존재(SKU 상이 가능) | 에이전트 그라운딩 용도 — 구조화 검색 결과 반환 아님 | **Nexus 3단 체인의 Bing News RSS(무료·API 아님)와 무관** — 영향 없음 | 부적합(종료) | CONFIRMED |
 
 ### 1-D. 현행 지출 비교 기준 (프로젝트 기구독 — 참고)
 
@@ -94,7 +94,7 @@ Nexus 적합성(일별 기사 수·원문 링크·재현성·이관 용이) | �
    - LSEG MRN·Platts·Fastmarkets·Argus는 **DQ-1(basis 호가) 견적과 묶어 1회 견적**만 요청 — 뉴스 단독 계약은 규모 대비 과잉.
    - Bloomberg 터미널·B-PIPE·Factiva 개인 요금제·NewsAPI.org·GNews·Bing Search API는 **부적합**(자동화 제약·중복·종료).
 4. 공통 전제: 어떤 유료 호스트든 **egress allowlist 선등재 → 키는 GitHub Secrets → 저장은 제목·링크만**(본문 저장은 계약 확인 후)
-   순서를 지킴. 11월 이관 전 신규 계약은 이관 표면(ETL#2/S3) 확정 후로 미루는 것이 안전.
+   순서를 지킴. 11월 이관 전 신규 계약은 이관 표면(ETL 서버/오브젝트 스토리지) 확정 후로 미루는 것이 안전.
 
 ## §4 DQ-24 갱신 문안 (한 줄)
 

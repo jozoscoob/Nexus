@@ -113,11 +113,11 @@ FAO AMIS는 매월 주요국 무역 정책 변경을 요약합니다. 인도 수
 
 **Historical Backfill 통합:**
 - `scripts/ingest_fao_amis_pdf.py` 수동 실행 → `data/raw/fao_amis_historical.parquet`
-- Parquet → Snowflake 업로드 (Azure ML 환경에서)
+- Parquet → DW 업로드 (클라우드 학습 환경 환경에서)
 - `.github/workflows/historical_backfill.yml`: FAO AMIS 수집 단계 추가
 
 **External Data Pipeline 통합 (Phase B):**
-- 매월 FAO AMIS 신규 발간 → 자동 다운로드 → 추출 → Snowflake 업데이트
+- 매월 FAO AMIS 신규 발간 → 자동 다운로드 → 추출 → DW 업데이트
 - `.github/workflows/external_data_refresh.yml`: FAO AMIS 수집 단계 추가
 - 다운로드 URL: `https://www.amis-outlook.org/market-monitor`
 
