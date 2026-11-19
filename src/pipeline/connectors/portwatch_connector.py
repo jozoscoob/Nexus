@@ -25,7 +25,7 @@ PW_URL = ("https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/"
 OUTPUT_DIR = "data/raw"
 PAGE_SIZE = 2000          # 서버 maxRecordCount(10000) 이하
 MAX_RETRIES = 4
-# 대두유 해상 경로에 걸리는 해협만 수집 — portid → 지표 접미사
+# 대두유 해상 경로와 그 우회로에 걸리는 해협만 수집 — portid → 지표 접미사
 CHOKEPOINTS = {
     "chokepoint1": "SUEZ",
     "chokepoint2": "PANAMA",
@@ -34,6 +34,10 @@ CHOKEPOINTS = {
     "chokepoint6": "HORMUZ",
     "chokepoint7": "CAPE_GOOD_HOPE",
     "chokepoint12": "KOREA_STRAIT",
+    # 우회로 판정용(2026-11-19 추가) — 말라카 대체(롬복·순다), 베트남·중국 남부 → 한국 항로(대만해협)
+    "chokepoint11": "TAIWAN_STRAIT",
+    "chokepoint15": "LOMBOK",
+    "chokepoint19": "SUNDA",
 }
 # 원천 필드 → 지표 접미사
 FIELDS = {"n_tanker": "TANKER", "n_dry_bulk": "DRY_BULK", "n_total": "TOTAL"}

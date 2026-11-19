@@ -1,0 +1,113 @@
+# 한국향 대두유·대체유 해상 경로 시나리오 (2026-11-19 신설 — 승인자 지시)
+# 목적: 실시간 선박 위치가 없을 때도 '경로 조정 가능성'을 보여 준다 — 평시 경로, 특정 비상 상황(호르무즈·미국–이란 충돌·
+#   홍해·파나마 가뭄·말라카·대만해협)별 우회 경로와 예상 지연을, 과거 선례(IMF PortWatch 실측 통과 척수)와 함께 제시.
+# 해석 규율:
+#   - extra_days는 항로 거리 차이를 탱커 경제 속력(12.5~14노트 ≈ 300~336해리/일)으로 나눈 **근사치(INFERENCE)**다.
+#     거리값은 공개 항로 거리의 반올림 근사이며, 실제 일정은 선박·항만 대기·기상에 따라 달라진다.
+#   - base_lead_days는 온톨로지 한국향 루트 리드타임(선적~도착, 문헌값 — D-041)을 그대로 쓴다.
+#   - 선례 수치는 코드가 PortWatch 원자료에서 매번 다시 계산한다(이 파일에 숫자를 적지 않음).
+#   - 대기열(파나마 대기일 등)·선복 확보 지연은 PortWatch로 측정되지 않는다 → '미측정'으로 표시.
+
+speed_knots: {low: 12.5, high: 14.0}
+
+routes:
+  RT-USG-KR:
+    name: 미국 걸프 → 한국 (조대두유 탱커)
+    commodity: 대두유
+    base_lead_days: [45, 50]
+    normal_path: [PANAMA]
+    normal_nm: 9600
+    alternatives:
+      - {id: via_cape, name: 희망봉 우회, avoids: [PANAMA], nm: 16000}
+      - {id: via_suez, name: 수에즈 경유, avoids: [PANAMA], via: [SUEZ, BAB_EL_MANDEB, MALACCA], nm: 13600}
+  RT-SANTOS-KR:
+    name: 브라질 산투스·파라나과 → 한국
+    commodity: 대두유
+    base_lead_days: [40, 45]
+    normal_path: [CAPE_GOOD_HOPE, MALACCA]
+    normal_nm: 11400
+    alternatives:
+      - {id: via_lombok, name: 롬복해협 우회, avoids: [MALACCA], via: [CAPE_GOOD_HOPE, LOMBOK], nm: 11900}
+      - {id: via_sunda, name: 순다해협 우회(흘수 제한 확인 필요), avoids: [MALACCA], via: [CAPE_GOOD_HOPE, SUNDA], nm: 11600}
+  RT-ROSARIO-KR:
+    name: 아르헨티나 로사리오 → 한국
+    commodity: 대두유
+    base_lead_days: [40, 45]
+    normal_path: [CAPE_GOOD_HOPE, MALACCA]
+    normal_nm: 12000
+    note: 파라나강 저수위(2021~22 선례)는 적재 제한으로 작용 — PortWatch 측정 대상 아님(DATA GAP)
+    alternatives:
+      - {id: via_lombok, name: 롬복해협 우회, avoids: [MALACCA], via: [CAPE_GOOD_HOPE, LOMBOK], nm: 12500}
+      - {id: via_sunda, name: 순다해협 우회(흘수 제한 확인 필요), avoids: [MALACCA], via: [CAPE_GOOD_HOPE, SUNDA], nm: 12200}
+  RT-VN-KR:
+    name: 베트남 → 한국 (정제 대두유)
+    commodity: 대두유
+    base_lead_days: [7, 12]
+    normal_path: [TAIWAN_STRAIT]
+    normal_nm: 2300
+    alternatives:
+      - {id: via_luzon, name: 대만 동쪽(루손해협) 우회, avoids: [TAIWAN_STRAIT], nm: 2550}
+  RT-CN-KR:
+    name: 중국 → 한국 (정제 대두유)
+    commodity: 대두유
+    base_lead_days: [3, 7]
+    normal_path: []
+    normal_nm: 600
+    note: 황해 단거리 항로 — 수집 해협을 지나지 않음(중국 남부 출항분은 대만해협 경유 가능)
+    alternatives: []
+  RT-BLACKSEA-KR:
+    name: 흑해 → 한국 (해바라기유 — 대체유)
+    commodity: 해바라기유
+    base_lead_days: [35, 45]
+    normal_path: [SUEZ, BAB_EL_MANDEB, MALACCA]
+    normal_nm: 9000
+    alternatives:
+      - {id: via_cape, name: 지브롤터·희망봉 우회, avoids: [SUEZ, BAB_EL_MANDEB], via: [CAPE_GOOD_HOPE, MALACCA], nm: 14600}
+
+# 비상 상황 — affected: 판정 대상 해협 / precedents: 기준 구간 대비 사건 구간의 탱커 통과 변화를 코드가 계산
+contingencies:
+  normal:
+    name: 평시
+    affected: []
+  hormuz_us_iran:
+    name: 호르무즈 봉쇄·미국–이란 충돌
+    affected: [HORMUZ]
+    lane_effect: >-
+      한국향 대두유 항로는 호르무즈를 지나지 않는다 — 물리적 우회·항해일 증가는 없음. 영향 경로는 비용·선복:
+      벙커유 가격, 전쟁 위험 할증 보험료, 원유 탱커 재배치로 인한 제품 탱커 수급 경색(선복 확보 지연은 미측정).
+    precedents:
+      - {name: 2019년 오만만 유조선 공격, event: [2019-05-12, 2019-07-31], baseline: [2019-02-01, 2019-04-30], series: [HORMUZ, MALACCA]}
+      - {name: 2025년 6월 이스라엘–이란 12일 전쟁, event: [2025-06-13, 2025-06-30], baseline: [2025-04-01, 2025-05-31], series: [HORMUZ, MALACCA]}
+      - {name: 2026년 호르무즈 통항 붕괴, event: [2026-03-01, 2026-06-30], baseline: [2025-12-01, 2026-02-28], series: [HORMUZ, MALACCA, CAPE_GOOD_HOPE]}
+  red_sea:
+    name: 홍해·수에즈 차단(후티 공격)
+    affected: [BAB_EL_MANDEB, SUEZ]
+    lane_effect: 주력 대두유 항로는 홍해를 지나지 않음 — 흑해·유럽발 대체유와 미국 걸프의 수에즈 대안이 막힘
+    precedents:
+      - {name: 2023-12 후티 공격 이후 홍해 회피, event: [2024-01-01, 2024-06-30], baseline: [2023-09-01, 2023-11-30], series: [BAB_EL_MANDEB, SUEZ, CAPE_GOOD_HOPE]}
+  panama_drought:
+    name: 파나마 운하 통항 제한(가뭄)
+    affected: [PANAMA]
+    lane_effect: 미국 걸프 → 한국 항로가 희망봉 우회 또는 운하 대기로 바뀜
+    precedents:
+      - {name: 2023~24 파나마 가뭄 통항 제한, event: [2023-11-01, 2024-03-31], baseline: [2023-03-01, 2023-07-31], series: [PANAMA, CAPE_GOOD_HOPE]}
+  malacca:
+    name: 말라카해협 차질
+    affected: [MALACCA]
+    lane_effect: 남미 → 한국 항로가 롬복·순다해협으로 우회
+    precedents:
+      - {name: 2026년 호르무즈 사태 파급(말라카 탱커 감소), event: [2026-03-01, 2026-06-30], baseline: [2025-12-01, 2026-02-28], series: [MALACCA, LOMBOK, SUNDA]}
+  taiwan_strait:
+    name: 대만해협 긴장(군사 훈련·통항 제한)
+    affected: [TAIWAN_STRAIT]
+    lane_effect: 베트남·중국 남부 → 한국 항로가 대만 동쪽으로 우회
+    precedents:
+      - {name: 2022-08 대만 주변 군사 훈련, event: [2022-08-04, 2022-08-10], baseline: [2022-07-01, 2022-07-31], series: [TAIWAN_STRAIT]}
+
+# 현재 상태 판정 — 최근 28일 평균 탱커 통과를 고정 기준기(2019~2022, 홍해·호르무즈 장기 사태 이전) 일별 중앙값과 비교.
+#   이동 기준선(최근 3년)을 쓰면 2024년 이후 홍해 회피처럼 오래 지속된 차질이 '평시'로 흡수돼 버린다.
+status_rule:
+  recent_days: 28
+  reference_period: [2019-01-01, 2022-12-31]
+  disrupted_drop_pct: -25   # 선례 3건(파나마 탱커 −29%·홍해 −54%·호르무즈 −92%)이 모두 넘는 수준
+  elevated_rise_pct: 30     # 우회 유입(희망봉 등) 표시용
