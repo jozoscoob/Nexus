@@ -20,7 +20,7 @@
     때만 교체한다(A-109 .partial 가드와 동일 원리).
   - 샌드박스는 api.tradingeconomics.com 차단 — GitHub Actions(te_xlsx_update.yml)에서 실행한다.
 
-사용: python scripts/update_te_xlsx_from_api.py [--mode snapshot|historical] [--dry-run]
+사용: python scripts/update_te_xlsx_from_api.py [--mode snapshot|historical] [--repair-gap] [--dry-run]
       [--only "Soybeans,BDI"]
 출력: xlsx 갱신 + reports/market/te_api_update_{date}.md
 """
@@ -370,11 +370,53 @@ def _jump_ratio(path: Path, first_new: float) -> float | None:
     return first_new / last_close - 1
 
 
-def _commit_rows(path: Path, rows: pd.DataFrame, desc: bool) -> tuple[bool, int, str]:
-    """임시 사본에 append → 재판독 검증 통과 시에만 원본 교체. → (성공, 추가 행 수, 메시지)."""
+GAP_DAYS = 7   # 연속 관측 사이 달력일 간격이 이보다 크면 '공백'으로 본다(주말·연휴 3~4일은 정상)
+
+
+def _find_recent_gap(path: Path) -> date | None:
+    """최신 연도 시트에서 마지막 공백의 시작일(공백 직전 관측일). 공백이 없으면 None.
+
+    일별 스냅샷 모드는 '오늘 1행'만 붙이므로 수집이 멈춘 기간이 있으면 그 뒤에 오늘 행이 붙어 공백이
+    가려진다(2026-11-19 실측: 09-23 → 11-18). 공백 복구 모드는 이 공백을 찾아 그 뒤 행을 걷어 내고
+    historical 창으로 다시 채운다.
+    """
+    wb = load_workbook(path, read_only=True, data_only=True)
+    years = sorted((int(m.group(1)), n) for n in wb.sheetnames if (m := _YEAR_SHEET_RE.search(n)))
+    if not years:
+        return None
+    y, name = years[-1]
+    ds = sorted(date(y, int(r[0]), int(r[1])) for r in wb[name].iter_rows(min_row=2, values_only=True)
+                if r and r[0] is not None and r[1] is not None)
+    gaps = [(a, b) for a, b in zip(ds, ds[1:]) if (b - a).days > GAP_DAYS]
+    return gaps[-1][0] if gaps else None
+
+
+def _truncate_after(path: Path, cut: date) -> int:
+    """cut 이후 관측 행을 해당 연도 시트에서 삭제. 반환: 삭제 행 수."""
+    wb = load_workbook(path)
+    name = f"{cut.year}년"
+    if name not in wb.sheetnames:
+        return 0
+    ws = wb[name]
+    drop = [i for i, r in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2)
+            if r and r[0] is not None and r[1] is not None and date(cut.year, int(r[0]), int(r[1])) > cut]
+    for i in reversed(drop):
+        ws.delete_rows(i)
+    wb.save(path)
+    return len(drop)
+
+
+def _commit_rows(path: Path, rows: pd.DataFrame, desc: bool,
+                 cut: date | None = None) -> tuple[bool, int, str]:
+    """임시 사본에 append → 재판독 검증 통과 시에만 원본 교체. → (성공, 추가 행 수, 메시지).
+
+    cut이 주어지면(공백 복구) 사본에서 cut 이후 행을 먼저 걷어 낸 뒤 append한다 — 원본은 검증 통과 시에만 바뀐다.
+    """
     with tempfile.TemporaryDirectory() as td:
         cand = Path(td) / path.name
         shutil.copy(path, cand)
+        if cut is not None:
+            _truncate_after(cand, cut)
         n = append_rows(cand, rows, desc)
         ok, msg = _validate(path, cand)
         if not ok:
@@ -383,7 +425,8 @@ def _commit_rows(path: Path, rows: pd.DataFrame, desc: bool) -> tuple[bool, int,
     return True, n, msg
 
 
-def run(dry_run: bool = False, only: set[str] | None = None, mode: str = "snapshot") -> list[dict]:
+def run(dry_run: bool = False, only: set[str] | None = None, mode: str = "snapshot",
+        repair_gap: bool = False) -> list[dict]:
     if mode not in MODES:
         raise SystemExit(f"[오류] 알 수 없는 모드: {mode} — {MODES} 중 하나여야 함")
     te_key = os.environ.get("TRADING_ECONOMICS_API_KEY", "").strip()
@@ -405,8 +448,11 @@ def run(dry_run: bool = False, only: set[str] | None = None, mode: str = "snapsh
             rec["status"] = "스로틀 — 중단"; results.append(rec); continue
         if last is None:
             rec["status"] = "시트 없음"; results.append(rec); continue
+        cut = _find_recent_gap(path) if (mode == "historical" and repair_gap) else None
+        if cut is not None:
+            rec["status"] = f"공백 복구({cut} 이후 재조회)"
         # snapshot은 '오늘 1행'을 노리므로 마지막 일자가 오늘이어야 최신. historical은 1일 여유.
-        if last >= (today if mode == "snapshot" else today - timedelta(days=1)):
+        elif last >= (today if mode == "snapshot" else today - timedelta(days=1)):
             rec["status"] = "최신"; results.append(rec); continue
         if dry_run:
             rec["status"] = f"dry-run(갱신 필요 {last}~{today})"; results.append(rec); continue
@@ -437,7 +483,7 @@ def run(dry_run: bool = False, only: set[str] | None = None, mode: str = "snapsh
             rec["symbol"] = used
             new_rows = pd.DataFrame([{**row, "date": pd.Timestamp(row["date"])}])
         else:
-            hist, status = fetch_history(te_key, symbols, last, today)
+            hist, status = fetch_history(te_key, symbols, cut or last, today)
             if status != "ok":
                 rec["status"] = {"plan": "플랜 미포함(409/403)", "empty": "응답 0행", "error": "HTTP 오류",
                                  "sparse": f"밀도 부족({len(hist)}행) — 미갱신"}[status]
@@ -445,13 +491,13 @@ def run(dry_run: bool = False, only: set[str] | None = None, mode: str = "snapsh
             new_rows = hist
 
         first_new = float(new_rows["close"].iloc[0])
-        jump = _jump_ratio(path, first_new)
+        jump = None if cut is not None else _jump_ratio(path, first_new)   # 복구는 공백 전 종가와 비교 불가
         if jump is not None and abs(jump) > MAX_JUMP:
             rec["status"] = f"점프 {jump:+.0%}(계약·집계 혼입 의심) — 미갱신"
             print(f"[경고] {path.name}: 기존 종가 대비 {jump:+.0%}(신규 {first_new}) — 미갱신")
             results.append(rec); continue
 
-        ok, n, msg = _commit_rows(path, new_rows, desc)
+        ok, n, msg = _commit_rows(path, new_rows, desc, cut=cut)
         if not ok:
             rec["status"] = f"검증 실패({msg}) — 원본 유지"; results.append(rec); continue
         rec["status"] = f"갱신(+{n}행, {msg})"; rec["added"] = n
@@ -487,6 +533,8 @@ if __name__ == "__main__":
                     help="snapshot=일별 1행 append(기본) · historical=공백 복구 창 조회")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--only", default="")
+    ap.add_argument("--repair-gap", action="store_true",
+                    help="historical 모드 전용 — 최신 연도 시트의 마지막 공백(>7일)을 찾아 그 뒤를 재조회로 채움")
     a = ap.parse_args()
     run(dry_run=a.dry_run, only=set(x.strip() for x in a.only.split(",") if x.strip()) or None,
-        mode=a.mode)
+        mode=a.mode, repair_gap=a.repair_gap)
