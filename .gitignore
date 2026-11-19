@@ -80,3 +80,4 @@ data/raw/Yahoo Finance/**/*.xlsx
 # G2 Preview 생성물 — 가격 데이터 포함(커밋 금지, D-026)
 reports/g2_preview/
 data/processed/route_scenarios_latest.json
+docker/penpot/.env
