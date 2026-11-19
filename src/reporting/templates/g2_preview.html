@@ -3,112 +3,142 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
 <style>
-/* 레이아웃: 거래 단말 3구역 — 상단 시세 레일 · 가격 차트+범위 사다리(호가창 자리) · 하단 탭 데크(성적표·해상 경로·인과 지도·방법) */
+/* 레이아웃: 실무형 판단 화면 — 한 줄 결론(참고 범위) → 구매 영향 → 숨 쉬는 범위 차트 → 기간별 표·사건·결과 비교 → 관점 탭 */
 :root {
+  --bg: #f2f5f4; --panel: #ffffff; --panel-2: #f6f8f7; --line: #dbe3e0; --fg: #14201e; --muted: #5a6b68;
+  --oil: #b46f0e; --oil-soft: rgba(180,111,14,.13); --oil-mid: rgba(180,111,14,.30);
+  --up: #cf2b2b; --down: #1f63d6; --ok: #1d8a62; --warn: #b46f0e; --bad: #cf2b2b; --grid: rgba(90,107,104,.14);
+  --classic: #2f6f8f; --keynes: #8a4fb0;
+  --f-display: "Noto Serif KR", "Nanum Myeongjo", Georgia, serif;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #0c1315; --panel: #121c1f; --panel-2: #172428; --line: #22343a; --fg: #e4ebe8; --muted: #8aa09c;
   --oil: #e9a23b; --oil-soft: rgba(233,162,59,.16); --oil-mid: rgba(233,162,59,.34);
   --up: #f0524f; --down: #4b93ff; --ok: #3fbf8f; --warn: #e9a23b; --bad: #f0524f; --grid: rgba(138,160,156,.12);
-  --f-display: "Noto Serif KR", "Nanum Myeongjo", Georgia, serif;
-  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-  color-scheme: dark;
-}
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
-  --bg: #eef3f2; --panel: #ffffff; --panel-2: #f5f8f7; --line: #d6e0dd; --fg: #13201e; --muted: #566865;
-  --oil: #b06d0c; --oil-soft: rgba(176,109,12,.13); --oil-mid: rgba(176,109,12,.28);
-  --up: #cf2b2b; --down: #1f63d6; --ok: #1d8a62; --warn: #b06d0c; --bad: #cf2b2b; --grid: rgba(86,104,101,.14);
-  color-scheme: light; } }
-:root[data-theme="light"] {
-  --bg: #eef3f2; --panel: #ffffff; --panel-2: #f5f8f7; --line: #d6e0dd; --fg: #13201e; --muted: #566865;
-  --oil: #b06d0c; --oil-soft: rgba(176,109,12,.13); --oil-mid: rgba(176,109,12,.28);
-  --up: #cf2b2b; --down: #1f63d6; --ok: #1d8a62; --warn: #b06d0c; --bad: #cf2b2b; --grid: rgba(86,104,101,.14);
-  color-scheme: light; }
+  --classic: #5fb3d9; --keynes: #c08ae6; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0c1315; --panel: #121c1f; --panel-2: #172428; --line: #22343a; --fg: #e4ebe8; --muted: #8aa09c;
+  --oil: #e9a23b; --oil-soft: rgba(233,162,59,.16); --oil-mid: rgba(233,162,59,.34);
+  --up: #f0524f; --down: #4b93ff; --ok: #3fbf8f; --warn: #e9a23b; --bad: #f0524f; --grid: rgba(138,160,156,.12);
+  --classic: #5fb3d9; --keynes: #c08ae6; color-scheme: dark; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 14px; line-height: 1.5;
-  margin: 0; padding-block: 0 32px; padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px)); font-variant-numeric: tabular-nums; }
-button { font: inherit; color: inherit; cursor: pointer; }
-button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--oil); outline-offset: 2px; }
-.wrap { max-width: 1320px; margin: 0 auto; display: grid; gap: 14px; }
-header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding-top: 18px; }
-.brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
-.brand h1 { font-family: var(--f-display); font-size: 22px; margin: 0; letter-spacing: -.01em; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 14px; line-height: 1.55; margin: 0;
+  padding-block: 0 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  font-variant-numeric: tabular-nums; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--oil); outline-offset: 2px; }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 16px; }
+header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding-top: 18px; }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand h1 { font-family: var(--f-display); font-size: 22px; margin: 0; }
 .brand .sub { color: var(--muted); font-size: 13px; }
-.top .spacer { flex: 1; }
-.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px;
-  padding: 3px 10px; font-size: 12px; color: var(--muted); background: var(--panel); }
+.spacer { flex: 1; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 12px; color: var(--muted); background: var(--panel); }
 .chip b { color: var(--fg); font-weight: 600; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
 .seg button { border: 0; background: transparent; padding: 5px 11px; font-size: 13px; color: var(--muted); }
 .seg button[aria-pressed="true"] { background: var(--oil-soft); color: var(--fg); box-shadow: inset 0 -2px 0 var(--oil); }
-/* 시세 레일 */
-.rail { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
-.tick { flex: 0 0 auto; min-width: 168px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
-  padding: 8px 12px; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; }
-.tick .n { font-size: 12px; color: var(--muted); grid-column: 1 / -1; }
-.tick .v { font-weight: 600; font-size: 15px; }
-.tick .c { font-size: 12px; align-self: center; }
-.tick svg { grid-column: 1 / -1; width: 100%; height: 22px; }
-.up { color: var(--up); } .down { color: var(--down); } .flat { color: var(--muted); }
-/* 히어로 */
-.hero { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; min-width: 0; }
+h2 { font-size: 15px; margin: 0; font-weight: 600; }
+h3 { font-size: 13.5px; margin: 0; font-weight: 600; }
+.note { color: var(--muted); font-size: 12.5px; margin: 0; max-width: 80ch; }
+.up { color: var(--up); } .down { color: var(--down); } .flat { color: var(--muted); }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.ok { color: var(--ok); } .pill.bad { color: var(--bad); } .pill.warn { color: var(--warn); } .pill.mute { color: var(--muted); }
+/* 한 줄 결론 + 구매 영향 */
+.lead { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; }
+.verdict { padding: 18px 20px; display: grid; gap: 12px; align-content: start; }
+.verdict .k { color: var(--muted); font-size: 13px; }
+.verdict .big { font-family: var(--f-display); font-size: clamp(26px, 4vw, 38px); line-height: 1.15; letter-spacing: -.01em; }
+.verdict .big span { white-space: nowrap; }
+.verdict .now { font-size: 14px; color: var(--muted); }
+.rangebar { position: relative; height: 54px; margin-top: 4px; }
+.rb-track { position: absolute; left: 0; right: 0; top: 22px; height: 10px; border-radius: 5px; background: var(--grid); }
+.rb-outer, .rb-inner { position: absolute; top: 22px; height: 10px; border-radius: 5px; transform-origin: center; }
+.rb-outer { background: var(--oil-soft); border: 1px solid var(--oil-mid); }
+.rb-inner { background: var(--oil-mid); }
+.rb-mark { position: absolute; top: 14px; width: 2px; height: 26px; background: var(--fg); }
+.rb-lbl { position: absolute; top: 40px; font-size: 11.5px; color: var(--muted); transform: translateX(-50%); white-space: nowrap; }
+.rb-lbl.t { top: 0; color: var(--fg); font-weight: 600; }
+.caution { display: flex; gap: 10px; align-items: flex-start; background: var(--oil-soft); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+.caution .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--oil); margin-top: 6px; flex: 0 0 auto; animation: beat 2.2s ease-in-out infinite; }
+@keyframes beat { 50% { transform: scale(1.6); opacity: .45; } }
+.calc { padding: 18px 20px; display: grid; gap: 12px; align-content: start; }
+.calc .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.calc label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+.calc input, .calc select { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; background: var(--panel-2); min-width: 0; width: 130px; }
+.cost { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.cost div { background: var(--panel-2); border-radius: 10px; padding: 10px; display: grid; gap: 2px; }
+.cost .lab { font-size: 11.5px; color: var(--muted); }
+.cost .val { font-size: 18px; font-weight: 700; }
+.cost .sub { font-size: 12px; }
+/* 차트 */
 .chart-card { padding: 14px 16px 10px; }
-.chart-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 18px; }
-.sym { font-size: 13px; color: var(--muted); }
-.price-big { font-size: 34px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
-.price-big small { font-size: 14px; font-weight: 500; color: var(--muted); margin-left: 4px; }
+.chart-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
 .chart-head .ctl { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
-#chart { width: 100%; height: 380px; display: block; margin-top: 10px; touch-action: pan-y; }
+.chart-box { position: relative; }
+#chart { width: 100%; height: 360px; display: block; margin-top: 10px; touch-action: pan-y; }
 #chart text { fill: var(--muted); font-size: 11px; font-family: var(--f-body); }
 .fan-outer { fill: var(--oil-soft); } .fan-inner { fill: var(--oil-mid); }
 .fan-mid { stroke: var(--oil); stroke-width: 1.6; stroke-dasharray: 5 4; fill: none; }
+.fan-edge { stroke: var(--oil); stroke-width: 1; fill: none; opacity: .6; }
+.prev-edge { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 4; fill: none; }
 .pline { stroke: var(--fg); stroke-width: 1.5; fill: none; }
 .parea { fill: url(#pgrad); }
 .gridl { stroke: var(--grid); stroke-width: 1; }
 .xhair { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
-#fanclip rect { animation: pour 1.1s cubic-bezier(.2,.7,.2,1) both; transform-origin: left; }
-@keyframes pour { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-.tip { position: absolute; pointer-events: none; background: var(--panel-2); border: 1px solid var(--line);
-  border-radius: 8px; padding: 6px 9px; font-size: 12px; white-space: nowrap; transform: translate(-50%, -110%); }
-.chart-box { position: relative; }
+.breathe { animation: breathe var(--bt, 5s) ease-in-out infinite; transform-box: view-box; }
+@keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(var(--amp, 1.05)); } }
+.tip { position: absolute; pointer-events: none; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font-size: 12px; white-space: nowrap; transform: translate(-50%, -110%); }
 .chart-foot { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font-size: 12px; padding-top: 6px; }
-.chart-foot i { display: inline-block; width: 18px; height: 8px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
-/* 범위 사다리 */
-.ladder { padding: 14px 16px; display: grid; gap: 12px; align-content: start; }
-.ladder h2, .deck h2 { font-size: 15px; margin: 0; font-weight: 600; }
-.ladder .hint { color: var(--muted); font-size: 12px; margin-top: -6px; }
-.rung { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 10px; padding: 7px 10px;
-  border-radius: 8px; background: var(--panel-2); }
-.rung .q { font-size: 12px; color: var(--muted); }
-.rung .p { font-weight: 600; text-align: right; }
-.rung .bar { height: 6px; border-radius: 3px; background: var(--grid); position: relative; overflow: hidden; }
-.rung .bar span { position: absolute; top: 0; bottom: 0; background: var(--oil); border-radius: 3px; }
-.rung.mid { box-shadow: inset 3px 0 0 var(--oil); }
-.rung.now { background: transparent; border: 1px dashed var(--line); }
-.rung .d { font-size: 11px; color: var(--muted); display: block; text-align: right; font-weight: 400; }
-.score { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 8px; }
-.gauge { height: 10px; background: var(--grid); border-radius: 5px; position: relative; }
-.gauge span { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--ok); }
-.gauge i { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--fg); left: 80%; }
-.score p { margin: 0; font-size: 12.5px; color: var(--muted); }
-.score strong { color: var(--fg); }
-/* 하단 데크 */
-.deck { padding: 0; }
-.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); padding: 0 10px; overflow-x: auto; }
-.tabs button { background: transparent; border: 0; padding: 12px 14px; color: var(--muted); font-size: 14px;
-  border-bottom: 2px solid transparent; white-space: nowrap; }
-.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--oil); }
-.pane { padding: 16px; display: grid; gap: 14px; }
+.sw { display: inline-block; width: 16px; height: 8px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+/* 표·사건·비교 */
+.trio { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; }
+.box { padding: 16px; display: grid; gap: 10px; align-content: start; }
 .tblwrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 13px; }
 th, td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 th:first-child, td:first-child { text-align: left; }
 th { color: var(--muted); font-weight: 500; }
 tr.cur td { background: var(--oil-soft); }
-.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; border: 1px solid currentColor; }
-.pill.ok { color: var(--ok); } .pill.bad { color: var(--bad); } .pill.warn { color: var(--warn); } .pill.mute { color: var(--muted); }
-.note { color: var(--muted); font-size: 12.5px; margin: 0; max-width: 78ch; }
+.events { display: grid; gap: 8px; }
+.ev { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; background: var(--panel-2); border-radius: 10px; padding: 9px 11px; font-size: 13px; }
+.ev .tag { font-size: 11.5px; }
+.ev a { color: inherit; }
+.ev .src { grid-column: 2; font-size: 11.5px; color: var(--muted); overflow-wrap: anywhere; }
+/* 탭 */
+.deck { padding: 0; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); padding: 0 10px; overflow-x: auto; }
+.tabs button { background: transparent; border: 0; padding: 12px 14px; color: var(--muted); font-size: 14px; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--oil); }
+.pane { padding: 16px; display: grid; gap: 14px; }
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.lens { border-radius: 12px; padding: 14px; display: grid; gap: 10px; align-content: start; background: var(--panel-2); }
+.lens.classic { box-shadow: inset 0 3px 0 var(--classic); }
+.lens.keynes { box-shadow: inset 0 3px 0 var(--keynes); }
+.lens p, .lens li { font-size: 13px; margin: 0; }
+.lens ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; }
+.kv span:nth-child(odd) { color: var(--muted); }
+#lensline { width: 100%; height: 150px; display: block; }
+#lensline text { fill: var(--muted); font-size: 11px; font-family: var(--f-body); }
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.pr { background: var(--panel-2); border-radius: 12px; padding: 14px; display: grid; gap: 8px; align-content: start; }
+.pr .who { font-size: 12px; color: var(--muted); }
+.pr .q { font-family: var(--f-display); font-size: 16px; }
+.pr .fig { font-size: 22px; font-weight: 700; }
+.pr p, .pr li { font-size: 13px; margin: 0; }
+.pr ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.heur { font-size: 11.5px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 6px; }
+.trust { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.trust div { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; }
+.trust b { display: block; font-size: 13px; margin-bottom: 2px; }
+footer.hitl { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 12px; }
+@media (max-width: 980px) { .lead, .trio, .duo { grid-template-columns: minmax(0, 1fr); } #chart { height: 290px; } .cost { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .breathe, .caution .dot, #routemap .lane.flow, #routemap .lane.detour { animation: none !important; } }
 /* 해상 경로 */
 .scen { display: flex; flex-wrap: wrap; gap: 6px; }
 .scen button { border: 1px solid var(--line); background: var(--panel-2); border-radius: 999px; padding: 4px 12px; font-size: 13px; }
@@ -153,21 +183,13 @@ tr.cur td { background: var(--oil-soft); }
 .method { display: grid; gap: 10px; max-width: 80ch; }
 .method p, .method li { font-size: 13.5px; margin: 0; }
 .method ul { padding-left: 18px; display: grid; gap: 6px; margin: 0; }
-footer.hitl { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 12px; }
-@media (max-width: 980px) {
-  .hero, .graph-grid { grid-template-columns: minmax(0, 1fr); }
-  #chart { height: 300px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  #fanclip rect, #routemap .lane.flow, #routemap .lane.detour { animation: none; }
-}
+footer.hitl { color: var(--muted); font-size: 12.5px; }
 </style>
 
 <div class="wrap">
   <header class="top">
     <div class="brand"><h1>Nexus G2</h1><span class="sub">대두유 가격 참고 범위</span></div>
     <span class="chip">정산가 기준일 <b id="asof">—</b></span>
-    <span class="chip">방법 <b>기준선 B2(경험 분위)</b></span>
     <span class="spacer"></span>
     <div class="seg" role="group" aria-label="가격 단위">
       <button type="button" id="u-usc" aria-pressed="true">USc/lb</button>
@@ -176,62 +198,96 @@ footer.hitl { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(
     <button type="button" class="chip" id="theme">화면 밝기 전환</button>
   </header>
 
-  <div class="rail" id="rail" aria-label="관련 시장 시세"></div>
-
-  <section class="hero">
-    <div class="card chart-card">
-      <div class="chart-head">
-        <div>
-          <div class="sym">CBOT 대두유 선물 · 근월 정산가 (ZL)</div>
-          <div class="price-big"><span id="last">—</span><small id="unit-lbl">USc/lb</small></div>
-          <div id="chg" class="flat">—</div>
-        </div>
-        <div class="ctl">
-          <div class="seg" role="group" aria-label="표시 기간">
-            <button type="button" data-span="63" aria-pressed="false">3개월</button>
-            <button type="button" data-span="252" aria-pressed="true">1년</button>
-            <button type="button" data-span="1300" aria-pressed="false">5년</button>
-          </div>
-          <div class="seg" role="group" aria-label="예측 지평">
-            <button type="button" data-h="1" aria-pressed="false">1일</button>
-            <button type="button" data-h="5" aria-pressed="false">1주</button>
-            <button type="button" data-h="20" aria-pressed="false">1개월</button>
-            <button type="button" data-h="60" aria-pressed="true">3개월</button>
-          </div>
-        </div>
+  <section class="lead">
+    <div class="card verdict">
+      <span class="k" id="v-k">CBOT 대두유 근월 정산가 · 3개월 뒤 참고 범위(P10~P90)</span>
+      <div class="big" id="v-big">—</div>
+      <div class="now" id="v-now">—</div>
+      <div class="rangebar" id="rangebar" aria-hidden="true"></div>
+      <div class="caution" id="caution"><span class="dot"></span><span id="caution-t">—</span></div>
+    </div>
+    <div class="card calc" aria-label="구매 영향 계산">
+      <h2>구매 영향 미리 보기</h2>
+      <div class="row">
+        <label for="q-vol">물량(MT, 예시)<input id="q-vol" type="number" min="1" step="100" value="1000"></label>
+        <label for="q-h">가격 결정 시점
+          <select id="q-h"><option value="5">1주 뒤</option><option value="20">1개월 뒤</option><option value="60" selected>3개월 뒤</option></select>
+        </label>
+        <label for="q-cur">표시 통화
+          <select id="q-cur"><option value="krw" selected>원화</option><option value="usd">달러</option></select>
+        </label>
       </div>
-      <div class="chart-box"><svg id="chart" role="img" aria-label="정산가 추이와 지평별 참고 범위"></svg><div class="tip" id="tip" hidden></div></div>
-      <div class="chart-foot">
-        <span><i style="background:var(--oil-soft)"></i>P10~P90 참고 범위</span>
-        <span><i style="background:var(--oil-mid)"></i>P25~P75</span>
-        <span><i style="background:transparent;border-top:2px dashed var(--oil);height:0"></i>P50 중앙값</span>
-        <span>범위는 과거 수익률 분포의 요약이며 가격 전망이 아닙니다.</span>
+      <div class="cost" id="cost"></div>
+      <p class="note" id="calc-note"></p>
+    </div>
+  </section>
+
+  <section class="card chart-card">
+    <div class="chart-head">
+      <h2>정산가와 참고 범위</h2>
+      <div class="ctl">
+        <div class="seg" role="group" aria-label="표시 기간">
+          <button type="button" data-span="63" aria-pressed="false">3개월</button>
+          <button type="button" data-span="252" aria-pressed="true">1년</button>
+          <button type="button" data-span="1300" aria-pressed="false">5년</button>
+        </div>
+        <div class="seg" role="group" aria-label="예측 지평">
+          <button type="button" data-h="1" aria-pressed="false">1일</button>
+          <button type="button" data-h="5" aria-pressed="false">1주</button>
+          <button type="button" data-h="20" aria-pressed="false">1개월</button>
+          <button type="button" data-h="60" aria-pressed="true">3개월</button>
+        </div>
       </div>
     </div>
+    <div class="chart-box"><svg id="chart" role="img" aria-label="정산가 추이와 지평별 참고 범위"></svg><div class="tip" id="tip" hidden></div></div>
+    <div class="chart-foot">
+      <span><i class="sw" style="background:var(--oil-soft)"></i>P10~P90</span>
+      <span><i class="sw" style="background:var(--oil-mid)"></i>P25~P75</span>
+      <span><i class="sw" style="height:2px;background:var(--muted)"></i>지난주 같은 방식 범위</span>
+      <span>범위의 숨 쉬는 폭은 최근 변동성 국면에 비례합니다. 범위는 과거 변동의 요약이며 가격 전망이 아닙니다.</span>
+    </div>
+  </section>
 
-    <aside class="card ladder" aria-label="범위 사다리">
-      <h2 id="lad-title">3개월 뒤 참고 범위</h2>
-      <p class="hint" id="lad-hint">최근 250개 구간의 실제 변동을 지금 가격에 적용한 값</p>
-      <div id="rungs" style="display:grid;gap:6px"></div>
-      <div class="score">
-        <h2>이 방식의 과거 성적</h2>
-        <div class="gauge" aria-hidden="true"><span id="g-fill"></span><i title="목표 80%"></i></div>
-        <p id="g-text">—</p>
-      </div>
-    </aside>
+  <section class="trio">
+    <div class="card box">
+      <h2>기간별 참고 범위</h2>
+      <div class="tblwrap"><table id="htbl"></table></div>
+      <p class="note">적중률 = 같은 방식으로 과거에 만든 80% 범위가 실제 정산가를 담은 비율(목표 80%).</p>
+    </div>
+    <div class="card box">
+      <h2>범위에 영향을 줄 수 있는 사건</h2>
+      <p class="note">아래 사건은 범위 숫자에 아직 반영되지 않았습니다. 읽고 판단에 보태는 참고 목록입니다.</p>
+      <div class="events" id="events"></div>
+    </div>
+  </section>
+
+  <section class="card box">
+    <h2>선택지별 결과 비교</h2>
+    <p class="note" id="opt-note">위 계산기의 물량·시점 기준. 판단이 아니라 범위 양 끝에서 각 선택이 어떤 결과가 되는지 보여 줍니다.</p>
+    <div class="tblwrap"><table id="opts"></table></div>
   </section>
 
   <section class="card deck">
     <div class="tabs" role="tablist">
-      <button type="button" role="tab" aria-selected="true" data-tab="card">과거 성적표</button>
-      <button type="button" role="tab" aria-selected="false" data-tab="routes">해상 경로·비상 상황</button>
+      <button type="button" role="tab" aria-selected="true" data-tab="lens2">두 관점: 고전파 · 케인스</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="value">가치 투자 렌즈</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="routes">해상 경로·경보</button>
       <button type="button" role="tab" aria-selected="false" data-tab="graph">인과 지도</button>
-      <button type="button" role="tab" aria-selected="false" data-tab="method">산출 방법·한계</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="card">성적표·방법</button>
     </div>
 
-    <div class="pane" data-pane="card">
-      <p class="note" id="card-note"></p>
-      <div class="tblwrap"><table id="card-tbl"></table></div>
+    <div class="pane" data-pane="lens2">
+      <p class="note">같은 시장을 두 학파의 눈으로 봅니다. 고전파는 공급·비용·대체 관계가 가격을 끌어당기는 자리(기초가치)를, 케인스 관점은 기대·불확실성·시장 지배력 때문에 가격이 그 자리에서 오래 벗어나는 폭을 봅니다. 두 구간이 겹치는 곳과 어긋나는 곳이 판단의 출발점입니다.</p>
+      <svg id="lensline" role="img" aria-label="두 관점의 구간 비교"></svg>
+      <div class="duo">
+        <div class="lens classic" id="lens-c"></div>
+        <div class="lens keynes" id="lens-k"></div>
+      </div>
+    </div>
+
+    <div class="pane" data-pane="value" hidden>
+      <p class="note">버핏·멍거·린치의 투자 원칙을 원자재 구매에 옮긴 점검표입니다. 원칙마다 지금 숫자를 하나씩 붙였습니다. 이 렌즈들은 경험칙이며 과거 성적을 검증한 예측 모델이 아닙니다.</p>
+      <div class="principles" id="principles"></div>
     </div>
 
     <div class="pane" data-pane="routes" hidden>
@@ -253,12 +309,21 @@ footer.hitl { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(
       <p class="note">노드 크기는 연결된 인과 사슬 수, 주황 테두리는 지금 차질이 관측된 해협과 이어진 사슬입니다. 실선은 검증 완료, 점선은 후보 엣지입니다.</p>
     </div>
 
-    <div class="pane" data-pane="method" hidden>
+    <div class="pane" data-pane="card" hidden>
+      <p class="note" id="card-note"></p>
+      <div class="tblwrap"><table id="card-tbl"></table></div>
       <div class="method" id="method"></div>
     </div>
   </section>
 
-  <footer class="hitl">이 화면은 참고용 미리보기입니다. 구매·보류 판단은 담당자 승인 절차를 거치며, 여기 나온 범위로 자동 실행되는 주문은 없습니다. 생성 <span id="gen"></span></footer>
+  <section class="trust" aria-label="신뢰 장치">
+    <div><b>분석과 실행 분리</b>이 화면은 계약·발주·헤지를 바꾸지 않습니다. 결정은 담당자 승인 절차에서 합니다.</div>
+    <div><b>발표 전 정보 차단</b>모든 입력은 실제 공개 시점 이후에만 씁니다.</div>
+    <div><b>성적 공개</b>범위 옆에 과거 적중률을 항상 붙이고, 못 맞힌 기간도 보여 줍니다.</div>
+    <div><b>출처 연결</b>사건·경보는 원문 링크를, 인과 사슬은 근거 문헌을 따라갈 수 있습니다.</div>
+  </section>
+
+  <footer class="hitl">이 화면은 참고용 미리보기입니다. 여기 나온 범위로 자동 실행되는 주문은 없습니다. 생성 <span id="gen"></span></footer>
 </div>
 
 <script>
@@ -267,133 +332,192 @@ const D = /*__G2_DATA__*/null;
   if (!D) { document.querySelector(".wrap").insertAdjacentHTML("afterbegin", "<p class='note'>데이터가 비어 있습니다. g2_preview.py로 생성하세요.</p>"); return; }
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const NS = "http://www.w3.org/2000/svg";
-  const st = { unit: "usc", span: 252, h: 60 };
-  try { const s = JSON.parse(localStorage.getItem("g2prefs") || "{}"); Object.assign(st, s); } catch (e) {}
-  const save = () => { try { localStorage.setItem("g2prefs", JSON.stringify(st)); } catch (e) {} };
-  const conv = v => st.unit === "usc" ? v : v * D.meta.to_usd_mt;
+  const st = { unit: "usc", span: 252, h: 60, vol: 1000, cur: "krw" };
+  try { Object.assign(st, JSON.parse(localStorage.getItem("g2prefs2") || "{}")); } catch (e) {}
+  const save = () => { try { localStorage.setItem("g2prefs2", JSON.stringify(st)); } catch (e) {} };
+  const K = D.meta.to_usd_mt;
+  const conv = v => st.unit === "usc" ? v : v * K;
   const fmt = v => st.unit === "usc" ? conv(v).toFixed(2) : Math.round(conv(v)).toLocaleString("ko-KR");
   const ulbl = () => st.unit === "usc" ? "USc/lb" : "$/MT";
   const cls = c => c > 0 ? "up" : c < 0 ? "down" : "flat";
-  const sign = c => (c > 0 ? "+" : "") + c.toFixed(2) + "%";
+  const sign = c => (c > 0 ? "+" : "") + c.toFixed(1) + "%";
   const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
   const P = D.price.map(([d, v]) => ({ d: new Date(d + "T00:00:00"), s: d, v }));
   const last = P[P.length - 1];
-
+  const KY = D.lenses.keynesian, CL = D.lenses.classical, VL = D.lenses.value;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const amp = 1 + Math.min(0.12, 0.03 + Math.max(0, KY.ratio - 0.8) * 0.15);   // 변동성 국면이 높을수록 크게 숨 쉼
+  const HL = { 1: "1일", 5: "1주", 20: "1개월", 60: "3개월" };
   $("#asof").textContent = D.meta.as_of; $("#gen").textContent = D.meta.generated;
 
-  // 시세 레일
-  $("#rail").innerHTML = D.tickers.map(t => {
-    const mn = Math.min(...t.spark), mx = Math.max(...t.spark), w = 150, h = 22;
-    const pts = t.spark.map((v, i) => `${(i / (t.spark.length - 1) * w).toFixed(1)},${(h - 2 - (v - mn) / ((mx - mn) || 1) * (h - 4)).toFixed(1)}`).join(" ");
-    return `<div class="tick" title="${t.date} 기준 · ${t.unit}"><span class="n">${t.name}</span><span class="v">${t.last.toLocaleString("ko-KR")}</span>`
-      + `<span class="c ${cls(t.chg)}">${sign(t.chg)}</span><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="currentColor" class="${cls(t.chg)}" stroke-width="1.4" points="${pts}"/></svg></div>`;
-  }).join("") || `<span class="note">관련 시장 시세 자료 없음</span>`;
-
-  // 영업일 더하기
   const addBiz = (d, n) => { const x = new Date(d); let k = 0; while (k < n) { x.setDate(x.getDate() + 1); const w = x.getDay(); if (w && w !== 6) k++; } return x; };
   const iso = d => d.toISOString().slice(0, 10);
+  const hit80 = h => { const r = ((D.card.horizons || {})[String(h)] || []).find(x => String(x.model).startsWith("B2")); return r && r.cov80 != null ? r.cov80 * 100 : null; };
+
+  function drawVerdict() {
+    const b = D.bands[String(st.h)].q, pb = (D.prev_bands[String(st.h)] || {}).q;
+    $("#v-k").textContent = `CBOT 대두유 근월 정산가 · ${HL[st.h]} 뒤 참고 범위(P10~P90, ${ulbl()})`;
+    $("#v-big").innerHTML = `<span>${fmt(b.p10)}</span> ~ <span>${fmt(b.p90)}</span>`;
+    const pv = P[P.length - 2], c = (last.v / pv.v - 1) * 100;
+    $("#v-now").innerHTML = `지금 ${fmt(last.v)} <span class="${cls(c)}">(${sign(c)})</span> · 중앙값 ${fmt(b.p50)} · 기준일 ${last.s}`;
+    // 범위 막대
+    const lo = Math.min(b.p10, last.v) * .985, hi = Math.max(b.p90, last.v) * 1.015, pos = v => ((v - lo) / (hi - lo) * 100).toFixed(2) + "%";
+    $("#rangebar").innerHTML = `<div class="rb-track"></div>
+      <div class="rb-outer ${reduce ? "" : "breathe"}" style="left:${pos(b.p10)};width:calc(${pos(b.p90)} - ${pos(b.p10)});--amp:${amp};--bt:${(6 / amp).toFixed(1)}s"></div>
+      <div class="rb-inner" style="left:${pos(b.p25)};width:calc(${pos(b.p75)} - ${pos(b.p25)})"></div>
+      <div class="rb-mark" style="left:${pos(last.v)}"></div>
+      <span class="rb-lbl t" style="left:${pos(last.v)}">지금</span>
+      <span class="rb-lbl" style="left:${pos(b.p10)}">P10</span><span class="rb-lbl" style="left:${pos(b.p50)}">P50</span><span class="rb-lbl" style="left:${pos(b.p90)}">P90</span>`;
+    // 신중 신호(문구는 사실만)
+    const w = (b.p90 - b.p10) / last.v * 100, pw = pb ? (pb.p90 - pb.p10) / (P[P.length - 6].v) * 100 : null, h80 = hit80(st.h);
+    const parts = [`범위 폭이 지금 가격의 ${w.toFixed(0)}%입니다`];
+    if (pw != null) parts.push(`지난주(${D.prev_as_of})보다 ${w >= pw ? "넓어졌습니다" : "좁아졌습니다"}(${pw.toFixed(1)}% → ${w.toFixed(1)}%)`);
+    parts.push(`최근 20일 변동성은 1년 평균의 ${KY.ratio.toFixed(2)}배`);
+    if (h80 != null) parts.push(`이 방식의 ${HL[st.h]} 80% 범위 적중률은 ${h80.toFixed(1)}%${h80 < 75 ? "로 목표(80%)에 못 미쳐 실제 변동이 범위를 벗어난 적이 잦습니다" : ""}`);
+    $("#caution-t").textContent = parts.join(" · ") + ".";
+  }
+
+  function drawCalc() {
+    const b = D.bands[String(st.h)].q, vol = Math.max(1, +st.vol || 1), fx = D.fx_krw ? D.fx_krw.value : null;
+    const money = usd => st.cur === "krw" && fx ? (usd * fx / 1e8).toFixed(2) + "억 원" : "$" + Math.round(usd).toLocaleString("ko-KR");
+    const usd = v => v * K * vol, now = usd(last.v);
+    const days = st.h, cells = [["낮은 쪽(P10)", b.p10], ["지금 가격", last.v], ["높은 쪽(P90)", b.p90]];
+    $("#cost").innerHTML = cells.map(([lab, v]) => { const d = usd(v) - now;
+      return `<div><span class="lab">${lab}</span><span class="val">${money(usd(v))}</span><span class="sub ${cls(d)}">${v === last.v ? "기준" : (d > 0 ? "+" : "") + money(d)}</span></div>`; }).join("");
+    $("#calc-note").textContent = `${vol.toLocaleString("ko-KR")}MT × CBOT 정산가 환산(1 USc/lb = ${K} $/MT), 가격 결정까지 약 ${days}거래일(${iso(addBiz(last.d, days))} 무렵). `
+      + (fx ? `원화는 ${D.fx_krw.date} 원/달러 ${fx.toLocaleString("ko-KR")}원 고정 — 환율 변동은 넣지 않았습니다. ` : "")
+      + "basis·운임·관세가 빠진 선물 기준 금액이라 실제 도착가와 다릅니다.";
+    drawOptions(b, vol, money, usd, now);
+  }
+
+  function drawOptions(b, vol, money, usd, now) {
+    const lo = usd(b.p10) - now, hi = usd(b.p90) - now;
+    $("#opts").innerHTML = `<thead><tr><th>선택지</th><th>가격이 P90까지 오르면</th><th>가격이 P10까지 내리면</th><th>추가 비용·자금 부담</th><th>확인할 것</th></tr></thead><tbody>
+      <tr><td>가격 미고정(결정일 시가)</td><td class="up">+${money(hi)}</td><td class="down">${money(lo)}</td><td>없음</td><td>결정일까지 시세 노출 유지</td></tr>
+      <tr><td>지금 가격 기준으로 고정</td><td>0 (상승분 회피)</td><td>0 (하락분 포기)</td><td>공급사 고정가 프리미엄·선급 조건(미반영)</td><td>견적의 고정 조건·인도 시점</td></tr>
+      <tr><td>선물로 헤지</td><td>선물 이익이 상승분 상쇄</td><td>선물 손실이 하락분 상쇄</td><td>증거금·수수료</td><td>사내 승인 후 중개사 견적</td></tr></tbody>`;
+  }
 
   function drawChart() {
     const svg = $("#chart"); svg.innerHTML = "";
-    const W = svg.clientWidth || 800, H = svg.clientHeight || 380, m = { l: 8, r: 64, t: 12, b: 24 };
+    const W = svg.clientWidth || 800, H = svg.clientHeight || 360, m = { l: 8, r: 64, t: 14, b: 24 };
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-    const view = P.slice(-st.span), b = D.bands[String(st.h)].q;
-    const end = addBiz(last.d, st.h);
-    const t0 = view[0].d.getTime(), t1 = end.getTime();
-    const vals = view.map(p => p.v).concat([b.p10, b.p90]);
-    let lo = Math.min(...vals), hi = Math.max(...vals); const pad = (hi - lo) * .06; lo -= pad; hi += pad;
-    const x = d => m.l + (d.getTime() - t0) / (t1 - t0) * (W - m.l - m.r);
-    const y = v => m.t + (hi - v) / (hi - lo) * (H - m.t - m.b);
-    const defs = el("defs", {}, svg);
-    const g = el("linearGradient", { id: "pgrad", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
-    el("stop", { offset: "0%", "stop-color": "currentColor", "stop-opacity": ".18" }, g);
+    const view = P.slice(-st.span), b = D.bands[String(st.h)].q, pb = (D.prev_bands[String(st.h)] || {}).q;
+    const end = addBiz(last.d, st.h), t0 = view[0].d.getTime(), t1 = end.getTime();
+    const vals = view.map(p => p.v).concat([b.p10 * .97, b.p90 * 1.03]);
+    let lo = Math.min(...vals), hi = Math.max(...vals); const pad = (hi - lo) * .05; lo -= pad; hi += pad;
+    const x = d => m.l + (d.getTime() - t0) / (t1 - t0) * (W - m.l - m.r), y = v => m.t + (hi - v) / (hi - lo) * (H - m.t - m.b);
+    const g = el("linearGradient", { id: "pgrad", x1: 0, y1: 0, x2: 0, y2: 1 }, el("defs", {}, svg));
+    el("stop", { offset: "0%", "stop-color": "currentColor", "stop-opacity": ".16" }, g);
     el("stop", { offset: "100%", "stop-color": "currentColor", "stop-opacity": "0" }, g);
-    const cp = el("clipPath", { id: "fanclip" }, defs);
-    el("rect", { x: x(last.d), y: 0, width: W - x(last.d), height: H }, cp);
-    // 격자·축
-    const ticks = 5;
-    for (let i = 0; i <= ticks; i++) {
-      const v = lo + (hi - lo) * i / ticks, yy = y(v);
-      el("line", { x1: m.l, x2: W - m.r, y1: yy, y2: yy, class: "gridl" }, svg);
-      const tx = el("text", { x: W - m.r + 6, y: yy + 4 }, svg); tx.textContent = fmt(v);
-    }
-    const months = []; let prev = "";
-    view.forEach(p => { const k = p.s.slice(0, 7); if (k !== prev) { months.push(p); prev = k; } });
+    for (let i = 0; i <= 5; i++) { const v = lo + (hi - lo) * i / 5, yy = y(v);
+      el("line", { x1: m.l, x2: W - m.r, y1: yy, y2: yy, class: "gridl" }, svg); const tx = el("text", { x: W - m.r + 6, y: yy + 4 }, svg); tx.textContent = fmt(v); }
+    const months = []; let prev = ""; view.forEach(p => { const k = p.s.slice(0, 7); if (k !== prev) { months.push(p); prev = k; } });
     const step = Math.ceil(months.length / 7);
     months.forEach((p, i) => { if (i % step) return; const tx = el("text", { x: x(p.d), y: H - 6, "text-anchor": "middle" }, svg); tx.textContent = p.s.slice(2, 7).replace("-", "."); });
-    // 가격 면·선
     const line = view.map((p, i) => `${i ? "L" : "M"}${x(p.d).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
     el("path", { d: `${line}L${x(last.d)},${H - m.b}L${x(view[0].d)},${H - m.b}Z`, class: "parea", style: "color:var(--fg)" }, svg);
     el("path", { d: line, class: "pline" }, svg);
-    // 범위 부채꼴
-    const fan = el("g", { "clip-path": "url(#fanclip)" }, svg);
     const x0 = x(last.d), x1 = x(end), y0 = y(last.v);
+    if (pb) { const pe = addBiz(P[P.length - 6].d, st.h), xp = x(pe), xs = x(P[P.length - 6].d), ys = y(P[P.length - 6].v);
+      el("path", { d: `M${xs},${ys}L${xp},${y(pb.p90)}M${xs},${ys}L${xp},${y(pb.p10)}`, class: "prev-edge" }, svg); }
+    const fan = el("g", { class: reduce ? "" : "breathe", style: `transform-origin:${x0}px ${y0}px;--amp:${amp};--bt:${(6 / amp).toFixed(1)}s` }, svg);
     el("path", { d: `M${x0},${y0}L${x1},${y(b.p90)}L${x1},${y(b.p10)}Z`, class: "fan-outer" }, fan);
     el("path", { d: `M${x0},${y0}L${x1},${y(b.p75)}L${x1},${y(b.p25)}Z`, class: "fan-inner" }, fan);
-    el("path", { d: `M${x0},${y0}L${x1},${y(b.p50)}`, class: "fan-mid" }, fan);
-    el("line", { x1: x0, x2: x0, y1: m.t, y2: H - m.b, class: "xhair", opacity: .5 }, svg);
+    el("path", { d: `M${x0},${y0}L${x1},${y(b.p90)}M${x0},${y0}L${x1},${y(b.p10)}`, class: "fan-edge" }, fan);
+    el("path", { d: `M${x0},${y0}L${x1},${y(b.p50)}`, class: "fan-mid" }, svg);
     el("circle", { cx: x0, cy: y0, r: 4, fill: "var(--oil)" }, svg);
-    [["p90", "P90"], ["p50", "P50"], ["p10", "P10"]].forEach(([k, n]) => {
-      const tx = el("text", { x: x1 - 4, y: y(b[k]) - 5, "text-anchor": "end", style: "fill:var(--oil);font-weight:600" }, svg);
-      tx.textContent = `${n} ${fmt(b[k])}`;
-    });
-    const et = el("text", { x: x1, y: m.t + 10, "text-anchor": "end" }, svg); et.textContent = `${iso(end)} (${D.bands[String(st.h)].label})`;
-    // 십자선
-    const vx = el("line", { class: "xhair", y1: m.t, y2: H - m.b, visibility: "hidden" }, svg);
-    const dot = el("circle", { r: 3.5, fill: "var(--fg)", visibility: "hidden" }, svg);
-    const tip = $("#tip");
-    const move = ev => {
-      const r = svg.getBoundingClientRect(), px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
-      const tt = t0 + (px - m.l) / (W - m.l - m.r) * (t1 - t0);
-      if (tt > last.d.getTime()) {
-        vx.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden");
-        tip.hidden = false; tip.style.left = px + "px"; tip.style.top = y(b.p50) + "px";
-        tip.innerHTML = `${D.bands[String(st.h)].label} 뒤 참고 범위<br>P10 ${fmt(b.p10)} · P50 ${fmt(b.p50)} · P90 ${fmt(b.p90)}`;
-        return;
-      }
+    [["p90", "P90"], ["p50", "P50"], ["p10", "P10"]].forEach(([k, n]) => { const t = el("text", { x: x1 - 4, y: y(b[k]) + (k === "p90" ? -6 : k === "p10" ? 14 : -5), "text-anchor": "end", style: "fill:var(--oil);font-weight:600" }, svg); t.textContent = `${n} ${fmt(b[k])}`; });
+    const et = el("text", { x: x1, y: m.t + 2, "text-anchor": "end" }, svg); et.textContent = `${iso(end)} (${HL[st.h]})`;
+    const vx = el("line", { class: "xhair", y1: m.t, y2: H - m.b, visibility: "hidden" }, svg), dot = el("circle", { r: 3.5, fill: "var(--fg)", visibility: "hidden" }, svg), tip = $("#tip");
+    const move = ev => { const r = svg.getBoundingClientRect(), px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left, tt = t0 + (px - m.l) / (W - m.l - m.r) * (t1 - t0);
+      if (tt > last.d.getTime()) { vx.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); tip.hidden = false; tip.style.left = px + "px"; tip.style.top = y(b.p50) + "px";
+        tip.innerHTML = `${HL[st.h]} 뒤 참고 범위<br>P10 ${fmt(b.p10)} · P50 ${fmt(b.p50)} · P90 ${fmt(b.p90)}`; return; }
       let k = 0, best = Infinity; view.forEach((p, i) => { const dd = Math.abs(p.d.getTime() - tt); if (dd < best) { best = dd; k = i; } });
-      const p = view[k], xx = x(p.d), yy = y(p.v);
-      vx.setAttribute("x1", xx); vx.setAttribute("x2", xx); vx.setAttribute("visibility", "visible");
-      dot.setAttribute("cx", xx); dot.setAttribute("cy", yy); dot.setAttribute("visibility", "visible");
-      tip.hidden = false; tip.style.left = xx + "px"; tip.style.top = yy + "px";
-      const pv = view[k - 1]; const c = pv ? (p.v / pv.v - 1) * 100 : 0;
-      tip.innerHTML = `${p.s} · <b>${fmt(p.v)}</b> <span class="${cls(c)}">${sign(c)}</span>`;
-    };
-    svg.onmousemove = move; svg.ontouchmove = move;
-    svg.onmouseleave = () => { tip.hidden = true; vx.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); };
+      const p = view[k], xx = x(p.d), yy = y(p.v), pv = view[k - 1], c = pv ? (p.v / pv.v - 1) * 100 : 0;
+      vx.setAttribute("x1", xx); vx.setAttribute("x2", xx); vx.setAttribute("visibility", "visible"); dot.setAttribute("cx", xx); dot.setAttribute("cy", yy); dot.setAttribute("visibility", "visible");
+      tip.hidden = false; tip.style.left = xx + "px"; tip.style.top = yy + "px"; tip.innerHTML = `${p.s} · <b>${fmt(p.v)}</b> <span class="${cls(c)}">${sign(c)}</span>`; };
+    svg.onmousemove = move; svg.ontouchmove = move; svg.onmouseleave = () => { tip.hidden = true; vx.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); };
   }
 
-  function drawHead() {
-    $("#last").textContent = fmt(last.v); $("#unit-lbl").textContent = ulbl();
-    const pv = P[P.length - 2], c = (last.v / pv.v - 1) * 100, w = P[P.length - 6], cw = (last.v / w.v - 1) * 100;
-    const ch = $("#chg"); ch.className = cls(c);
-    ch.innerHTML = `전일 대비 ${sign(c)} · <span class="${cls(cw)}">1주 ${sign(cw)}</span> <span class="flat">(${last.s})</span>`;
+  function drawHorizonTable() {
+    let h = `<thead><tr><th>기간</th><th>P10</th><th>P50</th><th>P90</th><th>지난주 대비 중앙값</th><th>적중률(80% 범위)</th></tr></thead><tbody>`;
+    [1, 5, 20, 60].forEach(k => { const b = D.bands[String(k)].q, pb = (D.prev_bands[String(k)] || {}).q, c = pb ? (b.p50 / pb.p50 - 1) * 100 : null, hr = hit80(k);
+      h += `<tr class="${k === st.h ? "cur" : ""}"><td>${HL[k]} 뒤</td><td>${fmt(b.p10)}</td><td>${fmt(b.p50)}</td><td>${fmt(b.p90)}</td>`
+        + `<td class="${c == null ? "flat" : cls(c)}">${c == null ? "—" : sign(c)}</td>`
+        + `<td>${hr == null ? '<span class="pill mute">미산출</span>' : `<span class="pill ${hr >= 75 ? "ok" : hr >= 65 ? "warn" : "bad"}">${hr.toFixed(1)}%</span>`}</td></tr>`; });
+    $("#htbl").innerHTML = h + "</tbody>";
   }
 
-  function drawLadder() {
-    const bd = D.bands[String(st.h)], b = bd.q;
-    $("#lad-title").textContent = `${bd.label} 뒤 참고 범위`;
-    $("#lad-hint").textContent = `최근 ${bd.n}개 ${bd.label} 구간의 실제 변동을 지금 정산가에 적용 (${ulbl()})`;
-    const span = b.p90 - b.p10 || 1;
-    const rows = [["P90", b.p90], ["P75", b.p75], ["P50", b.p50, "mid"], ["지금", last.v, "now"], ["P25", b.p25], ["P10", b.p10]]
-      .sort((a, c) => c[1] - a[1]);
-    $("#rungs").innerHTML = rows.map(([q, v, k]) => {
-      const pct = (v / last.v - 1) * 100, left = Math.max(0, Math.min(100, (v - b.p10) / span * 100));
-      return `<div class="rung ${k || ""}"><span class="q">${q}</span><div class="bar"><span style="left:${Math.min(left, 50)}%;right:${100 - Math.max(left, 50)}%"></span></div>`
-        + `<span class="p">${fmt(v)}${k === "now" ? "" : `<span class="d ${cls(pct)}">${sign(pct)}</span>`}</span></div>`;
-    }).join("");
-    const rows2 = (D.card.horizons || {})[String(st.h)] || [];
-    const b2 = rows2.find(r => String(r.model).startsWith("B2"));
-    if (b2 && b2.cov80 != null) {
-      const v = b2.cov80 * 100, f = $("#g-fill");
-      f.style.width = Math.min(100, v) + "%"; f.style.background = v >= 75 ? "var(--ok)" : v >= 65 ? "var(--warn)" : "var(--bad)";
-      $("#g-text").innerHTML = `과거 ${b2.n.toLocaleString("ko-KR")}회 중 <strong>${v.toFixed(1)}%</strong>가 P10~P90 안에 들어왔습니다(목표 80%). `
-        + `최근 반년 점검 구간(lockbox)에서는 ${(b2.lock_cov80 * 100).toFixed(1)}%.`;
-    } else {
-      $("#g-fill").style.width = "0"; $("#g-text").textContent = `${bd.label} 지평은 아직 과거 성적을 계산하지 않았습니다(백테스트 지평은 1주·1개월·3개월).`;
-    }
+  function drawEvents() {
+    const R = D.routes || {}, out = [], KO2 = { HORMUZ: "호르무즈", RED_SEA: "홍해·아덴만", BLACK_SEA: "흑해", MALACCA: "말라카", TAIWAN: "대만해협", WEST_AFRICA: "기니만", OTHER: "기타 해역" };
+    Object.entries(R.status || {}).filter(([, s]) => s.state === "disrupted").forEach(([k, s]) =>
+      out.push({ tag: ["bad", "물류"], t: `${k === "HORMUZ" ? "호르무즈" : k === "BAB_EL_MANDEB" ? "바브엘만데브" : k} 탱커 통과 ${s.change_pct}% (평시 대비, PortWatch ${R.as_of})`, src: "해상 경로 탭에서 우회로·과거 선례 확인" }));
+    Object.entries(R.alerts || {}).sort((a, b) => b[1].count - a[1].count).slice(0, 3).forEach(([reg, a]) => {
+      const it = (a.items[0] || "").match(/^(\[[^\]]+\]) (.*?) \(([^)]*)\) (https?:\S+)$/);
+      out.push({ tag: ["warn", "경보"], t: `${KO2[reg] || reg} 해사 경보 보도 ${a.count}건(최근 14일, 마지막 ${a.last})`,
+        src: it ? `<a href="${it[4]}" target="_blank" rel="noopener">${it[1]} ${it[2]}</a> · ${it[3]}` : "" }); });
+    const hot = new Set(D.graph.links.filter(l => l.hot).map(l => l.edge));
+    D.graph.edges.filter(e => hot.has(e.id)).slice(0, 2).forEach(e => out.push({ tag: [e.dir === "UP" ? "bad" : "ok", e.dir === "UP" ? "상승 요인" : "하락 요인"], t: e.label, src: `인과 사슬 ${e.id} · ${e.status === "validated" ? "검증" : "후보"}` }));
+    $("#events").innerHTML = out.map(o => `<div class="ev"><span class="pill ${o.tag[0]} tag">${o.tag[1]}</span><span>${o.t}</span>${o.src ? `<span class="src">${o.src}</span>` : ""}</div>`).join("") || '<p class="note">표시할 사건 없음</p>';
   }
 
+  function drawLenses() {
+    const b = D.bands["60"].q, ks = KY.scaled["60"], z = CL.zone;
+    // 숫자선: 고전파 기초가치 구간 vs 케인스 범위 vs 기준선 범위 vs 지금
+    const svg = $("#lensline"); svg.innerHTML = "";
+    const W = svg.clientWidth || 800, H = 150, m = 40; svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const all = [b.p10, b.p90, ks.p10, ks.p90, last.v].concat(z || []), lo = Math.min(...all) * .97, hi = Math.max(...all) * 1.03;
+    const x = v => m + (v - lo) / (hi - lo) * (W - 2 * m);
+    const rows = [["고전파 기초가치(등가 P25~P75)", z ? [z[0], z[2], z[1]] : null, "var(--classic)", 30], ["케인스 · 불확실성 조정 3개월", [ks.p10, ks.p90, ks.p50], "var(--keynes)", 70], ["기준선 3개월(P10~P90)", [b.p10, b.p90, b.p50], "var(--oil)", 110]];
+    rows.forEach(([lab, r, c, yy]) => { const t = el("text", { x: m, y: yy - 9 }, svg); t.textContent = lab; if (!r) return;
+      el("rect", { x: x(r[0]), y: yy - 4, width: Math.max(2, x(r[1]) - x(r[0])), height: 8, rx: 4, fill: c, opacity: .35 }, svg);
+      el("rect", { x: x(r[2]) - 1, y: yy - 7, width: 2, height: 14, fill: c }, svg);
+      const a = el("text", { x: x(r[0]), y: yy + 18, "text-anchor": "middle" }, svg); a.textContent = fmt(r[0]);
+      const bb = el("text", { x: x(r[1]), y: yy + 18, "text-anchor": "middle" }, svg); bb.textContent = fmt(r[1]); });
+    el("line", { x1: x(last.v), x2: x(last.v), y1: 14, y2: H - 8, stroke: "var(--fg)", "stroke-dasharray": "3 3" }, svg);
+    const nt = el("text", { x: x(last.v) + 4, y: 12, style: "fill:var(--fg);font-weight:600" }, svg); nt.textContent = `지금 ${fmt(last.v)}`;
+
+    const par = CL.parities.map(p => `<li><b>${p.name}</b>: ${fmt(p.implied[0])} ~ ${fmt(p.implied[2])} (중앙 ${fmt(p.implied[1])}) — ${p.basis}, 지금 차이 ${p.now_gap}${p.gap_unit}${p.half_life_m ? `, 벌어진 차이가 절반으로 줄어드는 데 약 ${p.half_life_m}개월` : ""}${p.caveat ? ` <span class="note">(${p.caveat})</span>` : ""}</li>`).join("");
+    $("#lens-c").innerHTML = `<h3>고전파 — 공급·비용·대체가 끌어당기는 자리</h3>
+      <p>가격은 길게 보면 생산비와 대체재 가격에 맞춰진다는 관점입니다. 대두유를 팜유·난방유·대두박과의 오랜 상대가격으로 다시 계산해 '기초가치 구간'을 만들었습니다.</p>
+      <ul>${par}</ul>
+      <div class="kv"><span>세 등가의 중앙 구간</span><span>${z ? `${fmt(z[0])} ~ ${fmt(z[2])} (중앙 ${fmt(z[1])})` : "산출 불가"}</span>
+      <span>지금 가격 위치</span><span>${VL.gap_to_value == null ? "—" : `중앙보다 ${VL.gap_to_value > 0 ? "+" : ""}${VL.gap_to_value}%`}</span></div>
+      <p class="note">한계: 상대가격이 과거 3년 분포로 돌아간다는 가정이며, 2020년 이후 대두유–팜유 연동이 약해진 구조 변화(바이오연료 수요)가 있어 평균 회귀를 단정하지 않습니다.</p>`;
+    const pos = KY.positioning;
+    $("#lens-k").innerHTML = `<h3>케인스 — 기대·불확실성·시장 지배력이 만드는 이탈 폭</h3>
+      <p>단기 가격은 기대와 불확실성, 정책 수요, 소수 대형 사업자의 가격 결정력 때문에 기초가치에서 오래 벗어날 수 있다는 관점입니다.</p>
+      <div class="kv"><span>변동성 국면</span><span>최근 20일 ${KY.rv20}% / 1년 ${KY.rv250}% (연율) → 범위 폭 ${KY.ratio.toFixed(2)}배로 조정</span>
+      <span>조정 후 1개월</span><span>${fmt(KY.scaled["20"].p10)} ~ ${fmt(KY.scaled["20"].p90)}</span>
+      <span>조정 후 3개월</span><span>${fmt(ks.p10)} ~ ${fmt(ks.p90)}</span>
+      <span>투기 자금 포지션</span><span>${pos ? `관리 자금 순매수 ${pos.value}%(미결제약정 대비) — 최근 5년 중 ${pos.pctile}백분위(${pos.date})` : "자료 없음"}</span>
+      <span>시장 집중도</span><span>대두 수출 상위 4사 약 ${KY.cr4}% — 과점이지만 선물 가격은 거래소 전체가 정함</span></div>
+      <p class="note">과점의 힘은 CBOT 선물보다 원산지 프리미엄·basis·도착가(관세청 CIF − CBOT 잔차)에 먼저 나타납니다. 그래서 이 관점은 G2 범위 자체보다 도착가 층의 해석에 붙입니다.</p>`;
+  }
+
+  function drawPrinciples() {
+    const z = CL.zone, s = VL.stress_60d, stu = VL.stu;
+    const ups = D.graph.edges.filter(e => e.dir === "UP" && e.status === "validated").slice(0, 3), dns = D.graph.edges.filter(e => e.dir === "DOWN").slice(0, 2);
+    const cards = [
+      { who: "워런 버핏", q: "가격은 지불하는 것, 가치는 얻는 것", fig: VL.gap_to_value == null ? "—" : `${VL.gap_to_value > 0 ? "+" : ""}${VL.gap_to_value}%`,
+        body: `<p>지금 가격이 고전파 기초가치 중앙(${z ? fmt(z[1]) : "—"})에서 떨어진 거리입니다. 안전 마진의 원자재 판: 가격이 기초가치 구간 아래쪽(${z ? fmt(z[0]) : "—"})에 가까울수록 오른쪽 꼬리(급등)에 대한 여유가 큽니다.</p>` },
+      { who: "찰리 멍거", q: "뒤집어 생각하라 — 무엇이 나를 망가뜨리는가", fig: `${fmt(s[0])} ~ ${fmt(s[1])}`,
+        body: `<p>2010년 이후 60거래일 변화의 하위·상위 1%를 지금 가격에 적용한 극단 범위입니다. 기준선 P10~P90 밖에서 일이 벌어지는 조건:</p><ul>${ups.map(e => `<li>오름 쪽: ${e.label}</li>`).join("")}${dns.map(e => `<li>내림 쪽: ${e.label}</li>`).join("")}</ul>` },
+      { who: "피터 린치", q: "무엇을 가졌는지 알라 — 경기순환주는 재고를 보라", fig: stu ? `재고율 ${stu.value}%` : "—",
+        body: `<p>세계 대두유 재고사용비율 ${stu ? `${stu.value}%(${stu.date} 발표 기준, 역사 ${stu.pctile}백분위)` : "자료 없음"} · 가격은 5년 범위의 ${VL.price_pctile_5y}백분위. ${VL.cycle}.</p>` },
+      { who: "능력 범위(버핏·멍거)", q: "아는 것과 모르는 것을 구분하라", fig: "측정 / 미측정",
+        body: `<ul><li>측정: 정산가·대체유·원유·운임(BDI)·환율·재고율·해협 통과·경보 보도·투기 포지션</li><li>미측정: 식물성유지 탱커 운임(BCAA), 아시아 CFR basis 호가, 실시간 선박 위치 — 이 영역의 위험은 범위에 담기지 않습니다</li></ul>` },
+    ];
+    $("#principles").innerHTML = cards.map(c => `<div class="pr"><span class="who">${c.who}</span><span class="q">${c.q}</span><span class="fig">${c.fig}</span>${c.body}<span class="heur">경험칙 — 과거 성적 검증 전, 판단 보조용</span></div>`).join("");
+  }
+  function alertHtml(c) {
+    const A = (D.routes || {}).alerts || {}, aff = new Set(c.affected), rows = Object.values(A).filter(a => a.straits.some(s => aff.has(s)));
+    if (!rows.length) return "";
+    const items = rows.flatMap(a => a.items).slice(0, 4).map(t => { const m = t.match(/^(\[[^\]]+\]) (.*?) \(([^)]*)\) (https?:\S+)$/);
+      return m ? `<li><a href="${m[4]}" target="_blank" rel="noopener">${m[1]} ${m[2]}</a> <span class="note">${m[3]}</span></li>` : `<li>${t}</li>`; }).join("");
+    return `<h3>최근 14일 해사 경보 보도 ${rows.reduce((s, a) => s + a.count, 0)}건</h3><ul>${items}</ul><p class="note">UKMTO·JMIC·MARAD 명의 보도를 뉴스 피드로 모은 것 — 보도 빈도이지 통항 차질의 측정은 아닙니다.</p>`;
+  }
   function drawCard() {
     const c = D.card; if (!c.horizons) { $("#card-tbl").innerHTML = "<tr><td>성적표 자료 없음</td></tr>"; return; }
     $("#card-note").textContent = `평가 기간 ${c.window[0]}~${c.window[1]}, 마지막 반년(${c.lockbox[0]}~${c.lockbox[1]})은 손대지 않은 점검 구간입니다. 80% 범위가 실제 값을 담은 비율이 80%에 가까울수록 정직한 범위입니다. 같은 방식이라도 지평이 길수록 맞힌 비율이 떨어집니다.`;
@@ -474,7 +598,7 @@ const D = /*__G2_DATA__*/null;
     } else {
       const imp = c.route_impacts.length ? c.route_impacts.map(i => `<li>${i.name}: ${i.detours.length ? i.detours.map(d => `${d.name} +${d.extra_days[0]}~${d.extra_days[1]}일${d.via_disrupted_now.length ? ` <span class="pill bad">우회로도 차질</span>` : ""}`).join(" / ") : "가용 우회로 없음(대기 또는 공급원 전환)"}</li>`).join("") : "<li>한국향 대두유 항로의 물리적 우회 없음</li>";
       const pre = c.precedents.map(p => `<li><b>${p.name}</b> (${p.event[0]}~${p.event[1]}): ${Object.entries(p.changes).map(([k, v]) => `${KO[k] || k} ${v == null ? "—" : (v > 0 ? "+" : "") + v + "%"}`).join(" · ")}</li>`).join("");
-      side.innerHTML = `<h3>${c.name}${c.active_now.length ? ' <span class="pill bad">현재 관측</span>' : ""}</h3><p class="eff">${c.lane_effect}</p><h3>영향 경로·예상 추가 항해일</h3><ul>${imp}</ul><h3>과거 선례 — 탱커 통과 척수 변화(실측)</h3><ul>${pre}</ul>`;
+      side.innerHTML = `<h3>${c.name}${c.active_now.length ? ' <span class="pill bad">현재 관측</span>' : ""}</h3><p class="eff">${c.lane_effect}</p><h3>영향 경로·예상 추가 항해일</h3><ul>${imp}</ul><h3>과거 선례 — 탱커 통과 척수 변화(실측)</h3><ul>${pre}</ul>` + alertHtml(c);
     }
   }
 
@@ -546,40 +670,38 @@ const D = /*__G2_DATA__*/null;
   }
 
   function drawMethod() {
-    $("#method").innerHTML = `
-      <p><b>범위는 어떻게 만드나.</b> 최근 250개 구간에서 실제로 나타난 h거래일 가격 변화율을 모아 하위 10%·25%·50%·75%·90% 값을 구하고, 지금 정산가에 그대로 곱합니다. 미래를 추정하는 모델이 아니라 "최근 1년의 변동 폭을 지금에 대어 본 것"입니다.</p>
-      <ul>
-        <li>가격 기준: CBOT 대두유 근월물 일일 정산가(USc/lb). $/MT 환산은 1 USc/lb = 22.0462 $/MT로 단순 환산한 값이며 운임·basis는 포함하지 않습니다.</li>
-        <li>성적표: 같은 방식을 ${D.card.window ? D.card.window[0] + "~" + D.card.window[1] : "과거"} 전 기간에 걸어 놓고, 그날 만든 범위가 실제 값을 담았는지 하루씩 확인한 결과입니다. 마지막 반년은 방식을 고칠 때 보지 않은 점검 구간입니다.</li>
-        <li>다음 단계: 분위수 회귀(Quantile LightGBM)와 범위 보정(CQR)을 같은 성적표로 비교해, 기준선을 이기는 지평만 교체합니다. 이기지 못하면 그 결과를 그대로 보여 줍니다.</li>
-        <li>해상 경로: 실시간 선박 위치가 아니라 IMF PortWatch의 해협별 일일 통과 척수(주간 갱신, 4~7일 지연)와 항로 거리 차이로 계산합니다. 추가 항해일은 탱커 경제 속력 12.5~14노트 기준 근사치이며, 운하 대기나 선박 확보 지연은 포함하지 않습니다.</li>
-        <li>표시하지 않는 것: 상승 확률, 특정 가격을 넘을 확률, 구매·보류 권고. 이 화면의 범위는 조달 판단의 근거로 쓰지 않습니다.</li>
-      </ul>`;
+    $("#method").innerHTML = `<h3 style="margin-top:6px">산출 방법·한계</h3><ul class="note" style="display:grid;gap:6px;padding-left:18px">
+      <li>참고 범위: 최근 250개 구간에서 실제로 나타난 h거래일 가격 변화율의 하위 10·25·50·75·90% 값을 지금 정산가에 곱한 기준선(B2). 미래를 추정하는 모델이 아닙니다.</li>
+      <li>숨 쉬는 폭: 최근 20일 변동성 ÷ 1년 변동성에 비례한 시각 효과일 뿐 범위 숫자를 바꾸지 않습니다.</li>
+      <li>두 관점·가치 렌즈: 상대가격 분포·변동성 비율·재고율에서 계산한 참고값이며 백테스트 전입니다. 범위 숫자는 기준선 그대로입니다.</li>
+      <li>구매 영향: 선물 정산가 × 물량 × 고정 환율. basis·운임·관세·환율 변동은 빠져 있습니다.</li>
+      <li>표시하지 않는 것: 상승 확률, 특정 가격을 넘을 확률, 구매·보류 권고.</li></ul>`;
   }
 
-  // 컨트롤
   function sync() {
     $$("[data-span]").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.span === st.span)));
     $$("[data-h]").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.h === st.h)));
     $("#u-usc").setAttribute("aria-pressed", String(st.unit === "usc")); $("#u-mt").setAttribute("aria-pressed", String(st.unit === "mt"));
-    drawHead(); drawChart(); drawLadder(); save();
+    $("#q-vol").value = st.vol; $("#q-cur").value = st.cur; if ([5, 20, 60].includes(st.h)) $("#q-h").value = String(st.h);
+    drawVerdict(); drawChart(); drawCalc(); drawHorizonTable(); drawLenses(); drawPrinciples(); save();
   }
   $$("[data-span]").forEach(b => b.onclick = () => { st.span = +b.dataset.span; sync(); });
   $$("[data-h]").forEach(b => b.onclick = () => { st.h = +b.dataset.h; sync(); });
+  $("#q-h").onchange = e => { st.h = +e.target.value; sync(); };
+  $("#q-vol").oninput = e => { st.vol = +e.target.value || 1; drawCalc(); save(); };
+  $("#q-cur").onchange = e => { st.cur = e.target.value; drawCalc(); save(); };
   $("#u-usc").onclick = () => { st.unit = "usc"; sync(); };
   $("#u-mt").onclick = () => { st.unit = "mt"; sync(); };
-  $("#theme").onclick = () => {
-    const r = document.documentElement, cur = r.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
-    r.setAttribute("data-theme", cur === "dark" ? "light" : "dark"); sync();
-  };
+  $("#theme").onclick = () => { const r = document.documentElement, cur = r.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); r.setAttribute("data-theme", cur === "dark" ? "light" : "dark"); sync(); };
   let graphOn = false;
   function showTab(name) {
     $$(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
     $$("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== name);
     if (name === "graph" && !graphOn) { graphOn = true; graph(); }
+    if (name === "lens2") drawLenses();
   }
   $$(".tabs button").forEach(b => b.onclick = () => showTab(b.dataset.tab));
-  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(drawChart, 120); });
-  drawCard(); drawScenarios(); drawRoutes(); drawMethod(); sync();
+  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { drawChart(); drawLenses(); }, 120); });
+  drawCard(); drawScenarios(); drawRoutes(); drawEvents(); drawMethod(); sync();
 })();
 </script>

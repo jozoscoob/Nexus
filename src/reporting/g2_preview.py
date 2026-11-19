@@ -137,13 +137,148 @@ def causal_graph(disrupted: set[str]) -> dict:
     return {"nodes": list(nodes.values()), "links": links, "edges": edges}
 
 
+# ── 관점(렌즈) 참고값 — G2 범위 숫자는 바꾸지 않는다. 휴리스틱이며 백테스트 전(화면에 그대로 표기) ──────────
+PARITY_WINDOW = 756            # 약 3년 — 상대가격(스프레드) 분포 창
+BUSHEL_OIL_LB, BUSHEL_MEAL_ST = 0.11, 0.022   # 대두 1부셸 → 유지 11lb(USc/lb×0.11=$/bu), 대두박 0.022 short ton
+LB_PER_GAL = 7.5                                 # 대두유 1갤런 ≈ 7.5lb (BOHO 환산)
+SOY_EXPORT_CR4 = 45                              # 대두 수출 상위 4사 점유율 %(Wilson AEPP 2025, 선박 실거래)
+
+
+def _mkt(code: str) -> pd.Series:
+    if code.startswith("TE_"):
+        df = pd.read_parquet(RAW / "te_commodities_historical.parquet", columns=["price_date", "indicator_code", "value"])
+    else:
+        f = sorted(glob.glob(str(RAW / "economic_indicators_*.parquet")))
+        if not f:
+            return pd.Series(dtype=float)
+        df = pd.read_parquet(f[-1], columns=["price_date", "indicator_code", "value"])
+    s = df[df["indicator_code"] == code].drop_duplicates("price_date", keep="last").set_index("price_date")["value"]
+    return s.sort_index().astype(float)
+
+
+def _front_month(sym: str) -> pd.Series:
+    """Databento 원시 일봉에서 아웃라이트 근월(일자별 최대 거래량) 종가 — UTC 일봉이라 진단용."""
+    f = sorted(glob.glob(str(RAW / "Databento" / "GLBX.MDP3" / "OHLCV-1d" / sym / f"{sym}_ohlcv-1d_*.csv")))
+    if not f:
+        return pd.Series(dtype=float)
+    d = pd.read_csv(f[-1], usecols=["ts_event", "close", "volume", "symbol"], skipinitialspace=True)
+    d["symbol"] = d["symbol"].astype(str).str.strip()
+    d = d[d["symbol"].str.fullmatch(rf"{sym}[FGHJKMNQUVXZ]\d")]
+    d["date"] = pd.to_datetime(d["ts_event"].str[:10])
+    d = d.sort_values("volume").drop_duplicates("date", keep="last")
+    return d.set_index("date")["close"].astype(float).sort_index()
+
+
+def _q3(s: pd.Series) -> list[float]:
+    return [float(x) for x in np.quantile(s.dropna().to_numpy(), [0.25, 0.5, 0.75])]
+
+
+def classical_lens(close: pd.Series) -> dict:
+    """고전파 관점 — 대체재·바이오연료·압착 등가(parity)로 본 '기초가치 구간'과 평균 회귀 속도."""
+    out = []
+    usd_t = close * USC_LB_TO_USD_MT
+    palm, myr = _mkt("TE_PALM_OIL"), _mkt("DEXMAUS")
+    if len(palm) and len(myr):
+        palm_usd = (palm / myr.reindex(palm.index, method="ffill")).dropna()
+        j = pd.concat([usd_t, palm_usd], axis=1, keys=["sbo", "palm"], sort=True).dropna().iloc[-PARITY_WINDOW:]
+        sp = j["sbo"] - j["palm"]
+        q = _q3(sp)
+        m = sp.resample("MS").mean().dropna().iloc[-120:]
+        x0, x1 = (m - m.mean()).iloc[:-1].to_numpy(), (m - m.mean()).iloc[1:].to_numpy()
+        phi = float(np.dot(x0, x1) / np.dot(x0, x0)) if len(x0) > 12 else float("nan")
+        hl = round(math.log(0.5) / math.log(phi), 1) if 0 < phi < 1 else None
+        out.append({"id": "palm", "name": "팜유 대체 등가", "basis": "대두유−팜유 가격 차이(최근 3년)",
+                    "implied": [round((float(j["palm"].iloc[-1]) + v) / USC_LB_TO_USD_MT, 2) for v in q],
+                    "now_gap": round(float(sp.iloc[-1]), 0), "gap_unit": "$/MT", "half_life_m": hl})
+    ho = _mkt("TE_HEATING_OIL")
+    if len(ho):
+        gal = close * LB_PER_GAL / 100
+        j = pd.concat([gal, ho], axis=1, keys=["sbo", "ho"], sort=True).dropna().iloc[-PARITY_WINDOW:]
+        q = _q3(j["sbo"] - j["ho"])
+        out.append({"id": "boho", "name": "바이오연료 등가(BOHO)", "basis": "대두유−난방유 갤런당 차이(최근 3년)",
+                    "implied": [round((float(j["ho"].iloc[-1]) + v) * 100 / LB_PER_GAL, 2) for v in q],
+                    "now_gap": round(float((j["sbo"] - j["ho"]).iloc[-1]), 2), "gap_unit": "$/gal", "half_life_m": None})
+    zm = _front_month("ZM")
+    if len(zm):
+        j = pd.concat([close, zm], axis=1, keys=["zl", "zm"], sort=True).dropna().iloc[-PARITY_WINDOW:]
+        share = j["zl"] * BUSHEL_OIL_LB / (j["zl"] * BUSHEL_OIL_LB + j["zm"] * BUSHEL_MEAL_ST)
+        q = _q3(share)
+        zm_now = float(j["zm"].iloc[-1])
+        out.append({"id": "crush", "name": "압착 유지 비중(oil share)", "basis": "크러시 가치 중 유지 몫(최근 3년)",
+                    "implied": [round(s * zm_now * BUSHEL_MEAL_ST / (BUSHEL_OIL_LB * (1 - s)), 2) for s in q],
+                    "now_gap": round(float(share.iloc[-1]) * 100, 1), "gap_unit": "% 유지 비중", "half_life_m": None,
+                    "caveat": "대두박은 UTC 일봉 근월(거래량 기준) — 정산가·롤 달력 불일치로 진단용"})
+    zone = [round(float(np.median([p["implied"][i] for p in out])), 2) for i in range(3)] if out else None
+    return {"parities": out, "zone": zone}
+
+
+def keynesian_lens(close: pd.Series) -> dict:
+    """케인스 관점 — 기대·불확실성: 최근 변동성 국면으로 기준선 범위 폭을 늘리거나 줄여 본 참고 범위."""
+    r = np.log(close).diff().dropna()
+    rv20, rv250 = float(r.iloc[-20:].std() * math.sqrt(252)), float(r.iloc[-250:].std() * math.sqrt(252))
+    ratio = round(rv20 / rv250, 2) if rv250 else 1.0
+    last, lp = float(close.iloc[-1]), np.log(close.to_numpy())
+    scaled = {}
+    for h in (20, 60):
+        win = (lp[h:] - lp[:-h])[-ROLL:]
+        qs = np.quantile(win, QUANTS)
+        mid = qs[2]
+        scaled[str(h)] = {f"p{int(q * 100)}": round(last * math.exp(mid + (v - mid) * ratio), 2) for q, v in zip(QUANTS, qs)}
+    cot = sorted(glob.glob(str(RAW / "cot_positions_*.parquet")))
+    pos = None
+    if cot:
+        c = pd.read_parquet(cot[-1], columns=["price_date", "indicator_code", "value"])
+        s = c[c["indicator_code"] == "COT_SBO_MM_NET_PCT_OI"].set_index("price_date")["value"].sort_index().iloc[-260:]
+        if len(s):
+            pos = {"value": round(float(s.iloc[-1]), 1), "pctile": round(float((s <= s.iloc[-1]).mean() * 100), 0),
+                   "date": s.index[-1].strftime("%Y-%m-%d")}
+    return {"rv20": round(rv20 * 100, 1), "rv250": round(rv250 * 100, 1), "ratio": ratio, "scaled": scaled,
+            "positioning": pos, "cr4": SOY_EXPORT_CR4}
+
+
+def value_lens(close: pd.Series, classical: dict) -> dict:
+    """가치 투자 렌즈(버핏·멍거·린치 원칙을 원자재에 옮긴 점검표) — 숫자는 서술용, 예측 모델 아님."""
+    last = float(close.iloc[-1])
+    zone = classical.get("zone")
+    gap = round((last / zone[1] - 1) * 100, 1) if zone else None
+    five = close.iloc[-1260:]
+    pctile = round(float((five <= last).mean() * 100), 0)
+    lp = np.log(close.to_numpy())
+    r60 = lp[60:] - lp[:-60]
+    stress = [round(last * math.exp(float(np.quantile(r60, q))), 2) for q in (0.01, 0.99)]
+    stu = None
+    w = RAW / "wasde_historical.parquet"
+    if w.exists():
+        d = pd.read_parquet(w, columns=["indicator_code", "value", "available_at", "price_date"])
+        s = d[d["indicator_code"] == "WASDE_SBO_STU"]
+        s = s[pd.to_datetime(s["available_at"]) <= pd.Timestamp.now()].sort_values("price_date")
+        if len(s):
+            v = float(s["value"].iloc[-1])
+            stu = {"value": round(v, 2), "pctile": round(float((s["value"] <= v).mean() * 100), 0),
+                   "date": pd.Timestamp(s["price_date"].iloc[-1]).strftime("%Y-%m")}
+    if stu and stu["pctile"] <= 33 and pctile >= 67:
+        cycle = "재고는 빠듯하고 가격은 5년 범위 위쪽 — 사이클 후반에 흔한 조합"
+    elif stu and stu["pctile"] >= 67 and pctile <= 33:
+        cycle = "재고는 넉넉하고 가격은 5년 범위 아래쪽 — 사이클 초반에 흔한 조합"
+    else:
+        cycle = "재고와 가격 위치가 엇갈림 — 사이클 위치를 단정하기 어려움"
+    return {"gap_to_value": gap, "price_pctile_5y": pctile, "stress_60d": stress, "stu": stu, "cycle": cycle}
+
+
 def build() -> dict:
     close = _close()
     hist = close.iloc[-HISTORY_DAYS:]
     routes_p = PROC / "route_scenarios_latest.json"
     routes = json.loads(routes_p.read_text(encoding="utf-8")) if routes_p.exists() else {}
     disrupted = {k for k, s in routes.get("status", {}).items() if s.get("state") == "disrupted"}
+    classical = classical_lens(close)
+    krw = _mkt("DEXKOUS")
     return {
+        "lenses": {"classical": classical, "keynesian": keynesian_lens(close),
+                   "value": value_lens(close, classical)},
+        "prev_bands": bands(close.iloc[:-5]),
+        "prev_as_of": close.index[-6].strftime("%Y-%m-%d"),
+        "fx_krw": {"value": round(float(krw.iloc[-1]), 2), "date": krw.index[-1].strftime("%Y-%m-%d")} if len(krw) else None,
         "meta": {"as_of": close.index[-1].strftime("%Y-%m-%d"),
                  "generated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
                  "unit": "USc/lb", "to_usd_mt": USC_LB_TO_USD_MT, "roll": ROLL,
