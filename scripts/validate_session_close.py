@@ -108,9 +108,8 @@ def _load_databento_close() -> tuple[pd.Series, pd.Series | None]:
     # CSV 재구성 폴백 (ingest_databento_bo.py의 CSV 출력 규약: price_date + close 컬럼)
     # 2026-11-17: ZL 원본이 GLBX.MDP3/ZL/ 하위 폴더로 이동 — 두 위치 모두 탐색. 이름 규약
     #   (ZL_ohlcv-1d_*.csv)으로 한정해 포털 원본(glbx-mdp3-*.csv, 다계약·스프레드 혼재)을 배제한다.
-    #   2026-11-19: OHLCV-1d/ZL/ 재배치 — 하위 트리 전체 탐색(정리본 clean/ 은 단일 월물 다계약이라 제외)
-    csvs = sorted({c for c in glob.glob(str(CSV_DIR / "**" / "ZL_ohlcv-1d_*.csv"), recursive=True)
-                   if "outright" not in Path(c).name}, key=os.path.getmtime)
+    csvs = sorted({*glob.glob(str(CSV_DIR / "ZL_ohlcv-1d_*.csv")),
+                   *glob.glob(str(CSV_DIR / "ZL" / "ZL_ohlcv-1d_*.csv"))}, key=os.path.getmtime)
     if csvs:
         latest = csvs[-1]
         raw = pd.read_csv(latest)

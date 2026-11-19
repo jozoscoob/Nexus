@@ -69,21 +69,3 @@ docker/.mcp.json
 
 # 학술지 PDF 원문 — 저작권 문제로 로컬에만 보관, 커밋 금지 (추출 텍스트는 repo 밖 scratchpad에 있음)
 data/raw/Market Structure (Production & Distribution)/PDF/
-
-# Databento 대두 복합체(ZL·ZM·ZS) 정리본 — 승인자 지시(2026-11-19)로 커밋 허용: 단일 월물·거래량 순위·정의·통계(상품별)
-!data/raw/Databento/GLBX.MDP3/OHLCV-1d/*/clean/*.csv
-!data/raw/Databento/GLBX.MDP3/OHLCV-1d/*/clean/*.xlsx
-!data/raw/Databento/GLBX.MDP3/OHLCV-1d/ZL/ZL_ohlcv-1d_2010-06-06_2026-08-12.csv
-!data/raw/Databento/GLBX.MDP3/OHLCV-1d/ZL/ZL_ohlcv-1d.xlsx
-!data/raw/Databento/GLBX.MDP3/Definitions/ZL/*.csv
-!data/raw/Databento/GLBX.MDP3/Definitions/ZM/*.csv
-!data/raw/Databento/GLBX.MDP3/Definitions/ZS/*.csv
-!data/raw/Databento/GLBX.MDP3/Statistics/ZL/*.csv
-!data/raw/Databento/GLBX.MDP3/Statistics/ZM/*.csv
-!data/raw/Databento/GLBX.MDP3/Statistics/ZS/*.csv
-# 원시 포털 다운로드(일별 zst 배치 폴더·다운로드 매니페스트 — 계정별 URL 포함)와 엑셀 잠금 파일은 제외
-data/raw/Databento/**/GLBX-*/
-data/raw/Databento/**/manifest.json
-**/~$*
-# Yahoo ZL=F 열람용 통합본 — 103 MB로 GitHub 파일 한도(100 MB) 초과
-data/raw/Yahoo Finance/**/*.xlsx
