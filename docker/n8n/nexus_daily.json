@@ -1,0 +1,439 @@
+{
+ "id": "nexusDaily01",
+ "name": "Nexus 일일 파이프라인",
+ "nodes": [
+  {
+   "parameters": {},
+   "id": "manual",
+   "name": "수동 실행",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    0,
+    200
+   ]
+  },
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "cronExpression",
+       "expression": "0 6 * * 2-6"
+      }
+     ]
+    }
+   },
+   "id": "schedule",
+   "name": "화~토 06:00",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/collect_free",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "collect_free",
+   "name": "무료 커넥터 수집",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    240,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/te_update",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "te_update",
+   "name": "TE 시세 갱신",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    480,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/codex_crawl",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "codex_crawl",
+   "name": "Codex 비정형 크롤러",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    720,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/digest",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "digest",
+   "name": "일별 비정형 다이제스트",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    960,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/mart",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "mart",
+   "name": "마트·게이트",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1200,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/baseline",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "baseline",
+   "name": "기준선 성적표",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1440,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/g2_preview",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "g2_preview",
+   "name": "해상 경로·G2 화면",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1680,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/tests",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "tests",
+   "name": "테스트",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1920,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/codex_verify",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "codex_verify",
+   "name": "Codex 교차검증",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2160,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const steps = [\"무료 커넥터 수집\", \"TE 시세 갱신\", \"Codex 비정형 크롤러\", \"일별 비정형 다이제스트\", \"마트·게이트\", \"기준선 성적표\", \"해상 경로·G2 화면\", \"테스트\", \"Codex 교차검증\"];\nconst fails = [];\nfor (const s of steps) {\n  let r;\n  try { r = $(s).first().json; } catch (e) { continue; }   // 비활성 노드는 건너뜀\n  const body = r.body || r;\n  const code = r.statusCode ?? 200;\n  if (code >= 400 || (Array.isArray(body.failed) && body.failed.length)) {\n    fails.push({ step: s, status: code, failed: body.failed || body.error || null, log: body.log || null });\n  }\n}\nreturn [{ json: { workflow: $workflow.name, ok: fails.length === 0, fails, at: new Date().toISOString() } }];"
+   },
+   "id": "check",
+   "name": "결과 점검",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2400,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "return $json.ok ? [] : [{ json: $json }];"
+   },
+   "id": "only_fail",
+   "name": "실패만 통과",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2640,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/alert",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json) }}",
+    "options": {}
+   },
+   "id": "alert",
+   "name": "실패 알림 기록",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2880,
+    100
+   ]
+  }
+ ],
+ "connections": {
+  "무료 커넥터 수집": {
+   "main": [
+    [
+     {
+      "node": "TE 시세 갱신",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "TE 시세 갱신": {
+   "main": [
+    [
+     {
+      "node": "Codex 비정형 크롤러",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Codex 비정형 크롤러": {
+   "main": [
+    [
+     {
+      "node": "일별 비정형 다이제스트",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "일별 비정형 다이제스트": {
+   "main": [
+    [
+     {
+      "node": "마트·게이트",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "마트·게이트": {
+   "main": [
+    [
+     {
+      "node": "기준선 성적표",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "기준선 성적표": {
+   "main": [
+    [
+     {
+      "node": "해상 경로·G2 화면",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "해상 경로·G2 화면": {
+   "main": [
+    [
+     {
+      "node": "테스트",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "테스트": {
+   "main": [
+    [
+     {
+      "node": "Codex 교차검증",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Codex 교차검증": {
+   "main": [
+    [
+     {
+      "node": "결과 점검",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "결과 점검": {
+   "main": [
+    [
+     {
+      "node": "실패만 통과",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "실패만 통과": {
+   "main": [
+    [
+     {
+      "node": "실패 알림 기록",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "수동 실행": {
+   "main": [
+    [
+     {
+      "node": "무료 커넥터 수집",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "화~토 06:00": {
+   "main": [
+    [
+     {
+      "node": "무료 커넥터 수집",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "timezone": "Asia/Seoul",
+  "executionOrder": "v1",
+  "errorWorkflow": "nexusErrorAlert01"
+ }
+}

@@ -1,0 +1,53 @@
+{
+ "id": "nexusErrorAlert01",
+ "name": "Nexus 실패 알림",
+ "active": false,
+ "settings": {
+  "timezone": "Asia/Seoul",
+  "executionOrder": "v1"
+ },
+ "nodes": [
+  {
+   "parameters": {},
+   "id": "err",
+   "name": "워크플로우 오류",
+   "type": "n8n-nodes-base.errorTrigger",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/alert",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ workflow: $json.workflow.name, failed_node: $json.execution.lastNodeExecuted, error: $json.execution.error.message, at: new Date().toISOString() }) }}",
+    "options": {}
+   },
+   "id": "alert",
+   "name": "실패 알림 기록",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "워크플로우 오류": {
+   "main": [
+    [
+     {
+      "node": "실패 알림 기록",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ }
+}

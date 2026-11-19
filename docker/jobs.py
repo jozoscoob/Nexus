@@ -45,12 +45,16 @@ JOBS: dict[str, tuple[list[list[str]], bool]] = {
     # G2 Preview 화면: 해상 경로 시나리오 → 화면 생성(portwatch 수집·마트 이후)
     "g2_preview": ([[PY, "-m", "src.logistics.route_scenarios"],
                     [PY, "-m", "src.reporting.g2_preview"]], False),
+    # Codex 연동(승인자 도구) — 비정형 크롤러 실행·산출 계약 검증 / 당일 산출물 교차검증. 미설정이면 건너뜀(비치명)
+    "codex_crawl": ([[PY, "scripts/codex_bridge.py", "crawl"]], False),
+    "codex_verify": ([[PY, "scripts/codex_bridge.py", "verify"]], False),
     "baseline": ([[PY, "-m", "src.evaluation.band_backtest"]], True),
     "tests": ([[PY, "-m", "pytest", "-q", "tests"]], True),
 }
 REPO = os.environ.get("NEXUS_REPO", "/repo")
 LOG_DIR = Path(REPO) / "docker" / "logs"
 TAIL_CHARS = 4000
+ALERT_MAX_BYTES = 16384
 _lock = threading.Lock()
 
 
@@ -86,6 +90,14 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, {"status": "ok", "jobs": sorted(JOBS)})
 
     def do_POST(self) -> None:
+        if self.path == "/alert":            # n8n 실패 알림 수신 — 크기 제한 후 로그에 한 줄씩 기록
+            n = min(int(self.headers.get("Content-Length") or 0), ALERT_MAX_BYTES)
+            raw = self.rfile.read(n).decode("utf-8", "replace")
+            LOG_DIR.mkdir(parents=True, exist_ok=True)
+            with (LOG_DIR / "alerts.jsonl").open("a", encoding="utf-8") as f:
+                f.write(json.dumps({"at": time.strftime("%Y-%m-%dT%H:%M:%S"), "body": raw}, ensure_ascii=False) + "\n")
+            print(f"[경고] 파이프라인 실패 알림 수신 — {raw[:300]}", flush=True)
+            return self._send(200, {"status": "recorded"})
         name = self.path.removeprefix("/run/")
         if name not in JOBS:
             return self._send(404, {"error": f"[오류] 알 수 없는 작업: {name}"})
