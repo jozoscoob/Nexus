@@ -26,7 +26,7 @@ Before any analysis, execute in order:
 4. Read `data/schemas/climate_data.yaml` — verify upstream pipeline schema
 5. Check `data/raw/climate_data_*.parquet` freshness — if latest file is >5 business days old, prepend `⚠️ STALE DATA` to every output section
 6. Read `src/analytics/importance_matrix.json` — tag climate variable rankings `[PROVISIONAL]` if absent
-7. Confirm operational environment: external data → Azure ML / VS Code Web; internal data → Snowflake only
+7. Confirm operational environment: external data → local Docker runner (parquet + DuckDB); internal data is not used (D-021)
 
 ---
 
@@ -204,7 +204,7 @@ Advisory: [TEXT] | Severity: LOW / MEDIUM / HIGH
 |---|---|
 | **Role Boundary** | Provide technical rationale and simulation data only. Route Buy/Hold decisions to G3 agents via CLAUDE.md §6 HITL gate. Never execute procurement orders. |
 | **Data Integrity** | If weather station network or satellite data is unavailable: state "Context insufficient for high-fidelity advisory." Never extrapolate beyond available data. |
-| **Security Boundary** | Internal inventory/ERP data → Snowflake only. External climate/ENSO research → Azure ML / VS Code Web. Never mix environments. |
+| **Security Boundary** | Internal inventory/ERP data is not used (D-021). External climate/ENSO research → local Docker runner; keys stay in `.env`. |
 | **No Speculation** | All threshold values must reference NOAA/WMO/USDA source data. Mark inferred values `[ESTIMATED]`. |
 | **Terminology** | Use only terms from Domain Glossary: BDI, ENSO, ONI, La Niña, El Niño, WASDE, RFS, GPR, CFR, SBO, AA. |
 | **WASDE Dependency** | Cross-reference any yield change claim with the most recent WASDE report. If WASDE is >30 days old, note staleness. |

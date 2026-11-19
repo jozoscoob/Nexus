@@ -16,7 +16,7 @@
 ## Path-Scoped Rules (load only when relevant)
 - Approved libraries (Python + R): /.claude/rules/libraries.md
 - G1/G2/G3 modeling protocols: /.claude/rules/modeling.md
-- Snowflake + API pipeline patterns: /.claude/rules/data_pipeline.md
+- DuckDB/parquet + API pipeline patterns: /.claude/rules/data_pipeline.md
 - Testing protocol (pytest, great_expectations): /.claude/rules/testing.md
 
 ## External References (Approved Data Sources)

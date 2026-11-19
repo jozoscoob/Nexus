@@ -8,7 +8,7 @@ API 변경 (2025):
 API 키:
   USDA_FAS_API_KEY  — FAS OpenData 포털(apps.fas.usda.gov/opendatawebV2)에서 발급
   USDA_ARM_API_KEY  — USDA ARMS 생산비용 데이터 (data.ers.usda.gov)
-실행 환경: VS Code Web (Azure ML Studio) 또는 GitHub Actions
+실행 환경: 로컬 Docker(n8n → runner 컨테이너) 또는 GitHub Actions
 """
 
 from __future__ import annotations

@@ -15,7 +15,7 @@ Strict quality gate for all code entering `src/`, `notebooks/`, and `.github/wor
 | Scope | C-05 Responsibility | C-08 Responsibility |
 |---|---|---|
 | Pipeline code | Error handling, retry logic, BACKFILL_MODE gaps | DQSOps 5-dimension scoring |
-| SQL / Snowflake | N+1 risks, parameterization, `LIMIT` enforcement | Schema drift, null ratios, timeliness |
+| SQL / DuckDB | N+1 risks, parameterization, `LIMIT` enforcement | Schema drift, null ratios, timeliness |
 | Connectors | Exponential backoff presence, empty-DataFrame guards | Accuracy/completeness at runtime |
 
 ## Review Steps (Run in Order)
@@ -31,7 +31,7 @@ McCabe CC: 1–5=LOW · 6–10=MEDIUM (flag) · 11–20=HIGH (justify) · >20=CR
 ### Step 2 — Quality Checklist
 - **2A Comprehension**: one-sentence explainability · ≥3 edge-case tests · no magic numbers · type hints
 - **2B Failure Modes**: explicit exception types · exponential backoff (2s→4s→8s→16s) · BACKFILL_MODE check · empty DataFrame guards
-- **2C DB & Performance**: no N+1 queries · parameterized SQL · `pd.concat` outside loops · `SNOWFLAKE_WAREHOUSE` env var
+- **2C DB & Performance**: no N+1 queries · parameterized SQL · `pd.concat` outside loops · data paths from constants/env
 - **2D Architecture/Security/Style**: no hardcoded secrets · no pickle · no openpyxl in pipeline · functions ≤30 lines · Korean `[오류]`/`[경고]`/`[완료]`/`[정보]` prefixes
 
 ### Step 3 — Red Flag Intervention (Auto-Block)
@@ -85,4 +85,4 @@ except httpx.HTTPStatusError as e:
 2. `CLAUDE.md §3` — code style rules (Korean error messages, PEP 8, 100-char limit)
 3. `.claude/rules/libraries.md` — forbidden patterns
 4. `.claude/rules/testing.md` — time-aware split protocol
-5. `MEMORY.md` — M-001 (time-series leakage), C-001 (circular imports), C-003 (Snowflake warehouse)
+5. `MEMORY.md` — M-001 (time-series leakage), C-001 (circular imports)

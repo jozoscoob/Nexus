@@ -10,7 +10,7 @@
     → 직접 API: Baltic Exchange/ICE 기업 구독 필요 (MEMORY A-013)
     → 현행: Perplexity 프록시로 최신값 수집
 
-실행 환경: VS Code Web (Azure ML Studio) 또는 GitHub Actions
+실행 환경: 로컬 Docker(n8n → runner 컨테이너) 또는 GitHub Actions
 """
 
 from __future__ import annotations

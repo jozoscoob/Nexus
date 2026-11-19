@@ -27,7 +27,7 @@ Before executing any review, align with the repository state:
 
 ### Validator Coordination (C-08 Overlap)
 
-When reviewing files in `src/pipeline/` or database schemas in `src/snowflake/`:
+When reviewing files in `src/pipeline/` or schemas in `data/schemas/`:
 - Verify that data contracts conform to the DQSOps (Data Quality Scoring Operations) framework
 - Do **NOT** perform data quality scoring or validation calculations — delegate data-stream audits to C-08 (Data Quality Validator)
 - Focus strictly on: clean execution of pipeline code, error handling, and SQL performance
@@ -37,7 +37,7 @@ When reviewing files in `src/pipeline/` or database schemas in `src/snowflake/`:
 | Scope | C-05 Responsibility | C-08 Responsibility |
 |---|---|---|
 | Pipeline code | Error handling, retry logic, BACKFILL_MODE gaps | DQSOps 5-dimension scoring |
-| SQL / Snowflake | N+1 risks, parameterization, `LIMIT` enforcement | Schema drift, null ratios, timeliness |
+| SQL / DuckDB | N+1 risks, parameterization, `LIMIT` enforcement | Schema drift, null ratios, timeliness |
 | Connectors | Exponential backoff presence, empty-DataFrame guards | Accuracy/completeness at runtime |
 
 ---
@@ -85,7 +85,7 @@ Assess the PR against the four critical quality dimensions:
 ### 2B — Failure Mode & Exception Checks
 
 - [ ] Exception handling is **explicit** — reject empty `except:` blocks, silent swallows, or bare `except Exception` without re-raising or logging
-- [ ] External service or API calls (Snowflake, Azure, Perplexity, TE API, AISstream, USDA FAS) have **explicit timeout and retry** configurations per `data_pipeline.md` pattern (2s → 4s → 8s → 16s exponential backoff)
+- [ ] External service or API calls (Perplexity, TE API, AISstream, USDA FAS, Databento) have **explicit timeout and retry** configurations per `data_pipeline.md` pattern (2s → 4s → 8s → 16s exponential backoff)
 - [ ] Failure states are **recoverable** or explicitly documented as catastrophic
 - [ ] `BACKFILL_MODE` check present where Perplexity real-time calls would return today-only data
 - [ ] Empty DataFrame returns handled — no `KeyError` on `.columns` access after `dropna()`
@@ -93,13 +93,12 @@ Assess the PR against the four critical quality dimensions:
 
 ### 2C — Database & Performance Checks
 
-- [ ] New SQL or Snowflake queries analyzed for **N+1 query risks** (loop-based queries)
+- [ ] New SQL / DuckDB queries analyzed for **N+1 query risks** (loop-based queries)
 - [ ] Queries use **parameterized inputs** — never f-string interpolation into SQL
 - [ ] All exploratory queries include `LIMIT` (per `data_pipeline.md`)
 - [ ] CTEs used over nested subqueries (per `data_pipeline.md`)
 - [ ] `pd.concat` called outside loops — list pre-allocated, single concat at end (O(n²) guard)
-- [ ] `SNOWFLAKE_WAREHOUSE` read from env var — never hardcoded (MEMORY C-003)
-- [ ] `statement_timeout_in_seconds = 300` set for large joins (MEMORY A-001)
+- [ ] Data paths read from constants/env (`NEXUS_DATA_ROOT`) — never hardcoded absolute paths
 
 ### 2D — Architecture, Security & Style Checks
 
@@ -111,7 +110,7 @@ Assess the PR against the four critical quality dimensions:
 **Architecture:**
 - [ ] Enforce the repository pattern: database actions stay in connectors/data access layer; business logic stays in `src/forecasting/`
 - [ ] No `pickle` — use `joblib` or `mlflow.log_model()` (CLAUDE.md §2)
-- [ ] No `openpyxl` in pipeline code (CLAUDE.md §2 — Snowflake is source of truth; exception: WBS admin and export_data.py)
+- [ ] No `openpyxl` in pipeline code (CLAUDE.md §2 — parquet is source of truth; exception: WBS admin and export_data.py)
 - [ ] No commodity scope creep — only soybean oil variables (CLAUDE.md §1)
 - [ ] New dependencies listed in `.claude/rules/libraries.md` before first use
 

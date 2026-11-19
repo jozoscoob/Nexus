@@ -35,7 +35,7 @@ UN Comtrade Plus 대안:
   - 패키지: comtradeapicall (pip install comtradeapicall)
   - 무료 500건/일, 유료 10,000건/일
 
-실행 환경: VS Code Web (Azure ML Studio) 또는 GitHub Actions
+실행 환경: 로컬 Docker(n8n → runner 컨테이너) 또는 GitHub Actions
 """
 
 from __future__ import annotations

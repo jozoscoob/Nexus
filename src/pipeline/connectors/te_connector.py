@@ -14,7 +14,7 @@ Trading Economics API 참고:
   - BCAA (식물성유지탱커): ❌ 미제공 — Perplexity 프록시 사용 (shipping_connector.py)
   - CBOT ZL=F: ❌ 미제공 — yfinance 사용 (commodity_connector.py)
 
-실행 환경: VS Code Web (Azure ML Studio) 또는 GitHub Actions
+실행 환경: 로컬 Docker(n8n → runner 컨테이너) 또는 GitHub Actions
 """
 
 from __future__ import annotations

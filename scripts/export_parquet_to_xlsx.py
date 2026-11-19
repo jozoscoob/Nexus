@@ -11,7 +11,7 @@
         realtime/{name}.xlsx     — 일별 실시간 커넥터 산출물 (그 외)
       각 xlsx는 indicator_code별 시트 분리(≤10종) 또는 단일 'data' 시트.
 
-성격: 열람·감사용 사본. 분석 파이프라인의 소스는 여전히 parquet/Snowflake (CLAUDE.md §2).
+성격: 열람·감사용 사본. 분석 파이프라인의 소스는 여전히 parquet (CLAUDE.md §2).
       xlsx는 openpyxl write 예외 허용(산출물 export 용도, 입력 파이프라인 아님).
 
 의존성: pandas >= 2.0 · openpyxl · pyarrow

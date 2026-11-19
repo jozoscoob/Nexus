@@ -36,7 +36,7 @@ You **transition the organization from reactive purchasing to proactive risk ale
                               → load current SHAP-derived feature rankings
                               → if absent: note "[PROVISIONAL] — importance_matrix.json not yet generated (Phase 2)"
 7. Run: git log --oneline -n 10
-                              → verify which data connectors (WBS 1.1.2~1.1.6) are live in Snowflake
+                              → verify which data connectors (WBS 1.1.2~1.1.6) have fresh parquet in data/raw
 ```
 
 If any artifact is missing: state `"정보 없음 — 컨텍스트에서 확인 불가"` — never infer or speculate.
@@ -50,7 +50,7 @@ If any artifact is missing: state `"정보 없음 — 컨텍스트에서 확인 
 | README.md §3 + §6 | External Variable Pool + Domain Glossary | Session-start mandatory |
 | `src/analytics/importance_matrix.json` | SHAP-derived feature rankings | Load if exists; note absence if not |
 | `docs/research_desk/MEMORY.md` | Prior trade signals + Procurement feedback | Load if exists; create stub if not |
-| Snowflake `soybean_oil.raw.*` | Live pipeline data (inventory, import stats, connectors) | Must be within 5 business days |
+| 저장소 parquet `data/raw/*.parquet` | Live pipeline data (inventory, import stats, connectors) | Must be within 5 business days |
 | Perplexity (via LLMRouter) | Real-time market news, freight indices, USDA/WASDE releases | Pull at session start |
 | NLM-01 (NotebookLM) | Price reports, analyst research, CBOT summaries | Human query → paste cited summary into context |
 | NLM-04 (NotebookLM) | EPA RFS, Korea RFS, tariff schedules, trade policy | Human query → paste cited summary into context |
@@ -77,16 +77,16 @@ Identify the current **top-5 macro/micro factors** driving SBO prices.
 #### Macro Variables (monitor always)
 | Variable | API Source | Env | Signal Direction | Lag to SBO Price |
 |---|---|---|---|---|
-| Fed Funds Rate | FRED API (`FRED_API_KEY`) | VS Code Web / Azure ML | Inverse (↑ rate → ↓ commodity demand) | 2–4 weeks |
-| USD/KRW FX Rate | BOK ECOS API (`BOK_ECOS_API_KEY`) | VS Code Web / Azure ML | Inverse for KR buyers (↑ USD → ↑ import cost) | **T+2 settlement — MEMORY M-002** |
-| Brent Crude | EIA API (`EIA_API_KEY`) | VS Code Web / Azure ML | Positive (↑ oil → ↑ SBO bio-demand) | 1–3 weeks |
+| Fed Funds Rate | FRED API (`FRED_API_KEY`) | 로컬 runner 컨테이너 | Inverse (↑ rate → ↓ commodity demand) | 2–4 weeks |
+| USD/KRW FX Rate | BOK ECOS API (`BOK_ECOS_API_KEY`) | 로컬 runner 컨테이너 | Inverse for KR buyers (↑ USD → ↑ import cost) | **T+2 settlement — MEMORY M-002** |
+| Brent Crude | EIA API (`EIA_API_KEY`) | 로컬 runner 컨테이너 | Positive (↑ oil → ↑ SBO bio-demand) | 1–3 weeks |
 
 #### Micro Variables (monitor always)
 | Variable | Source | Env | Signal Direction | Lag to SBO Price |
 |---|---|---|---|---|
-| WASDE Ending Stocks (SBO) | USDA PSD API (no key) | VS Code Web / Azure ML | Inverse (↓ stocks → ↑ price) | Release day + 1 week |
+| WASDE Ending Stocks (SBO) | USDA PSD API (no key) | 로컬 runner 컨테이너 | Inverse (↓ stocks → ↑ price) | Release day + 1 week |
 | US EPA RFS D4 RIN Mandate | EPA / Perplexity | Claude Code + Perplexity | Positive (↑ mandate → ↑ bio-demand) | Policy cycle (quarterly) |
-| ENSO Phase (Niño 3.4 Index) | NOAA CPC API (no key) | VS Code Web / Azure ML | Non-linear (La Niña → ↓ SA crop → ↑ price) | 3–6 months |
+| ENSO Phase (Niño 3.4 Index) | NOAA CPC API (no key) | 로컬 runner 컨테이너 | Non-linear (La Niña → ↓ SA crop → ↑ price) | 3–6 months |
 | Palm Oil Parity (CPO CIF Korea) | Perplexity | Claude Code + Perplexity | Substitute (↑ CPO premium → ↑ SBO demand) | 1–2 weeks |
 | BDI / SCFI | Perplexity (B-003 blocker for direct API) | Claude Code + Perplexity | Positive (↑ freight → ↑ CFR cost) | Immediate |
 
@@ -127,7 +127,7 @@ Monitor the External Variable Pool against historical σ thresholds to detect re
 | 🟢 NORMAL | Within μ ± 1.5σ | No action; note in Executive Summary |
 
 #### Alert Calculation Protocol
-1. Pull variable's 10-year weekly series from Snowflake `soybean_oil.raw.*` (or API for Phase 1)
+1. Pull variable's 10-year weekly series from the repository parquet (DuckDB) or the API
 2. Apply **IQR outlier cap** before computing μ and σ — prevents market spike distortion (MEMORY M-003)
 3. Compute 52-week rolling mean (μ) and standard deviation (σ)
 4. If current value breaches threshold → generate Anomaly Signal
@@ -166,7 +166,6 @@ Model Korean domestic SBO demand by integrating primary (internal company) and s
 #### Demand Model Data Sources
 | Component | Source | Env | Update Frequency |
 |---|---|---|---|
-| Company internal consumption (MT/month) | Snowflake `soybean_oil.internal.saop` | Snowflake | Monthly (S&OP sync) |
 | National SBO import volume | KOSIS (통계청) 품목별 수입통계 | Claude Code + Perplexity | Monthly |
 | Domestic SBO production | KREI (한국농촌경제연구원) | Claude Code + Perplexity | Quarterly |
 | Biodiesel demand (RFS mandate) | Korea Energy Agency (KEA) | Claude Code + Perplexity | Quarterly |

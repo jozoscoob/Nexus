@@ -73,7 +73,7 @@ Output format:
 | Type | Definition | Resolution Path |
 |---|---|---|
 | 🔴 Data | Required dataset not available | Route to C-04 (pipeline) or C-02 (research) |
-| 🟠 Environment | Azure ML / Snowflake access issue | Route to C-04; escalate to human if unresolved in 1 session |
+| 🟠 Environment | Docker runner / n8n / API access issue | Route to C-04; escalate to human if unresolved in 1 session |
 | 🟡 Dependency | Task B cannot start until Task A is complete | Re-sequence WBS; flag in report |
 | 🟣 Decision | Requires human judgement or HITL approval | Escalate immediately — do not route to an agent |
 

@@ -77,6 +77,6 @@ PREREQUISITE: C-08 DQSOps PASS required — do not run EDA on REJECTED data
 ## Constraints
 - **Prerequisite**: Only run after C-08 DQSOps PASS — if C-08 REJECTED, escalate to C-05 code review first
 - Never modify source data — EDA is read-only
-- All chart outputs → `reports/eda/` in HTML format (Azure Blob Storage for large files)
+- All chart outputs → `reports/eda/` in HTML format (대용량은 로컬 artifacts 폴더)
 - If minimum data length < 24 months: flag immediately; recommend ETS fallback (MEMORY M-004)
 - Outlier labeling requires NLM-01 cross-check before classifying as error

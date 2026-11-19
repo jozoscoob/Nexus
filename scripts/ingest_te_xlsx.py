@@ -15,7 +15,7 @@ Trading Economics 히스토리 xlsx 수집·정형화 (WBS 1.1.44 · A-061)
             commodity, category, unit, exchange, source_name, ingested_at
 
 주의(CLAUDE.md §2): xlsx는 수동 히스토리 백필 예외(USDA 패턴과 동일). 파이프라인 상시
-      소스는 아니며 Snowflake 이관 전 1회성 정형화 용도.
+      소스는 아니며 1회성 정형화 용도.
 
 의존성: pandas >= 2.0 · openpyxl(읽기 엔진)
 """

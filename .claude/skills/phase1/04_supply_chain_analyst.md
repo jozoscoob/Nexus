@@ -178,7 +178,7 @@ Preferred Origin: [U.S. Gulf / Brazil / Argentina / Mixed split %]
 | **Accuracy** | Do not speculate on shipping routes. If data is unavailable: state "Logistics visibility limited for [origin/route]." |
 | **GPR Threshold** | Use GPR ≥ 200 as the alert threshold (baseline ~100). The legacy 0.022 scale(D-3 처분으로 폐기 확정 2026-08-25) is deprecated (MEMORY A-062). |
 | **Substitution Scope** | Analysis covers SBO + Canola + Rapeseed only. No scope extension without explicit instruction (CLAUDE.md §1). |
-| **Security** | Internal inventory/ERP data → Snowflake only. Freight research and external API calls → Azure ML / VS Code Web. |
+| **Security** | Internal inventory/ERP data is not used (D-021). Freight research and external API calls → local Docker runner; keys stay in `.env`. |
 | **FX Convention** | Apply T+2 settlement offset to all KRW/USD CFR calculations (MEMORY M-002). |
 
 ---

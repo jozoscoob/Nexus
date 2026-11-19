@@ -32,10 +32,9 @@ data/raw/xlsx_exports/**/*.xlsx
 .env
 *.env.local
 
-# Azure ML / MLflow
+# MLflow
 mlruns/
 mlartifacts/
-.azureml/
 
 # macOS
 .DS_Store

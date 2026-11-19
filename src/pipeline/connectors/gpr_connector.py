@@ -1,7 +1,7 @@
 """
 지정학 리스크 지수 커넥터 — WBS 1.1.6
 수집 대상: Caldara & Iacoviello GPR Index (공개) · Perplexity 실시간 지정학 뉴스
-실행 환경: VS Code Web (Azure ML Studio) 또는 GitHub Actions
+실행 환경: 로컬 Docker(n8n → runner 컨테이너) 또는 GitHub Actions
 """
 
 from __future__ import annotations

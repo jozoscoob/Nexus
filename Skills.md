@@ -20,7 +20,6 @@ Loading all agent definitions into a single context is a primary cause of **cont
 │   ├── 01_senior_pm.md
 │   ├── 02_market_research.md
 │   ├── 03_data_scientist.md
-│   ├── 04_azure_engineer.md
 │   ├── 05_code_reviewer.md
 │   ├── 06_eda_agent.md
 │   ├── 07_documentation_agent.md
@@ -59,7 +58,7 @@ Loading all agent definitions into a single context is a primary cause of **cont
 | C-01 | Senior PM | ✓ Unchanged |
 | C-02 | Market Research & Intelligence Specialist | ✓ Unchanged; designated NotebookLM hub owner |
 | C-03 | Data Scientist | ✓ Unchanged; G1/G2/G3 model execution |
-| C-04 | Data & ML Infrastructure Engineer | ↩ Renamed from "Azure Data / Full-stack Engineer" — scope clarified |
+| C-04 | Document Intelligence & MLOps | ↩ Renamed — scope clarified (document extraction + local pipeline operations) |
 | C-05 | Code Reviewer (QA/QC) | ✓ Unchanged; two-pass model (Haiku → Sonnet) |
 | C-06 | EDA Agent | ✓ Unchanged |
 | C-07 | **Documentation & Knowledge Manager** | ➕ Added — MEMORY.md and NotebookLM archive ownership needs a dedicated agent |
@@ -160,7 +159,7 @@ notebooklm_response = call_notebooklm_api(
 | C-01 Senior PM | Sonnet 4.6 | — | Never needs Opus |
 | C-02 Market Research | Perplexity Pro | Gemini AI Pro | Document > 50 pages |
 | C-03 Data Scientist | Sonnet 4.6 | Opus 4.6 | G3 final synthesis; Monte Carlo variance > 20% |
-| C-04 Azure Engineer | Sonnet 4.6 | — | Code generation doesn't benefit from Opus |
+| C-04 Document Intelligence | Sonnet 4.6 | — | Code generation doesn't benefit from Opus |
 | C-05 Code Reviewer | Haiku 4.5 | Sonnet 4.6 | Security review; logic-level analysis |
 | C-06 EDA Agent | Sonnet 4.6 | Gemini AI Pro | Dataset > 1M rows |
 | C-07 Documentation | Haiku 4.5 | Sonnet 4.6 | Stakeholder-facing executive briefs |

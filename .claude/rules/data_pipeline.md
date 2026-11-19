@@ -1,10 +1,11 @@
 # .claude/rules/data_pipeline.md
 > Load this file when working in `src/pipeline/` or designing any data ingestion component.
 > These rules govern all data access patterns for the Nexus project.
+> 실행 환경: 개인 노트북 Docker(n8n → runner 컨테이너). 정본 저장소는 repo의 parquet, 질의는 DuckDB.
 
 ---
 
-## Snowflake — SQL Conventions
+## DuckDB — SQL Conventions (parquet 직접 질의)
 
 ```sql
 -- ✅ Correct: CTE-based, uppercase keywords, snake_case identifiers, LIMIT on exploratory
@@ -14,49 +15,39 @@ WITH monthly_prices AS (
         origin_country,
         cif_price_usd_per_mt,
         ROW_NUMBER() OVER (PARTITION BY origin_country ORDER BY price_date DESC) AS rn
-    FROM soybean_oil.raw.import_prices
-    WHERE price_date >= DATEADD('year', -10, CURRENT_DATE)
+    FROM read_parquet('data/raw/customs_*.parquet')
+    WHERE price_date >= CURRENT_DATE - INTERVAL 10 YEAR
 )
 SELECT * FROM monthly_prices WHERE rn = 1 LIMIT 100;
 
 -- ❌ Wrong: nested subqueries, no LIMIT, lowercase keywords
-select * from (select * from soybean_oil.raw.import_prices order by price_date desc);
+select * from (select * from read_parquet('data/raw/customs_*.parquet') order by price_date desc);
 ```
 
 **Rules:**
 - Always include `LIMIT` in exploratory queries
 - CTEs over nested subqueries
-- Use `SNOWFLAKE_WAREHOUSE` env variable — never hardcode warehouse name (see MEMORY C-003)
-- For joins > 10M rows: set `statement_timeout_in_seconds = 300` + break into chunked queries (see MEMORY A-001)
-- Credentials: `os.environ['SNOWFLAKE_ACCOUNT']`, `os.environ['SNOWFLAKE_USER']`, `os.environ['SNOWFLAKE_PASSWORD']`
+- 시점 정합 조인은 `ASOF JOIN`(available_at ≤ t)을 쓴다 — 기간초 forward-fill 금지(D-023)
+- 경로는 상수·환경변수(`NEXUS_DATA_ROOT`)로 둔다 — 절대경로 하드코딩 금지
 
-## Python Snowflake Connector Pattern
+## Python DuckDB Pattern
 
 ```python
-import snowflake.connector
-import os
-from typing import Optional
+from pathlib import Path
+
+import duckdb
 import pandas as pd
 
-def get_snowflake_connection() -> snowflake.connector.SnowflakeConnection:
-    return snowflake.connector.connect(
-        account=os.environ['SNOWFLAKE_ACCOUNT'],
-        user=os.environ['SNOWFLAKE_USER'],
-        password=os.environ['SNOWFLAKE_PASSWORD'],
-        warehouse=os.environ['SNOWFLAKE_WAREHOUSE'],   # never hardcode
-        database=os.environ['SNOWFLAKE_DATABASE'],
-        schema=os.environ['SNOWFLAKE_SCHEMA'],
-        session_parameters={'STATEMENT_TIMEOUT_IN_SECONDS': 300}
-    )
+RAW_DIR = Path("data/raw")
 
-def query_to_dataframe(sql: str, conn: Optional[snowflake.connector.SnowflakeConnection] = None) -> pd.DataFrame:
-    _conn = conn or get_snowflake_connection()
+
+def query_to_dataframe(sql: str) -> pd.DataFrame:
+    """parquet 직접 질의 — 서버 불필요, 읽기 전용 연결."""
     try:
-        cursor = _conn.cursor()
-        cursor.execute(sql)
-        return cursor.fetch_pandas_all()
-    except Exception as e:
-        raise RuntimeError(f"[오류] Snowflake 쿼리 실패: {e}") from e
+        with duckdb.connect(database=":memory:") as conn:
+            return conn.execute(sql).df()
+    except duckdb.Error as e:
+        raise RuntimeError(f"[오류] DuckDB 질의 실패: {e}") from e
 ```
 
 ## External API — Retry Pattern
@@ -87,25 +78,17 @@ def fetch_with_retry(url: str, max_retries: int = 4, **kwargs: Any) -> httpx.Res
 
 ```
 data/
-├── raw/          # NEVER committed (in .gitignore). Contains PII or proprietary source data.
+├── raw/          # 수집 산출물. parquet·라이선스 데이터는 .gitignore로 커밋하지 않음
 ├── processed/    # Committed if schema-documented. Store as Parquet, not CSV.
+├── gold/         # feature mart (재생성 산출물 — 계약 yaml·리포트만 추적)
+├── snapshots/    # scripts/build_snapshot_manifest.py 가 쓰는 입력 스냅샷 매니페스트(SHA256)
 └── schemas/      # YAML schema definitions for each processed dataset (column name, dtype, nullable, description)
 ```
 
 - All `processed/` files must have a corresponding `schemas/` YAML entry before being committed
-- Notebook outputs (charts, DataFrames) must be stored in Azure Blob Storage, not in the repo (see MEMORY C-002)
+- Notebook outputs (charts, DataFrames) stay out of the repo — local artifacts folder only (see MEMORY C-002)
 
 ## Environment Variables — `.env.template`
 
-```bash
-# Copy to .env locally — NEVER commit .env
-SNOWFLAKE_ACCOUNT=
-SNOWFLAKE_USER=
-SNOWFLAKE_PASSWORD=
-SNOWFLAKE_WAREHOUSE=
-SNOWFLAKE_DATABASE=
-SNOWFLAKE_SCHEMA=
-AZURE_ML_WORKSPACE=
-AZURE_ML_SUBSCRIPTION_ID=
-AZURE_ML_RESOURCE_GROUP=
-```
+키 이름은 저장소 루트 `.env.template`이 정본이다. 실제 값은 로컬 `.env`(gitignore)와 GitHub Secrets에만 둔다.
+코드는 항상 `os.environ['KEY']`(또는 `.get`)로 읽는다 — 하드코딩 금지.

@@ -22,7 +22,7 @@ Docker 없이 실행 가능한 이유:
   GDELT 이벤트 → 정책 변화 선행 신호 (수출세·수입관세)
   화재 → 인프라 손상 + 대두유 재배 면적 손실
 
-실행 환경: GitHub Actions (external_data_refresh 일별 스케줄) 또는 Azure ML Studio
+실행 환경: 로컬 Docker(n8n → runner 컨테이너) 또는 GitHub Actions(external_data_refresh 일별 스케줄)
 """
 
 from __future__ import annotations

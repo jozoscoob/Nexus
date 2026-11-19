@@ -6,7 +6,7 @@
   Open-Meteo 예보 — 산지 15일 일별 예보(FCST_ 접두, 참고 전용 — 2026-09-13 신설)
   ECMWF ERA5 기온·강수 이상 (ECMWF_API_KEY)
 범위 제외: NASA POWER 농업기상 → production_connector.py 담당
-실행 환경: VS Code Web (Azure ML Studio) 또는 GitHub Actions
+실행 환경: 로컬 Docker(n8n → runner 컨테이너) 또는 GitHub Actions
 """
 
 from __future__ import annotations

@@ -106,7 +106,7 @@ def _extract_text(pdf_path: Path) -> str:
     except ImportError:
         raise RuntimeError(
             "[오류] PDF 파싱 라이브러리 없음. pdfplumber 또는 pypdf를 설치하세요. "
-            "Azure ML 환경: pip install pdfplumber 또는 pypdf"
+            "러너 컨테이너: pip install pdfplumber 또는 pypdf"
         )
 
 

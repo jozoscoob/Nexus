@@ -6,7 +6,7 @@
 GitHub Actions에서 pipeline-summary / backfill-summary 단계 이후 자동 실행됨.
 
 설계 원칙:
-  - Snowflake는 파이프라인의 단일 소스. 이 스크립트는 보고/다운로드 전용 내보내기.
+  - 저장소 parquet이 파이프라인의 단일 소스. 이 스크립트는 보고/다운로드 전용 내보내기.
   - data/exports/ 는 .gitignore에 포함 (data/raw/ 와 동일 규칙)
   - 시트 구성: 파일별 개별 시트 + 'SUMMARY' 시트
 """
