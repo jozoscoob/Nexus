@@ -8,9 +8,10 @@
 name: Fetch Reference Docs
 
 on:
-  push:
-    branches: [main]
-    paths: [".github/workflows/fetch_reference_docs.yml"]
+  # 2026-11-19: push 자동 발화 해제 — 사내망 우회용 트리거였으며 로컬 runner에서 직접 실행(docs/operations/actions_scope.md).
+  # push:
+  #   branches: [main]
+  #   paths: [".github/workflows/fetch_reference_docs.yml"]
   workflow_dispatch:
 
 permissions:

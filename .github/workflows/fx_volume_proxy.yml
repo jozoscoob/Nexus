@@ -2,9 +2,10 @@
 # 발화: 이 파일 push(A-046 패턴) 또는 수동. yfinance는 샌드박스 프록시 차단이라 Actions에서만 실행.
 name: "FX Volume Proxy (BRL/USD ← CME 6L)"
 on:
-  push:
-    branches: [main]
-    paths: [".github/workflows/fx_volume_proxy.yml"]
+  # 2026-11-19: push 자동 발화 해제 — 사내망 우회용 트리거였으며 로컬 runner에서 직접 실행(docs/operations/actions_scope.md).
+  # push:
+  #   branches: [main]
+  #   paths: [".github/workflows/fx_volume_proxy.yml"]
   workflow_dispatch:
 permissions:
   contents: write

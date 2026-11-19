@@ -4,8 +4,9 @@ name: LLM Model Update Monitor
 # HITL §6: 역할 배정 변경은 인간 검토 후 PR로 반영
 
 on:
-  schedule:
-    - cron: "0 9 * * 1"   # 매주 월요일 09:00 UTC
+  # 2026-11-19: 정기 실행은 로컬 n8n → runner로 이관(docs/operations/actions_scope.md) — 수동 실행만 유지.
+  # schedule:
+  #   - cron: "0 9 * * 1"   # 매주 월요일 09:00 UTC
   workflow_dispatch:        # 수동 실행 허용
 
 jobs:

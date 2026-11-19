@@ -24,9 +24,10 @@
 name: Decode Incoming Base64 (반입함 자동 처리)
 
 on:
-  push:
-    branches: [main]
-    paths: ["incoming/**"]
+  # 2026-11-19: push 자동 발화 해제 — 사내망 우회용 트리거였으며 로컬 runner에서 직접 실행(docs/operations/actions_scope.md).
+  # push:
+  #   branches: [main]
+  #   paths: ["incoming/**"]
   workflow_dispatch: {}
 
 permissions:
