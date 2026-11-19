@@ -1,5 +1,5 @@
 # Phase 1 Guide — Foundation
-> **실행 환경**: Claude Code & GitHub → VS Code Web (Azure ML Studio) → Snowflake
+> **실행 환경**: Claude Code & GitHub → 로컬 Docker(n8n → runner 컨테이너) → 저장소 parquet + DuckDB
 > **목표**: 모든 분석의 토대가 되는 데이터 파이프라인 구축 및 G1 변수 풀 확정
 > **총 예상 공수**: ~560h (보고 체계 포함)
 > **Phase 2 진입 조건**: 1.3.5 통합 EDA 보고서 완료 + 1.4.7 G1 변수 풀 최종 문서화
@@ -14,7 +14,7 @@
 |---|---|---|---|---|
 | **C-01** | Senior PM | Opus 4.8 | 전체 오케스트레이션 | `common/01_senior_pm.md` |
 | **C-02** | 시장 조사 전문가 | Perplexity Pro | 1.4.1 (시장 인텔리전스) | `common/02_market_research.md` |
-| **C-04** | 데이터·ML 인프라 엔지니어 | Sonnet 4.6 | 1.1.x, 1.2.x | `common/04_azure_engineer.md` |
+| **C-04** | 데이터·ML 인프라 엔지니어 | Sonnet 4.6 | 1.1.x, 1.2.x | `.claude/agents/c04-document-intelligence.md` |
 | **C-07** | 문서화·지식 관리자 | Haiku 4.5 | 1.1.9, 1.2.6, 1.3.5, 1.4.7 | `common/07_documentation_agent.md` |
 | **C-08** | 데이터 품질 검증자 | Haiku 4.5 | 1.1.8, 1.2.5 | `common/08_data_validator.md` |
 | **C-06** | EDA 에이전트 | Sonnet 4.6 | 1.3.1~1.3.4 | `common/06_eda_agent.md` |
@@ -34,13 +34,12 @@ Claude Code & GitHub
   └─ 코드 작성, 스킬 파일, 스키마 설계 문서, GitHub Actions YAML, 보고서(Markdown)
   └─ 담당 작업: 1.1.1, 1.1.7, 1.1.9, 1.2.1~1.2.3, 1.2.6, 1.3.5, 1.4.x, 1.5.4
 
-VS Code Web (Azure ML Studio)
-  └─ Python 실행, API 커넥터, great_expectations, Jupyter EDA, 기준선 모델
-  └─ 담당 작업: 1.1.2~1.1.6, 1.1.8, 1.2.4(차단중), 1.2.5, 1.3.1~1.3.4, 1.5.1~1.5.3
+로컬 Docker (n8n → runner 컨테이너)
+  └─ Python 실행, API 커넥터, great_expectations, EDA, 기준선 모델
+  └─ 담당 작업: 1.1.2~1.1.6, 1.1.8, 1.2.5, 1.3.1~1.3.4, 1.5.1~1.5.3
 
-Snowflake
-  └─ SQL 실행, 외부+내부 데이터 결합, 최종 데이터 저장
-  └─ 담당 작업: 모든 raw 테이블 저장, ERP 내부 데이터(1.2.4 — IT 승인 필요)
+저장소 parquet + DuckDB
+  └─ 외부 데이터 저장·질의(ASOF JOIN) — 내부 ERP 데이터는 사용하지 않음(D-021)
 ```
 
 ---
@@ -55,7 +54,6 @@ Snowflake
 | `FRED_API_KEY` | Fed 금리, CPI 시계열 (1.1.2) | ✅ 등록 완료 |
 | `EIA_API_KEY` | WTI/Brent 유가 (1.1.2) | ✅ 등록 완료 |
 | `BOK_ECOS_API_KEY` | KRW/USD 환율 (1.1.2) | ✅ 등록 완료 |
-| `SNOWFLAKE_*` (6종) | Snowflake 연결 | ⏳ IT 승인 대기 |
 
 ---
 
@@ -63,7 +61,7 @@ Snowflake
 
 | WBS ID | 작업명 | 담당 | 실행 환경 | 상태 |
 |---|---|---|---|---|
-| 1.1.1 | 외부 지표 Snowflake Raw 스키마 설계 | **C-04** | Claude Code | ✅ (create_raw_tables.sql) |
+| 1.1.1 | 외부 지표 Raw 스키마 설계 | **C-04** | Claude Code | ✅ (data/schemas/*.yaml) |
 | 1.1.2 | 경제 지표 커넥터 (Fed/CPI/FX/WTI) | C-04 | VS Code Web | ✅ |
 | 1.1.3 | 해운 지수 커넥터 (BDI/SCFI) | C-04 | VS Code Web | ✅ |
 | 1.1.4 | WASDE/USDA 작황 커넥터 | **C-04** | VS Code Web | ✅ |
@@ -75,7 +73,7 @@ Snowflake
 | 1.2.1 | S&OP 스키마 설계 | C-04 | Claude Code | ⬜ |
 | 1.2.2 | 구매 이력 스키마 설계 | C-04 | Claude Code | ⬜ |
 | 1.2.3 | 재고·물류 스키마 설계 | C-04 | Claude Code | ⬜ |
-| 1.2.4 | ERP 동기화 파이프라인 구현 | C-04 | VS Code Web+Snowflake | 🚫 IT 승인 |
+| 1.2.4 | ERP 동기화 파이프라인 구현 | C-04 | — | ⛔ 폐기(D-021 내부 데이터 미사용) |
 | 1.2.5 | 내부 파이프라인 품질 검증 | C-08 | VS Code Web | ⬜ |
 | 1.2.6 | 내부 스키마 문서화 | C-07 | Claude Code | ⬜ |
 | 1.3.1 | 외부 가격 지표 EDA | C-06 | VS Code Web | ⬜ |
@@ -130,7 +128,7 @@ EDA 완료 후:
 
 | ID | 블로커 | 유형 | 담당 | 우선순위 |
 |---|---|---|---|---|
-| B-002 | 사내 ERP → Snowflake 연동 IT 부서 승인 미확보 (1.2.4) | 🟣 결정 | 인간 (IT/구매) | 높음 |
+| B-002 | 사내 ERP 연동 (1.2.4) | ⛔ 폐기 | — | D-021로 해소 |
 | B-003 | BDI 직접 API 유료 — Baltic Exchange 구독 미확보 | 🟣 결정 | 인간 (PM) | 중간 |
 | B-004 | ~~P1-03, P1-04, P1-05 스킬 파일 미작성~~ | ✅ 해소 | P1-03·P1-04 완성; P1-05 C-04 흡수로 폐기 | — |
 

@@ -17,8 +17,8 @@ Automated gatekeeper of raw data streams (structured + unstructured) before they
 ### Validation Boundaries
 | Scope | Platform | Status |
 |---|---|---|
-| External variable validation | Azure ML Studio (VS Code Web) workspace | Active |
-| Internal S&OP / procurement validation | Snowflake | Phase B — not yet active |
+| External variable validation | Local Docker runner (n8n '마트·게이트' job) | Active |
+| Internal S&OP / procurement validation | — | Not used (D-021) |
 
 **Output terminology**: Must follow South Korea's three-level Common Standard Terminology Framework (공통표준용어 체계) for all report field names and status labels.
 
@@ -158,7 +158,7 @@ Report per connector:
 |---|---|
 | ML model files | NEVER modify G1/G2/G3 model files or training scripts |
 | Data transformation | NEVER impute, patch, or modify missing/invalid values |
-| Snowflake export | NEVER export Snowflake data to external files |
+| Licensed data export | NEVER export licensed raw data (e.g., Databento) to external locations |
 | Speculation | If schema is missing → report `"Metadata context missing for source [Name]"` — no guessing |
 | Silent failures | If any threshold is breached → fail the pipeline + alert; never silently pass |
 | Serialization | Never use `pickle` — results written as JSON only |
@@ -207,4 +207,4 @@ connectors → pipeline-summary → C-08 (validation) → c06-eda → g1-analysi
 - Receives: Raw parquet files from connector pipeline-summary artifacts (`data/raw/`)
 - Feeds: C-06 (EDA Expert) via `reports/data_quality/dq_report_{DATE}.json`
 - Blocks: `g1-analysis` GitHub Actions job on 🔴 REJECTED status
-- Tools: `src/pipeline/validators/c08_dq_validator.py`, Azure ML Studio workspace
+- Tools: `src/pipeline/validators/c08_dq_validator.py`, local Docker runner

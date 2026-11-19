@@ -13,7 +13,7 @@ import yaml
 
 from scripts import ingest_databento_bo
 from scripts.build_unstructured_timeseries import _as_bool, _records_from_index
-from scripts.publish_blob_snapshot import _validated_files, build_manifest
+from scripts.build_snapshot_manifest import _validated_files, build_manifest
 from src.features.build_feature_mart import _validate_target_rows, build_calendar
 from src.forecasting.variable_importance_g1 import (
     _lasso_importance,
@@ -301,7 +301,7 @@ def test_utc_bar_available_after_bucket_end() -> None:
     assert result.loc[0, "available_at"] == pd.Timestamp("2024-01-08")
 
 
-def test_blob_manifest_has_lineage(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_snapshot_manifest_has_lineage(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GITHUB_SHA", "abc123")
     monkeypatch.setenv("GITHUB_RUN_ID", "42")
     manifest = build_manifest([], "snapshot-test")
@@ -311,13 +311,13 @@ def test_blob_manifest_has_lineage(monkeypatch: pytest.MonkeyPatch) -> None:
     assert manifest["files"] == []
 
 
-def test_blob_manifest_records_content_hash(snapshot_file: Path) -> None:
+def test_snapshot_manifest_records_content_hash(snapshot_file: Path) -> None:
     manifest = build_manifest([snapshot_file], "snapshot-hash")
     assert manifest["files"][0]["bytes"] > 0
     assert len(manifest["files"][0]["sha256"]) == 64
 
 
-def test_blob_uploader_rejects_paths_outside_release_roots(snapshot_file: Path) -> None:
+def test_snapshot_rejects_paths_outside_release_roots(snapshot_file: Path) -> None:
     with pytest.raises(ValueError, match="허용되지 않은 업로드 경로"):
         _validated_files([str(snapshot_file)])
 

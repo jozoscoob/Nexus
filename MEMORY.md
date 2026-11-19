@@ -12,15 +12,12 @@
 ### Library Incompatibilities
 | ID | Issue | Fix |
 |---|---|---|
-| L-001 | `prophet` requires `pystan >= 3.0` — conflicts with older Azure ML environments | Pin: `prophet==1.1.5`, `pystan==3.9.0` |
-| L-002 | `snowflake-connector-python` v3.x breaks with pandas v1.x | Use `snowflake-connector-python >= 3.5` with `pandas >= 2.0` |
-| L-003 | `torch` GPU version mismatch on Azure ML compute | Specify CUDA version in `requirements.txt`: `torch==2.1.0+cu118` |
+| L-001 | `prophet` requires `pystan >= 3.0` — conflicts with older Python environments | Pin: `prophet==1.1.5`, `pystan==3.9.0` |
+| L-003 | `torch` GPU version mismatch on GPU hosts | Specify CUDA version in `requirements.txt`: `torch==2.1.0+cu118` |
 
 ### API & Connection Issues
 | ID | Issue | Fix |
 |---|---|---|
-| A-001 | Snowflake query timeout on large joins (> 10M rows) | Add `statement_timeout_in_seconds = 300`; break into chunked queries |
-| A-002 | Azure ML SDK authentication token expiry mid-pipeline | Implement token refresh with `ServicePrincipalAuthentication` |
 | A-003 | Perplexity API intermittent 429 (rate limit) | Exponential backoff: 2s → 4s → 8s → 16s; max 4 retries |
 
 ### Modeling & Data Pitfalls
@@ -35,8 +32,7 @@
 | ID | Issue | Fix |
 |---|---|---|
 | C-001 | Circular imports when refactoring `src/` modules | Keep `utils.py` dependency-free; import direction: `utils → models → pipelines` |
-| C-002 | Notebook outputs bloat GitHub repo (embedded images) | Use `nbstripout` as pre-commit hook; store outputs in Azure Blob Storage |
-| C-003 | Hardcoded Snowflake warehouse name causes staging/prod confusion | Use `SNOWFLAKE_WAREHOUSE` env variable; define in `.env.template` |
+| C-002 | Notebook outputs bloat GitHub repo (embedded images) | Use `nbstripout` as pre-commit hook; keep outputs out of the repo (local artifacts folder) |
 
 ### LLM-Specific Pitfalls
 | ID | Issue | Fix |

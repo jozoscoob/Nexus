@@ -1,5 +1,5 @@
 # WBS 1.1.2~1.1.6 자동화 절차서
-> 최종 수정: 2026-04-17 | 작성: C-04 (Azure Infrastructure Engineer)
+> 최종 수정: 2026-04-17 | 작성: C-04
 > 관련 워크플로우: `.github/workflows/external_data_refresh.yml`
 
 ---
@@ -76,29 +76,10 @@ GitHub Repository → Settings → Secrets and variables → Actions → **Repos
 
 ---
 
-## 4. Phase B — 목표 상태 (GitHub Actions → Azure ML → Snowflake)
+## 4. 로컬 실행 — n8n + Docker (2026-11 개인 프로젝트 전환)
 
-> **활성화 조건**: Snowflake 관련 GitHub Secrets 6종 등록 완료 시
-
-### 4.1 추가 등록 필요 Secrets
-
-| Secret 이름 | 내용 |
-|---|---|
-| `SNOWFLAKE_ACCOUNT` | Snowflake 계정 식별자 (예: `xy12345.ap-northeast-1.aws`) |
-| `SNOWFLAKE_USER` | 서비스 계정 사용자명 |
-| `SNOWFLAKE_PASSWORD` | 서비스 계정 비밀번호 |
-| `SNOWFLAKE_WAREHOUSE` | 컴퓨팅 웨어하우스 이름 |
-| `SNOWFLAKE_DATABASE` | 대상 데이터베이스 (예: `SOYBEAN_OIL`) |
-| `SNOWFLAKE_SCHEMA` | 대상 스키마 (예: `RAW`) |
-
-### 4.2 활성화 절차
-1. Snowflake Secrets 6종 GitHub Repository Secrets에 등록
-2. `.github/workflows/external_data_refresh.yml` 하단 주석 해제:
-   ```yaml
-   # snowflake-upload:   ← 이 블록 전체 주석 해제
-   ```
-3. `src/pipeline/snowflake_loader.py` 작성 (C-04 담당 — WBS 1.2.x)
-4. 스키마: `soybean_oil.raw.economic_indicators`, `soybean_oil.raw.shipping_indices` 등
+> 일별·수동 실행은 로컬 n8n 워크플로우(`docker/n8n/g2_preview.json`)가 runner 컨테이너의 작업(`POST /run/<job>`)을 순서대로 호출한다.
+> 키는 저장소 루트 `.env`(gitignore)에 두고 `docker compose -f docker/compose.yml up -d --build`로 반영한다.
 
 ---
 
@@ -124,30 +105,12 @@ GitHub Actions job 레벨 재시도는 별도 설정 가능 (`retry-action` 참�
 
 ---
 
-## 6. VS Code Web (Azure ML) 로컬 테스트 절차
+## 6. 로컬 테스트 절차 (runner 컨테이너)
 
-GitHub Actions 트리거 전 VS Code Web에서 개별 커넥터 테스트:
+n8n 실행 전 runner 컨테이너에서 개별 커넥터를 테스트한다:
 
 ```bash
-# VS Code Web Terminal (Azure ML Studio)
-cd /home/azureuser/Nexus   # 또는 클론 경로
-
-# 환경 변수 설정 (터미널 세션 내 임시)
-export FRED_API_KEY="your_key_here"
-export EIA_API_KEY="your_key_here"
-export BOK_ECOS_API_KEY="your_key_here"
-export PERPLEXITY_API_KEY="your_key_here"
-
-# 개별 커넥터 테스트
-python src/pipeline/connectors/economic_connector.py
-python src/pipeline/connectors/shipping_connector.py
-python src/pipeline/connectors/wasde_connector.py
-python src/pipeline/connectors/climate_connector.py
-python src/pipeline/connectors/gpr_connector.py
-
-# 출력 확인
-ls -lh data/raw/
+docker exec -w /repo docker-runner-1 python src/pipeline/connectors/economic_connector.py
 ```
 
-> ⚠️ 보안: 터미널에 직접 키를 입력하지 말고 `.env` 파일 사용 후 `source .env` 실행.
-> `.env` 파일은 절대 git commit 하지 않음 (`.gitignore` 확인).
+키는 `.env`에서 컨테이너로 주입되므로 터미널에 직접 입력하지 않는다.

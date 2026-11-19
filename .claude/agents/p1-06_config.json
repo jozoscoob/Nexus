@@ -28,18 +28,7 @@
   },
   "deployment_targets": {
     "development_cli": "Claude Code / OpenAI Codex CLI",
-    "cloud_environment_options": {
-      "AWS": {
-        "bedrock_model_routing": "anthropic.claude-5-sonnet",
-        "orchestration": "AWS Step Functions",
-        "graph_db": "Amazon Neptune (Gremlin/openCypher)"
-      },
-      "MS_Azure_Studio": {
-        "azure_openai_routing": "gpt-5-5-thinking-deployment",
-        "orchestration": "Azure Logic Apps",
-        "graph_db": "Azure Cosmos DB (Apache Gremlin API)"
-      }
-    }
+    "runtime": "Local Docker (n8n → runner container); optional Oracle Cloud Free Tier host"
   },
   "data_flows": {
     "upstream_ingest": [

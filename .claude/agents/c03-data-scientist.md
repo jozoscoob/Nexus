@@ -170,7 +170,7 @@ residual diagnostic · SHAP·permutation·계수의 fold 안정성 · 추론 비
 ## §8 Data Governance
 - **외부 데이터 전용(D-021)**: 내부 S&OP·ERP·조달원가는 학습·검증·피처 어디에도 투입 금지.
   내부 지표의 **proxy 생성도 금지**(allowlist·schema test로 강제).
-- **Azure ML**: G2 학습 환경. `mlflow.log_model()` — `pickle` 금지.
+- **로컬 Docker(runner 컨테이너)**: G2 학습 환경. `mlflow.log_model()` — `pickle` 금지.
 - **신선도 게이트**: `ingested_at > 5영업일` 시리즈는 `[STALE]` 표시.
 - **누수 방지**: scaling·imputation·변수선택·분해·calibration을 **fold 내부에서 재적합**.
 

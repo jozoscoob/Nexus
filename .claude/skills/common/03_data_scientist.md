@@ -13,10 +13,10 @@ Builds the quantitative backbone of Project Nexus: Variable Importance Matrix, S
 ## Infrastructure Split (Non-Negotiable)
 | Data Type | Environment | Tool |
 |---|---|---|
-| External variables (indices, weather, macro) | Azure ML Studio (VS Code Web) | `src/pipeline/`, `src/forecasting/` |
+| External variables (indices, weather, macro) | 로컬 Docker runner 컨테이너 | `src/pipeline/`, `src/forecasting/` |
 | ~~Internal data (Inventory, S&OP, procurement history)~~ | **⛔ 사용 안 함 (D-021)** | 학습·검증·피처·proxy 전면 금지 |
-| Final G1/G2/G3 model artifacts | Azure ML Model Registry | `mlflow.log_model()` — pickle 금지 |
-| Dashboards / visualizations | Azure Blob → Plotly HTML | `plotly >= 5.0` |
+| Final G1/G2/G3 model artifacts | 로컬 mlflow 모델 레지스트리 | `mlflow.log_model()` — pickle 금지 |
+| Dashboards / visualizations | 로컬 HTML(Plotly) → 브리프 | `plotly >= 5.0` |
 
 ---
 
@@ -35,7 +35,7 @@ def field_guard(df: pd.DataFrame, expected_schema: dict) -> None:
 ```
 - Verify C-08-validated parquet before loading to modeling workspace
 - Alert P1-01~04 if any upstream variable series is `STALE` (>5 business days)
-- 자동화는 GitHub Actions. Snowflake는 D-021로 목적(내부 S&OP 웨어하우스)이 소멸해 도입 보류
+- 자동화는 로컬 n8n(+GitHub Actions 보조). 저장은 저장소 parquet + DuckDB
 
 ### Step 2 — EDA & Statistical Foundation (receive from C-06; do NOT redo)
 - **Receive** C-06 EDA report: distributional properties, stationarity tests, correlation heatmap
@@ -111,7 +111,7 @@ perm = permutation_importance(model, X_test, y_test, n_repeats=20, random_state=
   주요 기여 변수: 호르무즈 AWRP 승수 (SHAP +0.14), 미-중 관세 지수 (+0.09)
   조달 영향: 3개월 CFR 비용 약 +$18/MT 상승 예상 (90% 신뢰구간)
   ```
-- Deploy via: Azure ML Endpoint → Procurement Slack webhook (Phase B)
+- Deploy via: 로컬 배치 산출물 → 담당자 알림(승인 후 발송)
 
 ### Step 5 — Visualization & Storytelling
 ```python
@@ -120,7 +120,7 @@ import plotly.graph_objects as go
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=dates, y=pressure_score, name="Price Pressure Index"))
 fig.add_hline(y=0, line_dash="dash", annotation_text="Neutral")
-# Export: HTML to Azure Blob; PNG via kaleido for reports
+# Export: 로컬 HTML; PNG via kaleido for reports
 ```
 
 ---

@@ -25,7 +25,7 @@
 | **Model policy** | 단일 거대 모델 확정 금지 — **Champion–Challenger 포트폴리오**. 승격은 사전 등록된 규칙으로만 (→ `docs/research_desk/2026-08/model_strategy_2026_08_12/`) |
 | **Data scope** | 외부 파이프라인 데이터 **전용**(MEMORY **D-021**이 D-006을 대체 — 내부 S&OP/ERP는 학습·검증·피처·proxy 어디에도 투입 금지). G2 학습은 개인 노트북 Docker(로컬) |
 | **as-of rule** | 모델의 t일 입력 = `available_at ≤ t`인 최근값. `available_at` 없는 피처는 투입 금지 |
-| **Environment** | 개인 노트북(퇴사 후 개인 프로젝트 — 2026-11-16 승인자). Docker + n8n 로컬 실행. 사내 방화벽·DRM·클라우드 이관(Azure/AWS/Snowflake) 제약 해제. 저장소 용량 초과 시 원본은 Google Drive 보관 |
+| **Environment** | 개인 노트북(퇴사 후 개인 프로젝트 — 2026-11-16 승인자). Docker + n8n 로컬 실행. 사내 방화벽·DRM 제약 해제. 상시 실행이 필요하면 Oracle Cloud Free Tier 서버를 보조로 검토. 저장소 용량 초과 시 원본은 Google Drive 보관 |
 
 ---
 
@@ -38,7 +38,7 @@
 | **Secrets** | Never commit credentials. 키는 로컬 `.env`(gitignore) + GitHub Secrets. Always reference `os.environ['KEY']`. |
 | **Scope lock** | Do not extend to commodities other than soybean oil without explicit written instruction. |
 | **Serialization** | Never use `pickle`. Use `joblib` (sklearn) or `mlflow.log_model()`. |
-| **Data I/O** | Never use `openpyxl` or Excel for pipelines. 정본은 저장소 parquet + DuckDB(Snowflake 폐기 2026-11-16). 수동 업로드 xlsx 판독은 허용 |
+| **Data I/O** | Never use `openpyxl` or Excel for pipelines. 정본은 저장소 parquet + DuckDB. 수동 업로드 xlsx 판독은 허용 |
 | **Shell access** | Never use `os.system()` or `subprocess` for data access. Use SDK connectors only. |
 
 ---
@@ -50,7 +50,7 @@
 |---|---|
 | **Python** | Default: ML models, pipelines, API integration, automation |
 | **R** | Only when Python lacks equivalent: VAR (`vars`), GARCH (`rugarch`), unit root tests (`tseries`) |
-| **SQL** | All Snowflake queries. CTEs over nested subqueries. Always include `LIMIT` in exploratory queries. |
+| **SQL** | All DuckDB queries. CTEs over nested subqueries. Always include `LIMIT` in exploratory queries. |
 | **C++ / Java** | Only after Python profiling confirms bottleneck (C++) or UDF deployment requires it (Java). Add a one-line comment justifying the switch. |
 
 ### 3.2 Style
@@ -81,7 +81,7 @@ data:     update soybean oil prices to Q1-2026
 | Working In | Load | Contains |
 |---|---|---|
 | `src/forecasting/` or `notebooks/` | `.claude/rules/modeling.md` | G1/G2/G3 method specs, validation protocol, baseline requirements |
-| `src/pipeline/` | `.claude/rules/data_pipeline.md` | Snowflake patterns, API retry logic, schema conventions |
+| `src/pipeline/` | `.claude/rules/data_pipeline.md` | DuckDB/parquet patterns, API retry logic, schema conventions |
 | Any `src/` module | `.claude/rules/libraries.md` | Approved libraries with version pins (Python + R) |
 | Any test file | `.claude/rules/testing.md` | pytest, great_expectations, time-aware split protocol |
 | `docs/research_desk/references/` (공유 PDF) | `.claude/rules/references.md` | PDF→Markdown 변환·요약 절차 (PDF 직접 판독 금지) |

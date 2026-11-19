@@ -3,7 +3,7 @@
 G1 변수 중요도 분석 — C-03 Lead Data Scientist (WBS 1.1.8 / Phase A)
 수집된 외부 변수 parquet 파일을 로드하여 대두유 가격 변동성 드라이버를 분석.
 
-Phase A 구현 (Snowflake 연동 전):
+Phase A 구현:
   - 모델 입력: data/gold/feature_mart.parquet (as-of 정합 게이트 통과본)
   - 분석 방법: 시간순 Elastic Net 선택 + 피어슨 상관 + Granger + 기술통계
   - XGBoost+SHAP / Granger 인과검정: 충분한 시계열 누적 후 Phase B에서 적용

@@ -5,7 +5,7 @@
   - 팜유 글로벌 벤치마크: FRED PPOILUSDM (월별, CPO 대리지표)
   - ARS/USD 공식 환율: api.bcra.gob.ar (인증 불필요)
   - 미국 가뭄 지수 D0-D4: drought.gov USDM API (인증 불필요, 주별 갱신)
-실행 환경: GitHub Actions / VS Code Web (Azure ML Studio)
+실행 환경: 로컬 Docker(n8n → runner 컨테이너) 또는 GitHub Actions
 참고 MEMORY: D-002 (P0 데이터갭), M-002 (T+2 FX 오프셋)
 """
 from __future__ import annotations

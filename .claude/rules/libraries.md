@@ -9,7 +9,7 @@
 
 ```
 # Data & Numerics
-pandas >= 2.0           # tabular data (⚠ incompatible with snowflake-connector < 3.5 — see MEMORY L-002)
+pandas >= 2.0           # tabular data
 numpy >= 1.26           # numerical operations
 
 # Machine Learning
@@ -60,12 +60,8 @@ scipy >= 1.12           # scipy.optimize as fallback
 openai >= 1.30              # OpenAI API + Perplexity (OpenAI-compatible endpoint)
 google-genai >= 2.0         # Gemini API (⚠ google-generativeai 지원 종료 — MEMORY L-010 참조)
 
-# Cloud Connectors
-snowflake-connector-python >= 3.5   # Snowflake access (EDP 전용 DB — vintage append, MERGE 업서트 금지)
-mlflow >= 2.10                      # model tracking and registration (use over pickle)
-boto3 >= 1.34                       # S3 스냅샷·산출물 착지 (2026-09-02 등재 — 2026-09-01 클라우드 대통합 상세 수령 — Azure 전면 폐지(Power BI 제외))
-# ⛔ azureml-sdk · azure-identity · azure-storage-blob — 2026-09-02 제거(2026-09-01 클라우드 대통합 상세 수령 — Azure 전면 폐지(Power BI 제외)).
-#    잔존 코드(scripts/publish_blob_snapshot.py · azure_snapshot_publish.yml)는 DEPRECATED 표기, S3 실증 후 삭제.
+# Model Tracking (로컬)
+mlflow >= 2.10                      # model tracking and registration (use over pickle) — 로컬 추적 저장소
 
 # PDF 판독·변환 (2026-09-09 등재 — A-251 references 규칙)
 pymupdf >= 1.24         # PDF → Markdown 변환(scripts/pdf_to_markdown.py) · 요약 PDF 판독(FAO/GAIN 요약기와 병행)
@@ -87,7 +83,7 @@ forecast             # ARIMA, ETS, TBATS
 tseries              # ADF/KPSS unit root tests, GARCH
 vars                 # Vector Autoregression (VAR)
 rugarch              # GARCH family models (primary for G2 volatility)
-DBI + odbc           # Snowflake JDBC connection
+DBI + duckdb         # parquet 질의(DuckDB)
 pointblank           # data quality checks (R equivalent of great_expectations)
 ```
 
@@ -96,6 +92,6 @@ pointblank           # data quality checks (R equivalent of great_expectations)
 | Pattern | Reason | Use Instead |
 |---|---|---|
 | `pickle` | Insecure, version-fragile | `joblib.dump()` or `mlflow.log_model()` |
-| `openpyxl` / Excel I/O | Bypasses Snowflake as source of truth | Snowflake query via `snowflake-connector-python` |
+| `openpyxl` / Excel I/O | Bypasses parquet as source of truth | parquet 읽기·쓰기 + DuckDB 질의 |
 | `os.system()` / `subprocess` for data | Security policy violation | SDK connectors only |
 | `random_state` shuffle on time series | Causes data leakage (see MEMORY M-001) | `sklearn.model_selection.TimeSeriesSplit` |

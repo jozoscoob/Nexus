@@ -1033,7 +1033,7 @@ jobs:
       - name: Upload G1 analysis reports (HTML + PDF + Markdown)
         # alert 모드에서 무경보면 산출물이 없는 것이 정상 — ignore.
         # monthly(심층판)는 90일 보관: D-026(신규 git push 저장소 금지)에 따라 repo 커밋
-        # 대신 아티팩트 장기 보관, 영구 아카이브는 Azure Blob 이관(D-028) 후 일원화.
+        # 대신 아티팩트 장기 보관.
         uses: actions/upload-artifact@v4
         with:
           name: g1-variable-importance-${{ github.run_id }}
@@ -1090,7 +1090,7 @@ jobs:
           path: reports/pipeline/run_${{ github.run_id }}
       - name: Stage latest daily brief (배포 브리지 — 세션·아티팩트 재발행 경로, DQ-23)
         # 브리프는 아티팩트로만 존재해 세션(아티팩트 호스트 차단)이 받을 수 없었음 → 최신 1파일만 덮어쓰기.
-        # D-026 예외: 이력 누적이 아닌 배포 브리지(단일 파일 덮어쓰기)이며 S3 정적 사이트 이관 시 소멸.
+        # D-026 예외: 이력 누적이 아닌 배포 브리지(단일 파일 덮어쓰기).
         run: |
           mkdir -p reports/pipeline/latest
           f=$(ls -t reports/pipeline/run_${{ github.run_id }}/g1_daily_brief_*.html 2>/dev/null | head -1)
@@ -1269,49 +1269,3 @@ jobs:
   #       run: python src/pipeline/ai_quality_validator.py
   #   # ai_quality_validator.py: Claude Haiku 4.5로 각 parquet의 이상값·결측치 탐지 후
   #   # GitHub PR comment 또는 Issues로 자동 리포트 (MCP GitHub 툴 연동)
-
-  # ── Phase B: Snowflake 업로드 (SNOWFLAKE_* Secrets 6종 등록 후 주석 해제) ──────
-  # 활성화 절차: docs/automation/phase_b_activation_guide.md 참조
-  # snowflake-upload:
-  #   name: "1.2.1 | Snowflake Raw Upload (Phase B)"
-  #   needs: [economic-indicators, shipping-indices, wasde-crop-data, climate-enso, geopolitical-risk]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-python@v5
-  #       with:
-  #         python-version: "3.11"
-  #     - name: Install dependencies
-  #       run: pip install pandas pyarrow snowflake-connector-python
-  #     - uses: actions/download-artifact@v4
-  #       with:
-  #         path: data/raw/
-  #         merge-multiple: true
-  #     - name: Initialize Snowflake schema (idempotent)
-  #       env:
-  #         SNOWFLAKE_ACCOUNT:   ${{ secrets.SNOWFLAKE_ACCOUNT }}
-  #         SNOWFLAKE_USER:      ${{ secrets.SNOWFLAKE_USER }}
-  #         SNOWFLAKE_PASSWORD:  ${{ secrets.SNOWFLAKE_PASSWORD }}
-  #         SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-  #         SNOWFLAKE_DATABASE:  ${{ secrets.SNOWFLAKE_DATABASE }}
-  #         SNOWFLAKE_SCHEMA:    ${{ secrets.SNOWFLAKE_SCHEMA }}
-  #       run: |
-  #         python - <<'EOF'
-  #         import snowflake.connector, os
-  #         conn = snowflake.connector.connect(
-  #             account=os.environ['SNOWFLAKE_ACCOUNT'], user=os.environ['SNOWFLAKE_USER'],
-  #             password=os.environ['SNOWFLAKE_PASSWORD'], warehouse=os.environ['SNOWFLAKE_WAREHOUSE'],
-  #             database=os.environ['SNOWFLAKE_DATABASE'],
-  #         )
-  #         conn.cursor().execute(open('src/pipeline/sql/create_raw_tables.sql').read())
-  #         conn.close()
-  #         EOF
-  #     - name: Upload raw parquet to Snowflake (MERGE INTO — idempotent)
-  #       env:
-  #         SNOWFLAKE_ACCOUNT:   ${{ secrets.SNOWFLAKE_ACCOUNT }}
-  #         SNOWFLAKE_USER:      ${{ secrets.SNOWFLAKE_USER }}
-  #         SNOWFLAKE_PASSWORD:  ${{ secrets.SNOWFLAKE_PASSWORD }}
-  #         SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-  #         SNOWFLAKE_DATABASE:  ${{ secrets.SNOWFLAKE_DATABASE }}
-  #         SNOWFLAKE_SCHEMA:    ${{ secrets.SNOWFLAKE_SCHEMA }}
-  #       run: python src/pipeline/snowflake_loader.py

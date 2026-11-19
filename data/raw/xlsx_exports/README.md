@@ -12,7 +12,7 @@ xlsx_exports/
 
 ## 규칙
 - **자동 생성물**: 파이프라인(Historical Backfill / Daily Refresh)에서 갱신. 수동 편집 금지.
-- **분석 소스 아님**: 분석 파이프라인의 단일 소스는 parquet/Snowflake (CLAUDE.md §2).
+- **분석 소스 아님**: 분석 파이프라인의 단일 소스는 parquet (CLAUDE.md §2).
   이 xlsx는 감사·열람용 사본일 뿐임.
 - indicator_code ≤10종이면 지표별 시트 분리, 그 외 단일 `data` 시트.
 - tz-aware `ingested_at`은 엑셀 호환 위해 tz 제거 후 기록.

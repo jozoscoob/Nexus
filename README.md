@@ -219,7 +219,7 @@ WASDE·PSD 등 월·연간 자료는 **기간 말이 아니라 실제 발표일 
 | Import origins: US, Argentina, Brazil, Vietnam | Domestic Korean sourcing |
 | CFR contract-based procurement decisions | Futures/derivatives trading execution |
 | AI-generated Buy/Hold recommendations | Autonomous procurement decisions (human approval required) |
-| Cloud-native pipeline (Snowflake + Azure ML) | On-premise or firewall-internal system modification |
+| Local pipeline (Docker + n8n, parquet + DuckDB; optional Oracle Cloud Free Tier host) | Enterprise data platforms or internal company systems |
 
 ---
 
@@ -236,7 +236,7 @@ WASDE·PSD 등 월·연간 자료는 **기간 말이 아니라 실제 발표일 
 | [`AGENTS.md`](./AGENTS.md) | Root | All coding assistants | Tool-agnostic instructions valid for any AI assistant (Copilot, Gemini, etc.). |
 | [`Skills.md`](./Skills.md) | Root | On-demand (`/skill-name`) | Sub-agent definitions: PM, Data Engineer, Forecasting, Risk Analyst, Optimizer, Reporting, Code Reviewer. |
 | [`llms.txt`](./llms.txt) | Root | External LLM ingestion | Structured URL manifest for semantic discovery by external agents. |
-| [`G1/G2 Preview Release Gates`](./docs/operations/g1_g2_preview_release_gates.md) | `docs/operations/` | Operators + reviewers | Canonical target, fail-closed CI, Blob snapshot, Preview 완료 기준. |
+| [`G1/G2 Preview Release Gates`](./docs/operations/g1_g2_preview_release_gates.md) | `docs/operations/` | Operators + reviewers | Canonical target, fail-closed CI, 로컬 스냅샷 매니페스트, Preview 완료 기준. |
 
 ### 8.2 Path-Scoped Rules
 
@@ -246,7 +246,7 @@ Detailed, module-specific rules live in `.claude/rules/` and are loaded **only w
 |---|---|---|
 | `.claude/rules/modeling.md` | `src/forecasting/`, `notebooks/` | G1/G2/G3 method details, model validation protocol, baseline comparison rules |
 | `.claude/rules/libraries.md` | Any `src/` or `notebooks/` | Full approved library list with version pins (Python + R) |
-| `.claude/rules/data_pipeline.md` | `src/pipeline/` | Snowflake SQL patterns, API retry logic, schema conventions |
+| `.claude/rules/data_pipeline.md` | `src/pipeline/` | DuckDB/parquet patterns, API retry logic, schema conventions |
 | `.claude/rules/testing.md` | Any test file | pytest, great_expectations, time-aware split rules |
 
 ### 8.3 Memory Files

@@ -14,7 +14,7 @@ Interrogates raw supply chain and commodity data before C-03 receives it. Detect
 **Upstream inputs**: Raw parquet files from P1-01~04 connectors (economic_indicators, geopolitical_indices, climate_data, shipping_indices, commodity_data, production_data, crop_data, customs_import)
 **Downstream output**: "Nexus Data Quality Report" → C-03 (before each modeling run)
 
-**Infrastructure**: Azure ML for external variable profiling · Snowflake for internal S&OP and procurement history
+**Infrastructure**: 로컬 Docker runner 컨테이너에서 외부 변수 프로파일링(parquet + DuckDB) · 내부 S&OP 데이터는 사용하지 않음(D-021)
 
 ---
 
@@ -107,12 +107,12 @@ GPR Index (`GPR`) · ENSO ONI (`ENSO_ONI`) · WASDE Stocks-to-Use (`WASDE_STU`) 
 | Constraint | Rule |
 |---|---|
 | **Data freshness** | Flag any feature series with `ingested_at > 5 business days` as `[STALE]` — do not pass stale data to C-03 without human approval |
-| **Security** | Never export Snowflake data externally (CLAUDE.md §2). Internal S&OP data stays in Snowflake. |
+| **Security** | Never export licensed raw data (e.g., Databento) outside the local machine; keys stay in `.env`. |
 | **Statistical notation** | LaTeX for all statistical formulas: $\sigma = \sqrt{\frac{1}{N}\sum(x_i-\mu)^2}$ |
 | **Causation language** | If |r| < 0.3, state "No significant linear relationship detected" — never imply causation from correlation |
 | **Scope** | Soybean oil (대두유) only — do not extend analysis to other commodities (CLAUDE.md §2) |
 | **Serialization** | Never use `pickle`. Use `joblib.dump()` or `mlflow.log_model()` |
-| **Data I/O** | Snowflake is the single source of truth for internal data. Never use Excel/openpyxl. |
+| **Data I/O** | Repository parquet is the single source of truth. Never use Excel/openpyxl in pipelines. |
 
 ### Korean Error Messages (CLAUDE.md §3.3)
 ```python
@@ -148,6 +148,6 @@ except FileNotFoundError as e:
 | P1-01~04 (Domain Specialists) | P1 agents provide domain signal and raw data; C-06 provides statistical interrogation |
 
 ## Connections
-- Receives: P1-01~04 raw parquet outputs, Snowflake S&OP snapshots
+- Receives: P1-01~04 raw parquet outputs
 - Feeds: C-03 (Nexus Data Quality Report), C-01 (HIGH UNCERTAINTY escalations via HITL gate)
-- Tools: `src/forecasting/`, `src/pipeline/`, Azure ML compute, Snowflake worksheets
+- Tools: `src/forecasting/`, `src/pipeline/`, local Docker runner, DuckDB

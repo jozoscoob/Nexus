@@ -7,7 +7,7 @@
   - 원산지 농업기상 (6개 지역): NASA POWER API (공개, 키 불필요) — 기온·강수·습도
   - 원산지·지역 생산 컨텍스트: Perplexity Pro (실시간 작황 등급·생산량 가이던스)
 범위 제외: USDA FAS PSD 글로벌 수급 → wasde_connector.py 담당 (중복 방지)
-실행 환경: VS Code Web (Azure ML Studio) 또는 GitHub Actions
+실행 환경: 로컬 Docker(n8n → runner 컨테이너) 또는 GitHub Actions
 참고: github.com/kdmayer/nasa-power-api, github.com/datosgobar, github.com/WUR-AI/AgML-CY-Bench
 """
 

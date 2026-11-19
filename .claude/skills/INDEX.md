@@ -14,7 +14,7 @@
 | C-01 | Senior PM | `common/01_senior_pm.md` | Claude Opus 4.8 | — | Orchestration, WSJF prioritization, Korean status reports |
 | C-02 | Market Research Specialist | `common/02_market_research.md` | Claude Opus 4.8 | Perplexity Pro | Real-time intelligence, NotebookLM hub |
 | C-03 | Data Scientist | `common/03_data_scientist.md` | Claude Opus 4.8 (thinking) | — | G1/G2/G3 model execution, statistical analysis |
-| C-04 | Document Intelligence & Infrastructure | `common/04_azure_engineer.md` | Claude Sonnet 5 | — | PDF/Excel ingestion, Snowflake pipelines, Azure ML, GitHub Actions |
+| C-04 | Document Intelligence & Infrastructure | `.claude/agents/c04-document-intelligence.md` | Claude Sonnet 5 | — | PDF/Excel ingestion (MinerU·opendataloader), local Docker pipelines (n8n), GitHub Actions |
 | C-05 | Code Reviewer (QA/QC) | `common/05_code_reviewer.md` | Claude Haiku 4.5 | — | Style/security/correctness gating (fast, deterministic) |
 | C-06 | EDA Agent | `common/06_eda_agent.md` | Claude Sonnet 5 | — (Gemini 배제, C-012) | Statistical profiling, anomaly flagging |
 | C-07 | Documentation & Knowledge Manager | `common/07_documentation_agent.md` | Claude Haiku 4.5 | — | MEMORY.md, reports, stakeholder docs |
