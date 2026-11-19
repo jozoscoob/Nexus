@@ -48,6 +48,9 @@ JOBS: dict[str, tuple[list[list[str]], bool]] = {
     # Codex 연동(승인자 도구) — 비정형 크롤러 실행·산출 계약 검증 / 당일 산출물 교차검증. 미설정이면 건너뜀(비치명)
     "codex_crawl": ([[PY, "scripts/codex_bridge.py", "crawl"]], False),
     "codex_verify": ([[PY, "scripts/codex_bridge.py", "verify"]], False),
+    # 시맨틱 레이어 → Obsidian 볼트 보기(data/vault_view/Nexus). 검증 실패 시 내보내지 않음(정본은 YAML)
+    "vault_export": ([[PY, "scripts/validate_semantic_layer.py", "--strict"],
+                      [PY, "scripts/export_obsidian_vault.py"]], True),
     "baseline": ([[PY, "-m", "src.evaluation.band_backtest"]], True),
     "tests": ([[PY, "-m", "pytest", "-q", "tests"]], True),
 }

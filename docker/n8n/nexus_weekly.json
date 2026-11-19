@@ -150,14 +150,37 @@
   },
   {
    "parameters": {
-    "jsCode": "const steps = [\"TE 시세 공백 복구\", \"수동 업로드 파서\", \"마트·게이트\", \"기준선 성적표\", \"해상 경로·G2 화면\"];\nconst fails = [];\nfor (const s of steps) {\n  let r;\n  try { r = $(s).first().json; } catch (e) { continue; }   // 비활성 노드는 건너뜀\n  const body = r.body || r;\n  const code = r.statusCode ?? 200;\n  if (code >= 400 || (Array.isArray(body.failed) && body.failed.length)) {\n    fails.push({ step: s, status: code, failed: body.failed || body.error || null, log: body.log || null });\n  }\n}\nreturn [{ json: { workflow: $workflow.name, ok: fails.length === 0, fails, at: new Date().toISOString() } }];"
+    "method": "POST",
+    "url": "http://runner:8000/run/vault_export",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "vault_export",
+   "name": "Obsidian 볼트 보기 내보내기",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1440,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const steps = [\"TE 시세 공백 복구\", \"수동 업로드 파서\", \"마트·게이트\", \"기준선 성적표\", \"해상 경로·G2 화면\", \"Obsidian 볼트 보기 내보내기\"];\nconst fails = [];\nfor (const s of steps) {\n  let r;\n  try { r = $(s).first().json; } catch (e) { continue; }   // 비활성 노드는 건너뜀\n  const body = r.body || r;\n  const code = r.statusCode ?? 200;\n  if (code >= 400 || (Array.isArray(body.failed) && body.failed.length)) {\n    fails.push({ step: s, status: code, failed: body.failed || body.error || null, log: body.log || null });\n  }\n}\nreturn [{ json: { workflow: $workflow.name, ok: fails.length === 0, fails, at: new Date().toISOString() } }];"
    },
    "id": "check",
    "name": "결과 점검",
    "type": "n8n-nodes-base.code",
    "typeVersion": 2,
    "position": [
-    1440,
+    1680,
     100
    ]
   },
@@ -170,7 +193,7 @@
    "type": "n8n-nodes-base.code",
    "typeVersion": 2,
    "position": [
-    1680,
+    1920,
     100
    ]
   },
@@ -188,7 +211,7 @@
    "type": "n8n-nodes-base.httpRequest",
    "typeVersion": 4.2,
    "position": [
-    1920,
+    2160,
     100
    ]
   }
@@ -239,6 +262,17 @@
    ]
   },
   "해상 경로·G2 화면": {
+   "main": [
+    [
+     {
+      "node": "Obsidian 볼트 보기 내보내기",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Obsidian 볼트 보기 내보내기": {
    "main": [
     [
      {

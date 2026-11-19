@@ -1,0 +1,3 @@
+# 컨테이너에서 실행하는 셸 스크립트는 LF 고정(CRLF면 sh가 \r 때문에 실패)
+*.sh text eol=lf
+docker/Dockerfile text eol=lf

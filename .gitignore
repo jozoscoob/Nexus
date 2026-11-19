@@ -81,3 +81,9 @@ data/raw/Yahoo Finance/**/*.xlsx
 reports/g2_preview/
 data/processed/route_scenarios_latest.json
 docker/penpot/.env
+
+# 학술 참고문헌 원문 PDF — 저작권상 저장소 밖 보관(요약·쪽 인용만 반입, references.md)
+data/raw/References/
+
+# Obsidian 볼트 보기(시맨틱 YAML에서 재생성 — 정본은 src/semantic/*.yaml)
+data/vault_view/

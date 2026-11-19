@@ -104,7 +104,8 @@ WORKFLOWS = {
     # 일요일 07:00 — 공백 복구·수동 업로드 재파싱·마트 재생성
     "nexus_weekly.json": chain("nexusWeekly01", "Nexus 주간 정비", "0 7 * * 0", "일 07:00", [
         ("te_repair", "TE 시세 공백 복구"), ("manual_parsers", "수동 업로드 파서"), ("mart", "마트·게이트"),
-        ("baseline", "기준선 성적표"), ("g2_preview", "해상 경로·G2 화면")]),
+        ("baseline", "기준선 성적표"), ("g2_preview", "해상 경로·G2 화면"),
+        ("vault_export", "Obsidian 볼트 보기 내보내기")]),
     # 유료 — 수동 실행만(스케줄 없음). 실행 전 비용 확인
     "nexus_databento_manual.json": chain("nexusDatabento01", "Databento 유료 수집(수동)", None, "", [
         ("databento", "Databento 수집(유료)"), ("mart", "마트·게이트")]),
