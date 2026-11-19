@@ -87,3 +87,7 @@ data/raw/References/
 
 # Obsidian 볼트 보기(시맨틱 YAML에서 재생성 — 정본은 src/semantic/*.yaml)
 data/vault_view/
+
+# 실행 보고·Codex 교차검증 산출물(로컬 전용 — 수치 포함)
+reports/ops/pipeline_run_*.html
+reports/ops/codex_verify_*.md

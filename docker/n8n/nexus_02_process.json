@@ -1,0 +1,277 @@
+{
+ "id": "nexusProcess01",
+ "name": "Nexus 02 정제",
+ "nodes": [
+  {
+   "parameters": {},
+   "id": "manual",
+   "name": "수동 실행",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    0,
+    200
+   ]
+  },
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "id": "called",
+   "name": "통합 워크플로우에서 호출",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/manual_parsers",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "manual_parsers",
+   "name": "수동 업로드 파서",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    240,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/mart",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "mart",
+   "name": "마트·시점 정합 게이트",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    480,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/vault_export",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "vault_export",
+   "name": "Obsidian 볼트 보기",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    720,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/codex_verify_process",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "codex_verify_process",
+   "name": "Codex 교차검증 — 정제",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    960,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const steps = [\"수동 업로드 파서\", \"마트·시점 정합 게이트\", \"Obsidian 볼트 보기\", \"Codex 교차검증 — 정제\"];\nconst fails = [];\nfor (const s of steps) {\n  let r;\n  try { r = $(s).first().json; } catch (e) { continue; }   // 비활성 노드는 건너뜀\n  const body = r.body || r;\n  const code = r.statusCode ?? 200;\n  if (code >= 400 || (Array.isArray(body.failed) && body.failed.length)) {\n    fails.push({ step: s, status: code, failed: body.failed || body.error || null, log: body.log || null });\n  }\n}\nreturn [{ json: { workflow: $workflow.name, ok: fails.length === 0, fails, at: new Date().toISOString() } }];"
+   },
+   "id": "check",
+   "name": "결과 점검",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1200,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "return $json.ok ? [] : [{ json: $json }];"
+   },
+   "id": "only_fail",
+   "name": "실패만 통과",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1440,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/alert",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json) }}",
+    "options": {}
+   },
+   "id": "alert",
+   "name": "실패 알림 기록",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1680,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "content": "## 02 정제\n원천별 형식을 하나의 계약(price_date·indicator_code·value + as-of 5필드)으로 맞춘다.\n- 마트: available_at ≤ t인 최근값만(ASOF JOIN), 값 충돌은 즉시 실패\n- 목표변수는 CME 정산가 교차검증 계열만\n- 문서·온톨로지는 Obsidian 볼트 보기로 내보냄",
+    "width": 520,
+    "height": 220
+   },
+   "id": "note",
+   "name": "설명",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    0,
+    -280
+   ]
+  }
+ ],
+ "connections": {
+  "수동 업로드 파서": {
+   "main": [
+    [
+     {
+      "node": "마트·시점 정합 게이트",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "마트·시점 정합 게이트": {
+   "main": [
+    [
+     {
+      "node": "Obsidian 볼트 보기",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Obsidian 볼트 보기": {
+   "main": [
+    [
+     {
+      "node": "Codex 교차검증 — 정제",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Codex 교차검증 — 정제": {
+   "main": [
+    [
+     {
+      "node": "결과 점검",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "결과 점검": {
+   "main": [
+    [
+     {
+      "node": "실패만 통과",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "실패만 통과": {
+   "main": [
+    [
+     {
+      "node": "실패 알림 기록",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "수동 실행": {
+   "main": [
+    [
+     {
+      "node": "수동 업로드 파서",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "통합 워크플로우에서 호출": {
+   "main": [
+    [
+     {
+      "node": "수동 업로드 파서",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "timezone": "Asia/Seoul",
+  "executionOrder": "v1",
+  "errorWorkflow": "nexusErrorAlert01"
+ }
+}

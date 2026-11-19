@@ -1,0 +1,345 @@
+{
+ "id": "nexusAnalyze01",
+ "name": "Nexus 03 분석·평가",
+ "nodes": [
+  {
+   "parameters": {},
+   "id": "manual",
+   "name": "수동 실행",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    0,
+    200
+   ]
+  },
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "id": "called",
+   "name": "통합 워크플로우에서 호출",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/band_compare",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "band_compare",
+   "name": "참고 범위 방식 5종 비교",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    240,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/baseline",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "baseline",
+   "name": "기준선 성적표",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    480,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/g1_report",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "g1_report",
+   "name": "G1 변수 중요도·일별 브리프",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    720,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/g2_preview",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "g2_preview",
+   "name": "G2 화면(해상 경로·범위)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    960,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/tests",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "tests",
+   "name": "자동 테스트",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1200,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/codex_verify_analyze",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "codex_verify_analyze",
+   "name": "Codex 교차검증 — 분석",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1440,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const steps = [\"참고 범위 방식 5종 비교\", \"기준선 성적표\", \"G1 변수 중요도·일별 브리프\", \"G2 화면(해상 경로·범위)\", \"자동 테스트\", \"Codex 교차검증 — 분석\"];\nconst fails = [];\nfor (const s of steps) {\n  let r;\n  try { r = $(s).first().json; } catch (e) { continue; }   // 비활성 노드는 건너뜀\n  const body = r.body || r;\n  const code = r.statusCode ?? 200;\n  if (code >= 400 || (Array.isArray(body.failed) && body.failed.length)) {\n    fails.push({ step: s, status: code, failed: body.failed || body.error || null, log: body.log || null });\n  }\n}\nreturn [{ json: { workflow: $workflow.name, ok: fails.length === 0, fails, at: new Date().toISOString() } }];"
+   },
+   "id": "check",
+   "name": "결과 점검",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1680,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "return $json.ok ? [] : [{ json: $json }];"
+   },
+   "id": "only_fail",
+   "name": "실패만 통과",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1920,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/alert",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json) }}",
+    "options": {}
+   },
+   "id": "alert",
+   "name": "실패 알림 기록",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2160,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "content": "## 03 분석·평가\n여러 방식을 같은 walk-forward 조건에서 비교하고, 기준선을 못 이기면 승격하지 않는다.\n- 지표: coverage·폭·pinball(분위 손실)\n- 화면 수치는 원천 표와 대조(Codex)\n- 확률 약속·구매 권고 문구 금지",
+    "width": 520,
+    "height": 220
+   },
+   "id": "note",
+   "name": "설명",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    0,
+    -280
+   ]
+  }
+ ],
+ "connections": {
+  "참고 범위 방식 5종 비교": {
+   "main": [
+    [
+     {
+      "node": "기준선 성적표",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "기준선 성적표": {
+   "main": [
+    [
+     {
+      "node": "G1 변수 중요도·일별 브리프",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "G1 변수 중요도·일별 브리프": {
+   "main": [
+    [
+     {
+      "node": "G2 화면(해상 경로·범위)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "G2 화면(해상 경로·범위)": {
+   "main": [
+    [
+     {
+      "node": "자동 테스트",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "자동 테스트": {
+   "main": [
+    [
+     {
+      "node": "Codex 교차검증 — 분석",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Codex 교차검증 — 분석": {
+   "main": [
+    [
+     {
+      "node": "결과 점검",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "결과 점검": {
+   "main": [
+    [
+     {
+      "node": "실패만 통과",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "실패만 통과": {
+   "main": [
+    [
+     {
+      "node": "실패 알림 기록",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "수동 실행": {
+   "main": [
+    [
+     {
+      "node": "참고 범위 방식 5종 비교",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "통합 워크플로우에서 호출": {
+   "main": [
+    [
+     {
+      "node": "참고 범위 방식 5종 비교",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "timezone": "Asia/Seoul",
+  "executionOrder": "v1",
+  "errorWorkflow": "nexusErrorAlert01"
+ }
+}

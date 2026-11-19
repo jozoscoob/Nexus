@@ -171,14 +171,19 @@ def main() -> None:
     cats = export_terms(ent, names, edges_by_term)
     n_edges, n_nodes = export_edges(ont, names)
     n_sum = export_summaries()
+    from scripts.export_vault_documents import export as export_documents   # 비정형·반정형 문서 카드
+    docs = export_documents(OUT)
     home = [fm({"tags": ["nexus/홈"]}), "# Nexus 시맨틱 레이어", "",
             BANNER.format(src="src/semantic/*.yaml"), "",
             f"- 용어 {len(names)}개 · 분류 {len(cats)}개 · 인과 사슬 {n_edges}건 · 노드 {n_nodes}개 · 문헌 요약 {n_sum}건",
-            f"- 온톨로지 버전 {ont.get('version')} · 갱신 {ont.get('updated')}", "", "## 분류",
+            f"- 온톨로지 버전 {ont.get('version')} · 갱신 {ont.get('updated')}", "",
+            "## 비정형·반정형 문서", *[f"- {k}: {v}건" for k, v in sorted(docs.items())],
+            "- 문서 분류 허브: `문서 분류/` · GAIN·FAO 신호 색인: [[비정형 요약/신호 색인]]", "", "## 용어 분류",
             *[f"- [[분류/{safe(c)}|{c}]] ({len(v)})" for c, v in sorted(cats.items())], "", "## 인과 사슬",
             *[f"- [[인과/{e['edge_id']}|{e['edge_id']}]] {e.get('label_ko', '')}" for e in ont.get("causal_edges", [])]]
     write(OUT / "Nexus 홈.md", "\n".join(home) + "\n")
-    print(f"[완료] 볼트 보기 → {OUT}: 용어 {len(names)} · 인과 {n_edges} · 노드 {n_nodes} · 문헌 요약 {n_sum}")
+    print(f"[완료] 볼트 보기 → {OUT}: 용어 {len(names)} · 인과 {n_edges} · 노드 {n_nodes} · 문헌 요약 {n_sum} · "
+          + " · ".join(f"{k} {v}" for k, v in sorted(docs.items())))
 
 
 if __name__ == "__main__":

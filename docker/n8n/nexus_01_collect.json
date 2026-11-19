@@ -1,6 +1,6 @@
 {
- "id": "nexusDaily01",
- "name": "Nexus 일일 파이프라인",
+ "id": "nexusCollect01",
+ "name": "Nexus 01 수집",
  "nodes": [
   {
    "parameters": {},
@@ -15,19 +15,12 @@
   },
   {
    "parameters": {
-    "rule": {
-     "interval": [
-      {
-       "field": "cronExpression",
-       "expression": "0 6 * * 2-6"
-      }
-     ]
-    }
+    "inputSource": "passthrough"
    },
-   "id": "schedule",
-   "name": "화~토 06:00",
-   "type": "n8n-nodes-base.scheduleTrigger",
-   "typeVersion": 1.2,
+   "id": "called",
+   "name": "통합 워크플로우에서 호출",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
    "position": [
     0,
     0
@@ -94,7 +87,7 @@
     }
    },
    "id": "codex_crawl",
-   "name": "Codex 비정형 크롤러",
+   "name": "Codex 웹 수집",
    "type": "n8n-nodes-base.httpRequest",
    "typeVersion": 4.2,
    "position": [
@@ -117,7 +110,7 @@
     }
    },
    "id": "digest",
-   "name": "일별 비정형 다이제스트",
+   "name": "비정형 다이제스트(RSS·뉴스)",
    "type": "n8n-nodes-base.httpRequest",
    "typeVersion": 4.2,
    "position": [
@@ -128,7 +121,7 @@
   {
    "parameters": {
     "method": "POST",
-    "url": "http://runner:8000/run/mart",
+    "url": "http://runner:8000/run/codex_verify_collect",
     "options": {
      "timeout": 7200000,
      "response": {
@@ -139,8 +132,8 @@
      }
     }
    },
-   "id": "mart",
-   "name": "마트·게이트",
+   "id": "codex_verify_collect",
+   "name": "Codex 교차검증 — 수집",
    "type": "n8n-nodes-base.httpRequest",
    "typeVersion": 4.2,
    "position": [
@@ -150,106 +143,14 @@
   },
   {
    "parameters": {
-    "method": "POST",
-    "url": "http://runner:8000/run/baseline",
-    "options": {
-     "timeout": 7200000,
-     "response": {
-      "response": {
-       "neverError": true,
-       "fullResponse": true
-      }
-     }
-    }
-   },
-   "id": "baseline",
-   "name": "기준선 성적표",
-   "type": "n8n-nodes-base.httpRequest",
-   "typeVersion": 4.2,
-   "position": [
-    1440,
-    100
-   ]
-  },
-  {
-   "parameters": {
-    "method": "POST",
-    "url": "http://runner:8000/run/g2_preview",
-    "options": {
-     "timeout": 7200000,
-     "response": {
-      "response": {
-       "neverError": true,
-       "fullResponse": true
-      }
-     }
-    }
-   },
-   "id": "g2_preview",
-   "name": "해상 경로·G2 화면",
-   "type": "n8n-nodes-base.httpRequest",
-   "typeVersion": 4.2,
-   "position": [
-    1680,
-    100
-   ]
-  },
-  {
-   "parameters": {
-    "method": "POST",
-    "url": "http://runner:8000/run/tests",
-    "options": {
-     "timeout": 7200000,
-     "response": {
-      "response": {
-       "neverError": true,
-       "fullResponse": true
-      }
-     }
-    }
-   },
-   "id": "tests",
-   "name": "테스트",
-   "type": "n8n-nodes-base.httpRequest",
-   "typeVersion": 4.2,
-   "position": [
-    1920,
-    100
-   ]
-  },
-  {
-   "parameters": {
-    "method": "POST",
-    "url": "http://runner:8000/run/codex_verify",
-    "options": {
-     "timeout": 7200000,
-     "response": {
-      "response": {
-       "neverError": true,
-       "fullResponse": true
-      }
-     }
-    }
-   },
-   "id": "codex_verify",
-   "name": "Codex 교차검증",
-   "type": "n8n-nodes-base.httpRequest",
-   "typeVersion": 4.2,
-   "position": [
-    2160,
-    100
-   ]
-  },
-  {
-   "parameters": {
-    "jsCode": "const steps = [\"무료 커넥터 수집\", \"TE 시세 갱신\", \"Codex 비정형 크롤러\", \"일별 비정형 다이제스트\", \"마트·게이트\", \"기준선 성적표\", \"해상 경로·G2 화면\", \"테스트\", \"Codex 교차검증\"];\nconst fails = [];\nfor (const s of steps) {\n  let r;\n  try { r = $(s).first().json; } catch (e) { continue; }   // 비활성 노드는 건너뜀\n  const body = r.body || r;\n  const code = r.statusCode ?? 200;\n  if (code >= 400 || (Array.isArray(body.failed) && body.failed.length)) {\n    fails.push({ step: s, status: code, failed: body.failed || body.error || null, log: body.log || null });\n  }\n}\nreturn [{ json: { workflow: $workflow.name, ok: fails.length === 0, fails, at: new Date().toISOString() } }];"
+    "jsCode": "const steps = [\"무료 커넥터 수집\", \"TE 시세 갱신\", \"Codex 웹 수집\", \"비정형 다이제스트(RSS·뉴스)\", \"Codex 교차검증 — 수집\"];\nconst fails = [];\nfor (const s of steps) {\n  let r;\n  try { r = $(s).first().json; } catch (e) { continue; }   // 비활성 노드는 건너뜀\n  const body = r.body || r;\n  const code = r.statusCode ?? 200;\n  if (code >= 400 || (Array.isArray(body.failed) && body.failed.length)) {\n    fails.push({ step: s, status: code, failed: body.failed || body.error || null, log: body.log || null });\n  }\n}\nreturn [{ json: { workflow: $workflow.name, ok: fails.length === 0, fails, at: new Date().toISOString() } }];"
    },
    "id": "check",
    "name": "결과 점검",
    "type": "n8n-nodes-base.code",
    "typeVersion": 2,
    "position": [
-    2400,
+    1440,
     100
    ]
   },
@@ -262,7 +163,7 @@
    "type": "n8n-nodes-base.code",
    "typeVersion": 2,
    "position": [
-    2640,
+    1680,
     100
    ]
   },
@@ -280,8 +181,23 @@
    "type": "n8n-nodes-base.httpRequest",
    "typeVersion": 4.2,
    "position": [
-    2880,
+    1920,
     100
+   ]
+  },
+  {
+   "parameters": {
+    "content": "## 01 수집\n정형(가격·거시·기상·해상)과 비정형(RSS·뉴스·웹)을 모은다.\n- 커넥터는 실패해도 비치명 — 저장된 최신 데이터로 다음 단계 진행\n- 모든 행에 as-of 필드(event_time·available_at)\n- 끝에 Codex가 중복 키·시점 역전·조용한 실패를 점검",
+    "width": 520,
+    "height": 220
+   },
+   "id": "note",
+   "name": "설명",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    0,
+    -280
    ]
   }
  ],
@@ -301,80 +217,36 @@
    "main": [
     [
      {
-      "node": "Codex 비정형 크롤러",
+      "node": "Codex 웹 수집",
       "type": "main",
       "index": 0
      }
     ]
    ]
   },
-  "Codex 비정형 크롤러": {
+  "Codex 웹 수집": {
    "main": [
     [
      {
-      "node": "일별 비정형 다이제스트",
+      "node": "비정형 다이제스트(RSS·뉴스)",
       "type": "main",
       "index": 0
      }
     ]
    ]
   },
-  "일별 비정형 다이제스트": {
+  "비정형 다이제스트(RSS·뉴스)": {
    "main": [
     [
      {
-      "node": "마트·게이트",
+      "node": "Codex 교차검증 — 수집",
       "type": "main",
       "index": 0
      }
     ]
    ]
   },
-  "마트·게이트": {
-   "main": [
-    [
-     {
-      "node": "기준선 성적표",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "기준선 성적표": {
-   "main": [
-    [
-     {
-      "node": "해상 경로·G2 화면",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "해상 경로·G2 화면": {
-   "main": [
-    [
-     {
-      "node": "테스트",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "테스트": {
-   "main": [
-    [
-     {
-      "node": "Codex 교차검증",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "Codex 교차검증": {
+  "Codex 교차검증 — 수집": {
    "main": [
     [
      {
@@ -418,7 +290,7 @@
     ]
    ]
   },
-  "화~토 06:00": {
+  "통합 워크플로우에서 호출": {
    "main": [
     [
      {

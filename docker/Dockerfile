@@ -1,7 +1,7 @@
 # Nexus 로컬 실행 이미지 (D-053: 개인 노트북 Docker + n8n)
 # 1단계: Codex CLI 설치 — 공식 Node 이미지에서만 npm 사용(apt nodejs/npm 의존성 수백 개 회피)
 FROM node:22-slim AS codex
-# mcpvault: Obsidian 볼트 뷰 읽기 전용 MCP(MIT, stdio) — Claude가 docker exec로 실행
+# mcpvault: Obsidian 볼트 뷰 읽기 전용 MCP(MIT, stdio) — AI 어시스턴트가 docker exec로 실행
 RUN npm install -g @openai/codex@0.166.0 @bitbonsai/mcpvault@0.18.3 && npm cache clean --force
 
 FROM python:3.11-slim

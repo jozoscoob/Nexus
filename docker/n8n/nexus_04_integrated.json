@@ -1,0 +1,284 @@
+{
+ "id": "nexusDaily01",
+ "name": "Nexus 04 통합 파이프라인",
+ "nodes": [
+  {
+   "parameters": {},
+   "id": "manual",
+   "name": "수동 실행",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    0,
+    200
+   ]
+  },
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "cronExpression",
+       "expression": "0 6 * * 2-6"
+      }
+     ]
+    }
+   },
+   "id": "schedule",
+   "name": "화~토 06:00",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": {
+     "__rl": true,
+     "value": "nexusCollect01",
+     "mode": "id"
+    },
+    "mode": "once",
+    "options": {
+     "waitForSubWorkflow": true
+    }
+   },
+   "id": "call_nexusCollect01",
+   "name": "01 수집",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1.2,
+   "alwaysOutputData": true,
+   "position": [
+    240,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": {
+     "__rl": true,
+     "value": "nexusProcess01",
+     "mode": "id"
+    },
+    "mode": "once",
+    "options": {
+     "waitForSubWorkflow": true
+    }
+   },
+   "id": "call_nexusProcess01",
+   "name": "02 정제",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1.2,
+   "alwaysOutputData": true,
+   "position": [
+    480,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": {
+     "__rl": true,
+     "value": "nexusAnalyze01",
+     "mode": "id"
+    },
+    "mode": "once",
+    "options": {
+     "waitForSubWorkflow": true
+    }
+   },
+   "id": "call_nexusAnalyze01",
+   "name": "03 분석·평가",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1.2,
+   "alwaysOutputData": true,
+   "position": [
+    720,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/run_report",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "run_report",
+   "name": "실행 보고(최종 산출물)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    960,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const steps = [\"실행 보고(최종 산출물)\"];\nconst fails = [];\nfor (const s of steps) {\n  let r;\n  try { r = $(s).first().json; } catch (e) { continue; }   // 비활성 노드는 건너뜀\n  const body = r.body || r;\n  const code = r.statusCode ?? 200;\n  if (code >= 400 || (Array.isArray(body.failed) && body.failed.length)) {\n    fails.push({ step: s, status: code, failed: body.failed || body.error || null, log: body.log || null });\n  }\n}\nreturn [{ json: { workflow: $workflow.name, ok: fails.length === 0, fails, at: new Date().toISOString() } }];"
+   },
+   "id": "check",
+   "name": "결과 점검",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1200,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "return $json.ok ? [] : [{ json: $json }];"
+   },
+   "id": "only_fail",
+   "name": "실패만 통과",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1440,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/alert",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json) }}",
+    "options": {}
+   },
+   "id": "alert",
+   "name": "실패 알림 기록",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1680,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "content": "## 04 통합 파이프라인\n01 수집 → 02 정제 → 03 분석·평가를 하위 워크플로우로 차례로 호출하고\n실행 보고(reports/ops/pipeline_run_latest.html)를 최종 산출물로 남긴다.\n- 단계 실패는 다음 단계를 막지 않되 보고·알림에 드러남\n- 전체 약 25~35분",
+    "width": 620,
+    "height": 220
+   },
+   "id": "note",
+   "name": "설명",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    0,
+    -280
+   ]
+  }
+ ],
+ "connections": {
+  "01 수집": {
+   "main": [
+    [
+     {
+      "node": "02 정제",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "02 정제": {
+   "main": [
+    [
+     {
+      "node": "03 분석·평가",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "03 분석·평가": {
+   "main": [
+    [
+     {
+      "node": "실행 보고(최종 산출물)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "실행 보고(최종 산출물)": {
+   "main": [
+    [
+     {
+      "node": "결과 점검",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "결과 점검": {
+   "main": [
+    [
+     {
+      "node": "실패만 통과",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "실패만 통과": {
+   "main": [
+    [
+     {
+      "node": "실패 알림 기록",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "수동 실행": {
+   "main": [
+    [
+     {
+      "node": "01 수집",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "화~토 06:00": {
+   "main": [
+    [
+     {
+      "node": "01 수집",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "timezone": "Asia/Seoul",
+  "executionOrder": "v1",
+  "errorWorkflow": "nexusErrorAlert01"
+ }
+}

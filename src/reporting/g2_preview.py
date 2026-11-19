@@ -31,7 +31,13 @@ TEMPLATE = Path(__file__).with_name("templates") / "g2_preview.html"
 OUT = ROOT / "reports" / "g2_preview" / "g2_preview_latest.html"
 HORIZONS = {1: "1일", 5: "1주", 20: "1개월", 60: "3개월"}
 QUANTS = [0.10, 0.25, 0.50, 0.75, 0.90]
-ROLL = 250                      # band_backtest B2와 동일한 경험 분위 창
+ROLL = 250                      # 케인스 렌즈의 경험 분위 창(참고 렌즈 전용)
+# 참고 범위 B4a′(2026-11-19 패널 재검토 후 승인 적용): 중심 = 현재가(무드리프트), 폭 = EWMA 일변동성 × √h × 정규 분위.
+# 지평별 감쇠: 1·5일 0.94, 20·60일 0.97 — 60일 80% coverage 76.8%·pinball 최저·폭 일변동 안정(근거:
+# docs/research_desk/2026-11/g2_b4_panel_review_2026_11_19.md). 컨포멀 배수는 60일 독립 표본이 적어 범위에 곱하지 않음.
+EWMA_LAMBDA = {1: 0.94, 5: 0.94, 20: 0.97, 60: 0.97}
+Z = {0.10: -1.2816, 0.25: -0.6745, 0.50: 0.0, 0.75: 0.6745, 0.90: 1.2816}
+EVAL_START = "2012-01-01"        # 범위 적중 이력 산출 시작(walk-forward, 결과가 실현된 구간만)
 HISTORY_DAYS = 1300             # 화면 차트 표시 이력(약 5년)
 USC_LB_TO_USD_MT = 22.0462      # 1 USc/lb = 22.0462 USD/MT (정확 환산)
 TICKERS = [("TE_PALM_OIL", "팜유 (Bursa)"), ("TE_SOYBEANS", "대두 (CBOT)"),
@@ -48,16 +54,36 @@ def _close() -> pd.Series:
     return s.astype(float)
 
 
-def bands(close: pd.Series) -> dict:
+def _ewma_sigma(lp: np.ndarray, lam: float) -> np.ndarray:
+    """t일 종가까지의 일간 로그수익률로 만든 EWMA 일변동성(t 이후 정보 없음)."""
+    r = np.diff(lp)
+    s2 = np.empty(len(lp))
+    s2[0] = 0.015 ** 2                    # 미래 수익률 없이 고정 사전값(연율 약 24%) — 평가 시작 전 소멸
+    for t in range(1, len(lp)):
+        s2[t] = lam * s2[t - 1] + (1 - lam) * r[t - 1] ** 2
+    return np.sqrt(s2)
+
+
+def bands(close: pd.Series, with_stats: bool = True) -> dict:
+    """참고 범위 B4a′ + 지평별 과거 적중 이력(같은 방식을 매일 적용했을 때 실제가 범위 안·위·아래에 든 비율)."""
     last = float(close.iloc[-1])
     lp = np.log(close.to_numpy())
     out = {}
     for h, label in HORIZONS.items():
-        r = lp[h:] - lp[:-h]
-        win = r[-ROLL:]
-        qs = np.quantile(win, QUANTS)
-        out[str(h)] = {"label": label, "n": int(len(win)),
-                       "q": {f"p{int(q * 100)}": round(last * math.exp(v), 2) for q, v in zip(QUANTS, qs)}}
+        sig = _ewma_sigma(lp, EWMA_LAMBDA[h])
+        sd = float(sig[-1]) * math.sqrt(h)
+        item = {"label": label, "n": int(len(lp)), "lambda": EWMA_LAMBDA[h],
+                "q": {f"p{int(q * 100)}": round(last * math.exp(Z[q] * sd), 2) for q in QUANTS}}
+        if with_stats:
+            start = int(np.searchsorted(close.index.values, np.datetime64(EVAL_START)))
+            t = np.arange(start, len(lp) - h)
+            zs = (lp[t + h] - lp[t]) / (sig[t] * math.sqrt(h))
+            item["stats"] = {"n": int(len(t)), "since": EVAL_START,
+                             "cov80": round(float(np.mean(np.abs(zs) <= Z[0.90])) * 100, 1),
+                             "cov50": round(float(np.mean(np.abs(zs) <= Z[0.75])) * 100, 1),
+                             "above90": round(float(np.mean(zs > Z[0.90])) * 100, 1),
+                             "below10": round(float(np.mean(zs < Z[0.10])) * 100, 1)}
+        out[str(h)] = item
     return out
 
 
@@ -276,13 +302,13 @@ def build() -> dict:
     return {
         "lenses": {"classical": classical, "keynesian": keynesian_lens(close),
                    "value": value_lens(close, classical)},
-        "prev_bands": bands(close.iloc[:-5]),
+        "prev_bands": bands(close.iloc[:-5], with_stats=False),
         "prev_as_of": close.index[-6].strftime("%Y-%m-%d"),
         "fx_krw": {"value": round(float(krw.iloc[-1]), 2), "date": krw.index[-1].strftime("%Y-%m-%d")} if len(krw) else None,
         "meta": {"as_of": close.index[-1].strftime("%Y-%m-%d"),
                  "generated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
                  "unit": "USc/lb", "to_usd_mt": USC_LB_TO_USD_MT, "roll": ROLL,
-                 "method": "기준선 B2 — 최근 250개 h-거래일 수익률의 경험 분위를 최신 정산가에 적용"},
+                 "method": "B4a′ — 중심은 현재 정산가, 폭은 최근 변동성(EWMA) × √기간 × 정규 분위"},
         "price": [[d.strftime("%Y-%m-%d"), round(float(v), 2)] for d, v in hist.items()],
         "bands": bands(close),
         "card": report_card(),

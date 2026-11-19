@@ -1,5 +1,4 @@
 <title>Nexus G2 대두유 범위</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
 <style>
@@ -351,15 +350,15 @@ const D = /*__G2_DATA__*/null;
   $("#asof").textContent = D.meta.as_of; $("#gen").textContent = D.meta.generated;
 
   const addBiz = (d, n) => { const x = new Date(d); let k = 0; while (k < n) { x.setDate(x.getDate() + 1); const w = x.getDay(); if (w && w !== 6) k++; } return x; };
-  const iso = d => d.toISOString().slice(0, 10);
-  const hit80 = h => { const r = ((D.card.horizons || {})[String(h)] || []).find(x => String(x.model).startsWith("B2")); return r && r.cov80 != null ? r.cov80 * 100 : null; };
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;   // 현지(KST) 날짜 — UTC 변환으로 하루 밀리지 않게
+  const hit80 = h => { const s = (D.bands[String(h)] || {}).stats; return s && s.cov80 != null ? s.cov80 : null; };
 
   function drawVerdict() {
     const b = D.bands[String(st.h)].q, pb = (D.prev_bands[String(st.h)] || {}).q;
-    $("#v-k").textContent = `CBOT 대두유 근월 정산가 · ${HL[st.h]} 뒤 참고 범위(P10~P90, ${ulbl()})`;
-    $("#v-big").innerHTML = `<span>${fmt(b.p10)}</span> ~ <span>${fmt(b.p90)}</span>`;
+    $("#v-k").textContent = `CBOT 대두유 근월 정산가 · ${HL[st.h]} 뒤 참고 범위 — 가운데 50%(P25~P75, ${ulbl()})`;
+    $("#v-big").innerHTML = `<span>${fmt(b.p25)}</span> ~ <span>${fmt(b.p75)}</span>`;
     const pv = P[P.length - 2], c = (last.v / pv.v - 1) * 100;
-    $("#v-now").innerHTML = `지금 ${fmt(last.v)} <span class="${cls(c)}">(${sign(c)})</span> · 중앙값 ${fmt(b.p50)} · 기준일 ${last.s}`;
+    $("#v-now").innerHTML = `지금 ${fmt(last.v)} <span class="${cls(c)}">(${sign(c)})</span> · 80% 범위(P10~P90) ${fmt(b.p10)} ~ ${fmt(b.p90)} · 기준일 ${last.s}`;
     // 범위 막대
     const lo = Math.min(b.p10, last.v) * .985, hi = Math.max(b.p90, last.v) * 1.015, pos = v => ((v - lo) / (hi - lo) * 100).toFixed(2) + "%";
     $("#rangebar").innerHTML = `<div class="rb-track"></div>
@@ -373,7 +372,9 @@ const D = /*__G2_DATA__*/null;
     const parts = [`범위 폭이 지금 가격의 ${w.toFixed(0)}%입니다`];
     if (pw != null) parts.push(`지난주(${D.prev_as_of})보다 ${w >= pw ? "넓어졌습니다" : "좁아졌습니다"}(${pw.toFixed(1)}% → ${w.toFixed(1)}%)`);
     parts.push(`최근 20일 변동성은 1년 평균의 ${KY.ratio.toFixed(2)}배`);
-    if (h80 != null) parts.push(`이 방식의 ${HL[st.h]} 80% 범위 적중률은 ${h80.toFixed(1)}%${h80 < 75 ? "로 목표(80%)에 못 미쳐 실제 변동이 범위를 벗어난 적이 잦습니다" : ""}`);
+    const sx = D.bands[String(st.h)].stats;
+    if (h80 != null) parts.push(`같은 방식을 ${sx.since.slice(0, 4)}년부터 매일 적용했을 때 ${HL[st.h]} 뒤 실제 가격이 80% 범위 안에 든 비율 ${h80.toFixed(1)}%(목표 80%) · 50% 범위 안 ${sx.cov50.toFixed(1)}%(목표 50%)`);
+    if (sx) parts.push(`위로 벗어난 비율 ${sx.above90.toFixed(1)}% · 아래로 ${sx.below10.toFixed(1)}%(각 목표 10%) — 급등 국면에서는 위쪽 이탈이 몰렸습니다`);
     $("#caution-t").textContent = parts.join(" · ") + ".";
   }
 
@@ -526,9 +527,9 @@ const D = /*__G2_DATA__*/null;
     for (const [hz, rows] of Object.entries(c.horizons)) {
       rows.forEach(r => {
         const v = r.cov80 * 100, p = v >= 75 ? "ok" : v >= 65 ? "warn" : "bad";
-        h += `<tr class="${String(r.model).startsWith("B2") ? "cur" : ""}"><td>${lbl[hz] || hz} · ${r.model}</td>`
+        h += `<tr><td>${lbl[hz] || hz} · ${r.model}</td>`
           + `<td><span class="pill ${p}">${v.toFixed(1)}%</span></td><td>${(r.cov50 * 100).toFixed(1)}%</td>`
-          + `<td>±${(r.width80 / 2).toFixed(1)}%</td><td>${r.mae.toFixed(2)}%</td><td>${(r.lock_cov80 * 100).toFixed(1)}%</td></tr>`;
+          + `<td>${r.width80.toFixed(1)}%</td><td>${r.mae.toFixed(2)}%</td><td>${(r.lock_cov80 * 100).toFixed(1)}%</td></tr>`;
       });
     }
     $("#card-tbl").innerHTML = h + "</tbody>";
@@ -671,7 +672,8 @@ const D = /*__G2_DATA__*/null;
 
   function drawMethod() {
     $("#method").innerHTML = `<h3 style="margin-top:6px">산출 방법·한계</h3><ul class="note" style="display:grid;gap:6px;padding-left:18px">
-      <li>참고 범위: 최근 250개 구간에서 실제로 나타난 h거래일 가격 변화율의 하위 10·25·50·75·90% 값을 지금 정산가에 곱한 기준선(B2). 미래를 추정하는 모델이 아닙니다.</li>
+      <li>참고 범위(B4a′): 중심은 지금 정산가에 두고(과거 추세를 싣지 않음), 폭은 최근 변동성(EWMA — 1·5일 감쇠 0.94, 20·60일 0.97) × √기간 × 정규 분위로 정합니다. 굵은 막대는 P25~P75(가운데 50% 참고 범위), 옅은 막대는 P10~P90(80% 참고 범위)입니다. 둘 다 오늘 계산한 앞으로의 참고 범위이며 과거 가격 구간이 아닙니다. 미래를 추정하는 모델이 아닙니다.</li>
+      <li>바꾼 이유: 이전 방식(최근 250구간 경험 분위)은 3개월 80% 범위 적중률이 63.5%로 목표(80%)에 크게 못 미쳤고, 같은 비교에서 이 방식은 76.8%였습니다(2012~2025 walk-forward). 급등 국면(2020·2025 하반기·2026)에서는 어느 방식이든 위쪽 이탈이 많아, 이 위험은 사건 정보와 함께 봐야 합니다.</li>
       <li>숨 쉬는 폭: 최근 20일 변동성 ÷ 1년 변동성에 비례한 시각 효과일 뿐 범위 숫자를 바꾸지 않습니다.</li>
       <li>두 관점·가치 렌즈: 상대가격 분포·변동성 비율·재고율에서 계산한 참고값이며 백테스트 전입니다. 범위 숫자는 기준선 그대로입니다.</li>
       <li>구매 영향: 선물 정산가 × 물량 × 고정 환율. basis·운임·관세·환율 변동은 빠져 있습니다.</li>

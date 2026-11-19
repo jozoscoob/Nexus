@@ -52,6 +52,18 @@ JOBS: dict[str, tuple[list[list[str]], bool]] = {
     "vault_export": ([[PY, "scripts/validate_semantic_layer.py", "--strict"],
                       [PY, "scripts/export_obsidian_vault.py"]], True),
     "baseline": ([[PY, "-m", "src.evaluation.band_backtest"]], True),
+    # 분석·평가: 참고 범위 산출 방식 5종 walk-forward 비교(모델 비교·검증)
+    "band_compare": ([[PY, "scripts/g2_band_method_compare.py"]], True),
+    # G1 변수 중요도·일별 브리프(약 6분) — 마트 이후. reports/pipeline/g1_daily_brief_*.html
+    "g1_report": ([[PY, "src/forecasting/variable_importance_g1.py"]], False),
+    # 시연용 빠른 수집 — 해상 경로(PortWatch)·해상 경보 RSS만. 실패해도 저장된 데이터로 이후 단계 진행(비치명)
+    "collect_quick": ([[PY, f"src/pipeline/connectors/{c}_connector.py"] for c in ("portwatch", "maritime_alerts")], False),
+    # 단계별 Codex 교차검증(읽기 전용) — 산출물+생성 코드+점검표. codex 미설치·산출물 없음이면 건너뜀(비치명)
+    "codex_verify_collect": ([[PY, "scripts/codex_bridge.py", "verify", "collect"]], False),
+    "codex_verify_process": ([[PY, "scripts/codex_bridge.py", "verify", "process"]], False),
+    "codex_verify_analyze": ([[PY, "scripts/codex_bridge.py", "verify", "analyze"]], False),
+    # 최종 산출물: 단계별 성패·소요·산출물 링크를 한 화면으로(reports/ops/pipeline_run_latest.html)
+    "run_report": ([[PY, "scripts/pipeline_run_report.py"]], False),
     "tests": ([[PY, "-m", "pytest", "-q", "tests"]], True),
 }
 REPO = os.environ.get("NEXUS_REPO", "/repo")
@@ -78,7 +90,11 @@ def run_job(name: str) -> tuple[int, dict]:
                 break
     failed = [r["step"] for r in results if r["returncode"] != 0]
     status = 500 if failed and stop_on_fail else 200
-    return status, {"job": name, "failed": failed, "log": str(log_path), "steps": results}
+    body = {"job": name, "failed": failed, "log": str(log_path), "steps": results,
+            "finished_at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+    # 실행 결과를 로그 옆 JSON으로 남김 — 실행 보고서(run_report)가 단계별 성패·소요 시간을 읽음
+    log_path.with_suffix(".json").write_text(json.dumps(body, ensure_ascii=False), encoding="utf-8")
+    return status, body
 
 
 class Handler(BaseHTTPRequestHandler):

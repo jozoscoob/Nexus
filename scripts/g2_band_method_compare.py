@@ -1,7 +1,7 @@
 """G2 참고 범위 산출 방식 비교 — walk-forward 백테스트(2012~2025, 80% 구간).
 
-비교 대상(전부 중심 = 현재가, 무변화):
-  B2_250 / B2_120 : 최근 250/120일 겹치는 h일 로그수익률의 경험 분위(현행 g2_preview)
+비교 대상(B2는 과거 수익률 분위를 그대로 — 중심도 과거 추세를 따름 / 나머지는 중심 = 현재가, 무변화):
+  B2_250 / B2_120 : 최근 250/120일 겹치는 h일 로그수익률의 경험 분위(구 g2_preview 기준선)
   EWMA_N          : EWMA(λ=0.94) 일변동성 × √h × 정규 분위
   FHS_750         : 과거 750일 h일 수익률을 당시 EWMA로 표준화한 경험 분위 × 현재 σ
   EWMA_CONF       : EWMA 폭 × 롤링 컨포멀 배수(최근 250개 '이미 실현된' 표준화 점수의 80% 분위)
@@ -21,6 +21,7 @@ import pandas as pd
 from src.reporting.g2_preview import _close
 
 EWMA_LAMBDA = 0.94
+EWMA_SEED_DAILY_VOL = 0.015  # 초기 일변동성 사전값(연율 약 24%) — 2010년 초 몇 달 뒤 영향 소멸
 Z10 = 1.2816  # 정규 10% 분위 절댓값
 CONF_WINDOW = 250
 CONF_MIN = 50
@@ -32,7 +33,7 @@ OUT = Path("reports/g2_preview/band_method_compare.json")
 
 def _ewma_sigma(r: np.ndarray, n: int) -> np.ndarray:
     s2 = np.empty(n)
-    s2[0] = r[:20].var()
+    s2[0] = EWMA_SEED_DAILY_VOL ** 2      # 미래 수익률을 쓰지 않는 고정 사전값(평가 시작 2012 전에 소멸)
     for t in range(1, n):
         s2[t] = EWMA_LAMBDA * s2[t - 1] + (1 - EWMA_LAMBDA) * r[t - 1] ** 2
     return np.sqrt(s2)
@@ -43,7 +44,7 @@ def _bands(lp: np.ndarray, sig: np.ndarray, t: int, h: int, scores: list[float])
     hist = lp[h : t + 1] - lp[: t + 1 - h]
     q = {name: np.quantile(hist[-win:], [0.1, 0.9]) for name, win in (("B2_250", 250), ("B2_120", 120))}
     q["EWMA_N"] = np.array([-Z10 * sd, Z10 * sd])
-    idx = np.arange(max(0, t - FHS_WINDOW - h), t - h + 1)
+    idx = np.arange(max(0, t - FHS_WINDOW - h + 1), t - h + 1)   # 결과가 실현된 쌍 정확히 750개
     if len(idx) > 100:
         std = (lp[idx + h] - lp[idx]) / (sig[idx] * np.sqrt(h))
         q["FHS_750"] = np.quantile(std, [0.1, 0.9]) * sd

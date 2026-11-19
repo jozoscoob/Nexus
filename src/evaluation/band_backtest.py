@@ -58,6 +58,7 @@ def run_backtest(close: pd.Series) -> dict[str, Any]:
                            "lockbox": list(LOCKBOX), "horizons": {}}
     for h in HORIZONS:
         realized = logc.shift(-h) - logc
+        outcome_date = pd.Series(logc.index, index=logc.index).shift(-h)   # t 예측의 채점일(t+h)
         bands = _baseline_bands(logc, h)
         res_h: dict[str, Any] = {}
         for name, bd in bands.items():
@@ -67,7 +68,8 @@ def run_backtest(close: pd.Series) -> dict[str, Any]:
                 res_h[name] = {"status": "표본 부족"}
                 continue
             lock = (j.index >= pd.Timestamp(LOCKBOX[0])) & (j.index <= pd.Timestamp(LOCKBOX[1]))
-            main = j[~lock]
+            # 본 평가는 채점일까지 락박스 이전이어야 함 — 경계 h일을 비워 락박스 실측이 섞이지 않게(정화)
+            main = j[~lock & (outcome_date.reindex(j.index) < pd.Timestamp(LOCKBOX[0])).to_numpy()]
             def _score(sub: pd.DataFrame) -> dict[str, Any]:
                 y = sub["y"]
                 return {
@@ -106,7 +108,7 @@ def render_markdown(res: dict[str, Any], basis: str) -> str:
                 continue
             w, lk = e["walk_forward"], e["lockbox"]
             L.append(f"| {name} | {w['n']:,} | {w['pinball_p10']} | {w['pinball_p50']} | {w['pinball_p90']} | "
-                     f"{w['coverage_50']*100:.0f}% | {w['coverage_80']*100:.0f}% | ±{w['width_80_pct']/2:.1f}% | {w['mae_p50_pct']:.2f}% | "
+                     f"{w['coverage_50']*100:.0f}% | {w['coverage_80']*100:.0f}% | {w['width_80_pct']:.1f}%(로그) | {w['mae_p50_pct']:.2f}% | "
                      f"{(str(round(lk['coverage_80']*100)) + '%') if lk.get('coverage_80') is not None else lk.get('status')} |")
         L.append("")
         b2 = res["horizons"][str(h)].get("B2 롤링 경험 분위(250일)", {})

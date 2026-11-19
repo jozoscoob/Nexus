@@ -3,6 +3,7 @@
 사용(runner 작업 codex_crawl / codex_verify가 호출):
   python scripts/codex_bridge.py crawl    # 크롤러 실행 → 산출물 계약 검증
   python scripts/codex_bridge.py verify   # 당일 산출물 교차검증(읽기 전용)
+  python scripts/codex_bridge.py verify collect|process|analyze   # 단계별 교차검증(산출물+코드+점검표)
 
 설정(로컬 .env — 값은 커밋하지 않음):
   CODEX_CRAWLER_CMD   크롤러 실행 명령(예: "python tools/crawler/run.py"). 비어 있으면 crawl은 건너뜀.
@@ -84,14 +85,85 @@ def crawl() -> int:
     return 0
 
 
-def _today_outputs() -> list[str]:
-    today = date.today()
-    out = []
-    for pat in ("reports/market/*.md", "reports/g2_preview/*.html", "data/processed/*.json"):
+# 단계별 교차검증 범위 — 산출물(오늘 갱신분) + 그 산출물을 만든 코드 + 단계 점검표
+STAGES: dict[str, dict] = {
+    "collect": {
+        "outputs": ["data/raw/*.parquet", "data/processed/unstructured_daily_signals.csv", "docker/logs/collect_free_*.log"],
+        "code": ["src/pipeline/connectors/*_connector.py", "src/pipeline/asof.py"],
+        "checks": "(a) every collected parquet has price_date, indicator_code, value and the as-of fields "
+                  "event_time/available_at/ingested_at; (b) no duplicate (price_date, indicator_code) rows that would make "
+                  "an as-of join pick an arbitrary value; (c) available_at is never earlier than event_time and never in the "
+                  "future; (d) connector errors are not silently reported as success (empty frames, swallowed exceptions).",
+    },
+    "process": {
+        "outputs": ["data/gold/feature_contract.yaml", "reports/market/feature_mart_*.md",
+                    "reports/market/data_readiness_*.md", "reports/market/session_close_validation_*.md",
+                    "docker/logs/mart_*.log", "docker/logs/manual_parsers_*.log"],
+        "code": ["src/features/build_feature_mart.py", "src/pipeline/asof.py", "scripts/validate_asof.py",
+                 "scripts/validate_session_close.py", "scripts/data_readiness.py"],
+        "checks": "(a) the feature mart joins each indicator with available_at <= t (no forward-fill from period start); "
+                  "(b) value conflicts fail hard instead of being resolved silently; (c) target columns (target_*) are never "
+                  "used as features; (d) the target series is the CME settlement with time_basis checks; (e) parquet at "
+                  "data/gold/feature_mart.parquet can be inspected with pandas to confirm (a)-(c).",
+    },
+    "analyze": {
+        "outputs": ["reports/market/g2_band_backtest_*.md", "reports/g2_preview/g2_preview_latest.html",
+                    "reports/g2_preview/band_method_compare.json", "reports/market/g1_*.md"],
+        "code": ["src/evaluation/band_backtest.py", "scripts/g2_band_method_compare.py", "src/reporting/g2_preview.py",
+                 "src/logistics/route_scenarios.py"],
+        "checks": "(a) walk-forward evaluation uses only information realized by t (calibration pairs with s+h <= t); "
+                  "(b) every number on the G2 page matches its source table or JSON; (c) coverage/width/pinball are computed "
+                  "as documented; (d) page wording makes no probability promise or buy/hold recommendation.",
+    },
+}
+STAGE_PROMPT = (
+    "You are a read-only reviewer for the Nexus soybean-oil data pipeline, stage '{stage}'. Inspect the outputs and the code "
+    "that produced them (you may run read-only Python/pandas to open parquet files). Checks: {checks} Report findings as a "
+    "Korean markdown table: 파일 | 심각도(치명/높음/참고) | 내용 | 근거(줄·값). If nothing is wrong, say so per check. "
+    "Do not modify any file.\n\nOutputs updated today:\n{outputs}\n\nCode:\n{code}\n"
+)
+
+
+def _today(paths: list[str]) -> list[str]:
+    today, out = date.today(), []
+    for pat in paths:
         for f in glob.glob(str(ROOT / pat)):
             if datetime.fromtimestamp(Path(f).stat().st_mtime).date() == today:
-                out.append(str(Path(f).relative_to(ROOT)))
+                out.append(str(Path(f).relative_to(ROOT)).replace("\\", "/"))
     return sorted(out)
+
+
+def _today_outputs() -> list[str]:
+    return _today(["reports/market/*.md", "reports/g2_preview/*.html", "data/processed/*.json"])
+
+
+def _codex_cmd(prompt: str) -> list[str] | None:
+    if shutil.which("codex"):
+        return ["codex", "exec", "--sandbox", "read-only", "--skip-git-repo-check", prompt]
+    return None
+
+
+def verify_stage(stage: str) -> int:
+    spec = STAGES[stage]
+    outputs = _today(spec["outputs"])
+    if not outputs:
+        print(f"[정보] '{stage}' 단계 오늘 갱신된 산출물 없음 — 교차검증 건너뜀")
+        return 0
+    code = sorted({str(Path(f).relative_to(ROOT)).replace("\\", "/") for pat in spec["code"]
+                   for f in glob.glob(str(ROOT / pat))})
+    cmd = _codex_cmd(STAGE_PROMPT.format(stage=stage, checks=spec["checks"], outputs="\n".join(outputs[:60]),
+                                         code="\n".join(code)))
+    if cmd is None:
+        print("[정보] codex CLI 없음 — 교차검증 건너뜀")
+        return 0
+    proc = _run(cmd)
+    OPS.mkdir(parents=True, exist_ok=True)
+    out = OPS / f"codex_verify_{stage}_{date.today():%Y-%m-%d}.md"
+    out.write_text(f"# Codex 교차검증 — {stage} 단계 · {date.today()}\n\n산출물 {len(outputs)}건 · 코드 {len(code)}건 · "
+                   f"종료 코드 {proc.returncode}\n\n{proc.stdout}\n", encoding="utf-8")
+    print(f"[{'완료' if proc.returncode == 0 else '오류'}] {stage} 교차검증 → {out}")
+    print(proc.stdout[-2500:])
+    return 0 if proc.returncode == 0 else 1
 
 
 def verify() -> int:
@@ -118,6 +190,11 @@ def verify() -> int:
 
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else ""
-    if mode not in ("crawl", "verify"):
-        raise SystemExit("[오류] 사용법: codex_bridge.py crawl|verify")
-    sys.exit(crawl() if mode == "crawl" else verify())
+    stage = sys.argv[2] if len(sys.argv) > 2 else ""
+    if mode == "crawl":
+        sys.exit(crawl())
+    if mode == "verify" and stage in STAGES:
+        sys.exit(verify_stage(stage))
+    if mode == "verify" and not stage:
+        sys.exit(verify())
+    raise SystemExit("[오류] 사용법: codex_bridge.py crawl | verify [collect|process|analyze]")

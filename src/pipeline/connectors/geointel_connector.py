@@ -262,8 +262,10 @@ def fetch_gdelt_sbo_events() -> pd.DataFrame:
             "GDELT_EVENT_SCORE", float(total), "articles/day (5쿼리×최대5건 합산, 0~25)",
             f"[GEOINTEL:GDELT] {len(query_counts)}/{len(GDELT_QUERIES)}쿼리 합산 — {detail}",
         ))
-    print(f"[완료] GDELT 이벤트 {len(query_counts)}개 쿼리 성공 → 일 합산 1행 "
-          f"(대상 {len(GDELT_QUERIES)}개)")
+    if query_counts:
+        print(f"[완료] GDELT 이벤트 {len(query_counts)}/{len(GDELT_QUERIES)}개 쿼리 성공 → 일 합산 1행")
+    else:   # 성공 쿼리 0개면 행을 만들지 않음 — '완료'로 보이지 않게 경고로 남김(Codex 교차검증 지적)
+        print(f"[경고] GDELT 성공 쿼리 0/{len(GDELT_QUERIES)}개 — 오늘 GDELT 행 없음(이전 값으로 진행)")
     return _to_df(rows)
 
 
