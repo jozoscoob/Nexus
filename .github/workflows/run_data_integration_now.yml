@@ -1,7 +1,7 @@
 # Data Integration 수동 발사 런처 (조정자 승인 2026-08-28 · A-218)
 # 세션 통합 토큰은 dispatch 403(A-146) — Actions 내부 GITHUB_TOKEN은 workflow_dispatch
 # 가능(재귀 방지 규칙의 명시적 예외). 이 파일 push 1회로 Data Integration을 발사한다.
-# 재발사 #3 (2026-08-30): 런 #84 회귀 2건 수정 검증(GDELT 합산·ESR as-of 캡) — 일요일 팀장 보고용 green run 확보 (A-242)
+# 재발사 #3 (2026-08-30): 런 #84 회귀 2건 수정 검증(GDELT 합산·ESR as-of 캡) — 정상 실행 1회 확보 (A-242)
 name: Run Data Integration Now
 
 on:

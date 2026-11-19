@@ -63,7 +63,8 @@ JOBS: dict[str, tuple[list[list[str]], bool]] = {
     "codex_verify_process": ([[PY, "scripts/codex_bridge.py", "verify", "process"]], False),
     "codex_verify_analyze": ([[PY, "scripts/codex_bridge.py", "verify", "analyze"]], False),
     # 최종 산출물: 단계별 성패·소요·산출물 링크를 한 화면으로(reports/ops/pipeline_run_latest.html)
-    "run_report": ([[PY, "scripts/pipeline_run_report.py"]], False),
+    "run_report": ([[PY, "scripts/pipeline_run_report.py"],
+                    [PY, "-m", "scripts.build_terminal"]], False),   # + 대화형 터미널(reports/terminal/nexus_terminal.html)
     "tests": ([[PY, "-m", "pytest", "-q", "tests"]], True),
 }
 REPO = os.environ.get("NEXUS_REPO", "/repo")

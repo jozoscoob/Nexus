@@ -173,12 +173,21 @@ def main() -> None:
     n_sum = export_summaries()
     from scripts.export_vault_documents import export as export_documents   # 비정형·반정형 문서 카드
     docs = export_documents(OUT)
+    from scripts.export_vault_ontology import export as export_ontology    # 온톨로지 템플릿·MOC·캔버스·그래프 색
+    docs.update({f"온톨로지 · {k}": v for k, v in export_ontology(OUT).items()})
+    term = Path("reports/terminal/nexus_terminal.html")       # 대화형 터미널 사본(볼트에서 바로 열기)
+    if term.exists():
+        (OUT / "대시보드").mkdir(parents=True, exist_ok=True)
+        shutil.copy2(term, OUT / "대시보드" / term.name)
+        docs["대시보드 · Nexus Terminal"] = 1
     home = [fm({"tags": ["nexus/홈"]}), "# Nexus 시맨틱 레이어", "",
             BANNER.format(src="src/semantic/*.yaml"), "",
             f"- 용어 {len(names)}개 · 분류 {len(cats)}개 · 인과 사슬 {n_edges}건 · 노드 {n_nodes}개 · 문헌 요약 {n_sum}건",
             f"- 온톨로지 버전 {ont.get('version')} · 갱신 {ont.get('updated')}", "",
             "## 비정형·반정형 문서", *[f"- {k}: {v}건" for k, v in sorted(docs.items())],
-            "- 문서 분류 허브: `문서 분류/` · GAIN·FAO 신호 색인: [[비정형 요약/신호 색인]]", "", "## 용어 분류",
+            "- 문서 분류 허브: `문서 분류/` · GAIN·FAO 신호 색인: [[비정형 요약/신호 색인]]",
+            "- 온톨로지: [[온톨로지 MOC]] · [[온톨로지 지도.canvas|인과 사슬 캔버스]] · 템플릿 폴더 `템플릿/`",
+            "- 대시보드: [Nexus Terminal 열기](대시보드/nexus_terminal.html) — 브라우저에서 열림(차트·3D 표면·온톨로지 3D)", "", "## 용어 분류",
             *[f"- [[분류/{safe(c)}|{c}]] ({len(v)})" for c, v in sorted(cats.items())], "", "## 인과 사슬",
             *[f"- [[인과/{e['edge_id']}|{e['edge_id']}]] {e.get('label_ko', '')}" for e in ont.get("causal_edges", [])]]
     write(OUT / "Nexus 홈.md", "\n".join(home) + "\n")

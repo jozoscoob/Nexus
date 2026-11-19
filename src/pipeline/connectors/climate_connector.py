@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import os
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import httpx
@@ -99,6 +99,12 @@ _BUILTIN_REGIONS: dict[str, dict[str, Any]] = {
 _REGION_KEYS: tuple[str, ...] = (
     "lat", "lon", "country", "role", "crop", "tier", "name_ko", "coord_status")
 
+
+
+def _utc_today() -> date:
+    """API 요청·예보 발행일 기준 날짜(UTC). 컨테이너가 KST라 00~09시에 date.today()가 UTC보다 하루 앞서
+    아카이브가 미래 종료일로 400을 내고 예보 발행일이 미래가 됨(2026-11-20 실측 — 전 지역 0/23)."""
+    return datetime.now(timezone.utc).date()
 
 def _coerce_scalar(raw: str) -> Any:
     """최소 YAML 스칼라 변환 — 따옴표 제거, 정수·실수 판정, 그 외 문자열."""
@@ -308,7 +314,7 @@ def fetch_openmeteo_regional_climate(
     참고: docs/research_desk/_reference/soybean_oil_production_climate.md §3.2
     """
     if end_date is None:
-        end_date = date.today().isoformat()
+        end_date = _utc_today().isoformat()
     targets = _select_regions(regions)
     if not targets:
         print("[경고] 수집 대상 산지 없음(CLIMATE_TIER 필터 결과) — 아카이브 수집 건너뜀")
@@ -502,7 +508,8 @@ def fetch_openmeteo_forecast(
         print("[경고] 예보 대상 산지 없음 — 건너뜀")
         return pd.DataFrame()
     forecast_days = max(1, min(int(forecast_days), 16))
-    issue_date = date.today()
+    # 발행일은 UTC 날짜 — 컨테이너가 KST라 00~09시 실행 시 date.today()가 UTC보다 하루 앞서 미래 발행일이 됨(2026-11-20 실측)
+    issue_date = _utc_today()
     ingested_at = pd.Timestamp.utcnow()
     rows: list[dict[str, Any]] = []
     ok: list[str] = []
@@ -656,7 +663,7 @@ def run(start_year: int | None = None) -> None:
         om_start = f"{start_year}-01-01"
         print(f"[C-03] 기후 수집 — 백필 모드: {om_start} ~ 현재")
     else:
-        om_start = (date.today() - timedelta(days=incr_days)).isoformat()
+        om_start = (_utc_today() - timedelta(days=incr_days)).isoformat()
         print(f"[C-03] 기후 수집 — 증분 모드: 최근 {incr_days}일({om_start}~). "
               f"전 구간 수집은 BACKFILL_MODE=true로 실행")
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -671,7 +678,7 @@ def run(start_year: int | None = None) -> None:
     # 2. Open-Meteo 산지 일별 기후 (config/production_regions.yaml — tier1 12 + tier2 11)
     regional = fetch_openmeteo_regional_climate(
         start_date=om_start,
-        end_date=date.today().isoformat(),
+        end_date=_utc_today().isoformat(),
     )
     if not regional.empty:
         frames.append(regional)

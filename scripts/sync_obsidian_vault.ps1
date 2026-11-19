@@ -23,5 +23,8 @@ if ((Test-Path $dst) -and (Get-ChildItem $dst -Force | Select-Object -First 1) -
 # /MIR: Nexus 하위만 원본과 동일하게(삭제 포함). 볼트의 다른 폴더는 건드리지 않음
 robocopy $src $dst /MIR /NFL /NDL /NJH /NP /R:2 /W:2 | Out-Null
 if ($LASTEXITCODE -ge 8) { Write-Error "[오류] 복사 실패(robocopy 코드 $LASTEXITCODE)" }
+# 그래프 보기 색 그룹(태그별) — 볼트에 그래프 설정이 아직 없을 때만 넣음(사용자 설정 보호)
+$gt = Join-Path $src ".obsidian-template\graph.json"; $gd = Join-Path $VaultDir ".obsidian\graph.json"
+if ((Test-Path $gt) -and -not (Test-Path $gd)) { New-Item -ItemType Directory -Force (Join-Path $VaultDir ".obsidian") | Out-Null; Copy-Item $gt $gd; Write-Output "[정보] 그래프 색 그룹 설정 추가" }
 $n = (Get-ChildItem $dst -Recurse -File -Filter *.md).Count
 Write-Output "[완료] 볼트 반영: 노트 $($n)개"
