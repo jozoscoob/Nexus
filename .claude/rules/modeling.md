@@ -96,6 +96,15 @@ GAS-t(관측 구동 변동성 — Python 구현 부재로 구현 비용 유의, 
 **1 · 5 · 20 · 60 거래일**. 60일을 약 3개월 조달 의사결정 지평으로 사용한다.
 재귀 예측은 보조 실험으로만 둔다.
 
+### 타깃 라벨·연속 계열 규칙 (2026-11-19 승인 — R-046)
+- **라벨은 같은 계약 안에서만 계산한다.** h=20/60 수익률이 롤을 걸치면 계약 간 스프레드(구곡·신곡 등)가
+  라벨에 섞인다. 같은 계약 수익률을 연결하거나 비율 조정하고, 롤을 걸친 구간은 coverage를 별도 보고한다
+  (구·신곡 계약은 서로 다른 실물 공급에 묶여 따로 가격이 매겨짐 — Cortazar 외 2025 p.2·p.8).
+- **크러시·oilshare 피처는 타깃과 같은 원천·같은 근월 규칙·같은 롤 달력으로 만든다**(Databento 정산가).
+  Yahoo 근월(ZM=F·ZS=F)은 탐색용으로만 쓴다 — 원천을 섞으면 as-of·롤 불일치가 생긴다.
+- 크러시 마진은 인도월을 맞춘 조합(예: ZSX·ZMZ·ZLZ)으로 계산하고 가공비는 **대두 톤당**으로 차감한다
+  (기름 톤당 환산 금지 — 헥산 공정 약 EUR 30/t 대두, Cravotto 외 2023 p.30 시뮬레이션 인용).
+
 ### Training Workflow (로컬 Docker)
 ```
 1. strict gates → `data/gold/feature_mart.parquet` + contract   (n8n '마트·게이트' 노드)
@@ -117,11 +126,16 @@ GAS-t(관측 구동 변동성 — Python 구현 부재로 구현 비용 유의, 
    (2026-08-12 개정). 복잡 모델은 유효 시계열 길이·독립 충격 수·피처 대비 표본 수·
    레짐별 사례 수로 판단한다(구 M-004 단독 기준 폐기)
 6. G2 gate: 8개 외부 소스 C-08 DQSOps PASS + `available_at` 100% 존재
-7. **Stress slice 별도 보고**: 2012 가뭄 · 2018 미중 · 2020 팬데믹 · 2022 러우 · 2025 ·
-   2026(미완결 → shadow slice). 사건 구간을 이상치로 제거하지 않는다.
+6-1. **정책 시점 지터 검정**(R-046): 정책 더미·유사국면 창의 시작일을 공포일 기준 ±창(일별 모형은 horizon에
+   맞춘 ±k거래일, 월별은 ±6개월)에서 무작위 100회 이동해 계수·순위 안정성을 확인한다(Schaefer 외 2022 p.13).
+   저장은 published_at/effective_from 분리(D-023)를 따른다.
+7. **Stress slice 별도 보고**: 2012 가뭄 · 2018 미중 · 2020 팬데믹 · 2021-Q2(재생디젤 수요로 팜유와 탈동조) ·
+   2022 러우 · 2022-Q2~Q3(인니 팜유 수출금지) · 2025 · 2026(미완결 → shadow slice)(R-046, Fousekis 2024 p.5). 사건 구간을 이상치로 제거하지 않는다.
    레짐별 coverage 분리 보고의 학술 근거: Heliyon 2024 Quantile VAR — 유지류 가격
    전이가 극단 분위수(0.1/0.9)에서 91%/87%로 동조화(꼬리 ≠ 중위, `references/`)
 8. 최신 완전 기간은 **lockbox test**로 보존한다
+9. **비교 불가 이력 결합 금지**(R-046): IMF 월간 유지 가격·Decatur/FOB 현물 등 장기 이력은 ZL 정산가와
+   NOT COMPARABLE이다 — G1 유사국면 보강에만 쓰고 G2 학습 표본에는 결합하지 않는다.
 
 ---
 
@@ -143,6 +157,12 @@ GAS-t(관측 구동 변동성 — Python 구현 부재로 구현 비용 유의, 
 | Multi-horizon regime | TFT | `pytorch-forecasting` | 3-month forward regime probability |
 | P&L simulation | Monte Carlo (10,000 runs) | `numpy`, `scipy` | Distribution of outcomes per Buy/Hold |
 | Scenario encoding | ENSO phase dummy + geopolitical index | Manual + `transformers` | Encodes climate + geopolitical shock inputs |
+
+### 원산지·품질 시나리오 prior (2026-11-19 승인 — R-046)
+- 브라질산 대비 미국산 조유 품질 격차는 **시간 불변 원산지 할인**(시나리오 상수)으로 둔다 — 원산지 더미만으로
+  FFA 조정 R² 0.888, 성분·상호작용 포함 0.900(Flores 외 2026 표4·표7). 기상→품질 동적 경로는 보조 가설.
+- 품질조정 CFR 스프레드는 점추정 대신 **범위**로 쓴다(브라질 NOL 0.71–2.43%, 표3) — 관세청 원산지별 CIF 잔차로
+  먼저 검증한 뒤 경보 보정에 반영한다.
 
 ### Human-in-the-Loop Gate (Mandatory)
 - G3 output always passes through CLAUDE.md §6 HITL protocol before being surfaced as a recommendation

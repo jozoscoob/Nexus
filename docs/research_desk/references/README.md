@@ -123,3 +123,8 @@
 | `summaries/Miranda_2025_agronegocio_cerrado.md` (同) | Miranda, Ágora 27(1), 2025 | 2026-11-17 | 배경 — MATOPIBA(TERM-235)·Itaqui/TEGRAM(TERM-236)·일본 종합상사(TERM-237) candidate · ADM·Bunge 연도 고정 이력 메모 · 원곡 전용 |
 | `summaries/Alves_2022_cadeia_soja_transmissao_precos.md` (同, 영문 파일명·포르투갈어 본문) | Alves 외(CEPEA), Desenvolvimento em Questão 20(58) e12723, 2022 | 2026-11-17 | ★**CE-023 evidence 2건**(조유 국내 흡수 58→82% p.8 · 바이오디젤 원료 대두유 ≈70%·혼합 단계 p.17) · CE-023 entity_terms 정정(TERM-071→068/065) · MP-19(배경) |
 | `summaries/Figueira_2023_competitividade_exportacoes_soja.md` (同, 영문 파일명·포르투갈어 본문) | Figueira & Galache, RESR 61(1) e245403, 2023 | 2026-11-17 | CE-003·CE-011 evidence(아르헨 압착 74.10% p.14 · 중국 관세 역진 p.13) · TERM-105 해석 규칙 보강 · MP-20(배경) · 내부 불일치 5건 판정 |
+
+### 인용 금지 등재 (2026-11-19 · R-046)
+| 파일 | 출처 | 공유일 | 연결 문서 |
+|---|---|---|---|
+| (원문 로컬 보관: data/raw/…/PDF/Market Structure/Edible Oilseeds …pdf, git 제외) | Khan 외 2024, IntechOpen 장 "Edible Oilseeds" | 2026-11-17 | ⚠️ **인용 금지** — 표1 카놀라 행이 종자가 아닌 기름 값(p.2), 대두 식용유 점유 25%(p.5)가 다른 문헌(28.8%·약 1/3)과 상충, 빈티지 혼합. 근거: `docs/research_desk/2026-11/p1_review_2026_11_19/batch_C.md` C-13 |

@@ -48,18 +48,21 @@ RIN(51), regime(45), crush(12), CIF(3), soybean oil(1), biodiesel(1), basis(1), 
 - estor Temasek, with 9% shares, and a Mauritius subsidiary of the London-based Stan
 - d- ard Chartered, with 3% shares (Noble Group, 2014). Thereby, CIL built a finance ou
 
-## 핵심 주장 (세션 작성)
-- (미작성)
+## 핵심 주장 (세션 작성 — 2026-11-19, R-046)
+- 중국 대두 체계를 "국가 매집" 서사가 아닌 금융화·다층 채널(국유 비축·지방 국유·민영 압착)로 해석한다(Fares 2023).
+- COFCO 압착능력의 약 1/3(30/90 Mt)이 해외에 있고(p.12), 2018년 COFCO의 브라질·아르헨 대두 수출 41%가 비중국 행선지로 갔다(p.13).
+- 압착 주체 구분: 중앙 국유 Sinograin(비축)·지방 국유 Jiusan(북대황 계열)·민영 Hopefull(p.8).
 
 ## 방법·데이터 (세션 작성)
-- (미작성)
+- 정치경제학 문헌 분석·통계 2차 정리(정량 모형 없음).
 
 ## Nexus 관련성 — G1 / G2 / G3 / 시맨틱 (세션 작성)
-- (미작성)
+- 중국 구매 신호를 국가 수요로 단정하지 않는 채널 분리 규율(A-219)의 근거 문헌. 압착 주체는 entities TERM-241~244(candidate)로 등재.
+- 중국이 대두유 순수출 국면일 수 있다는 점(CE-012 선행 점검)과 정합.
 
 ## 정직 분류·인용 가능 문장 (세션 작성)
-- 분류: (미작성)
-- 인용 가능 문장·locator: (미작성)
+- 분류: **배경**(채널 분리 근거).
+- 인용 가능 문장·locator: "central state-owned Sinograin, the local Jiusan (Beidahuang's subsidiary) and the private-owned Hopefull"(p.8).
 
 ## 온톨로지 반영 후보 (세션 작성)
-- CE evidence / MP 등재 / 엔티티: (미작성)
+- 엔티티: TERM-241 Sinograin · TERM-242 Jiusan · TERM-243 Hopefull · TERM-244 Chinatex(Processor, candidate) — 반영 완료(R-046).

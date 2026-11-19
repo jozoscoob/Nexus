@@ -49,18 +49,19 @@ RIN(7), supply chain(6), concentration(6), CIF(3), rapeseed(2), palm oil(1)
 - Indian agribusiness company) and, later that year, acquired 51% of Nidera, a Dutch grain trading company (Dexter, 2014). Wi
 - th a revenue of $61 billion and 101,000 employees, Cofco is the largest commodity tradi
 
-## 핵심 주장 (세션 작성)
-- (미작성)
+## 핵심 주장 (세션 작성 — 2026-11-19, R-046)
+- ABCD 4사(ADM·Bunge·Cargill·LDC)의 수직계열화·다각화를 개관한 리뷰. 매출 수치는 2015년 기준(p.2).
+- "ABCD 70% 지배"를 2차 인용으로 반복한다(p.2·p.5) — 선박 실거래 기준 집중도(Wilson 외 2025, 대두 CR4 45%)와 NOT COMPARABLE.
 
 ## 방법·데이터 (세션 작성)
-- (미작성)
+- 문헌 개관(정량 분석 없음). 저자 소속이 고등학교(Gymnasium)로 표기됨(p.1).
 
 ## Nexus 관련성 — G1 / G2 / G3 / 시맨틱 (세션 작성)
-- (미작성)
+- 직접 관련성 없음. 집중도 수치는 ontology `concentration`(선적 기준)을 정본으로 쓴다.
 
 ## 정직 분류·인용 가능 문장 (세션 작성)
-- 분류: (미작성)
-- 인용 가능 문장·locator: (미작성)
+- 분류: **반면교사** — 오기·자기모순: Noble을 "인도 농기업"으로 표기(p.10), 대두 용도 85%가 p.5(박·유 가공)와 p.6(사료)에서 상충.
+- 인용 가능 문장·locator: 없음(수치 인용 금지). 근거: `docs/research_desk/2026-11/p1_review_2026_11_19/batch_B.md` doc24.
 
 ## 온톨로지 반영 후보 (세션 작성)
-- CE evidence / MP 등재 / 엔티티: (미작성)
+- 없음 — 오류 수치가 감성 사전·엔티티로 새지 않도록 차단.

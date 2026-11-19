@@ -1,5 +1,16 @@
 # Market Structure & Price-Driver PDF Review (2026-11-17)
 
+> ## ⚠️ 정정 (2026-11-19 · R-046 — 전문 판독 6관점 재검토 반영)
+> 본 문서 일부 판정은 표 구조가 복원된 재판독(MinerU)으로 교정되었다. 상세: `p1_review_2026_11_19/batch_{A,B,C,D}.md`, 종합: `p1_document_review_2026_11_19.md`.
+> - (a)#1 원산지 HHI: 분모는 전 세계 수입 합계·`coverage_pct` 필수, 조유·정제유 분리(B-01). 의존지수의 수출국 측 집중도는 관세청 자료로 산출 불가 — "수집분에서 파생만"은 오류(B-02).
+> - rank 1 "yfinance ZM/ZS 즉시 사용" 철회 — 크러시 피처는 타깃과 같은 원천·근월·롤 달력으로(A-02).
+> - Paper 1(Barboza) 표1 열 정렬 확정: Paranaguá 438·Rotterdam 461·CBOT 415 USD/t(A-20).
+> - Paranaguá 'CMPorts 인수'는 컨테이너 터미널 — 대두유 경로 노드 등재 철회(B-03).
+> - 2020 아르헨 원곡 수출 −33%를 대두유 공급 감소로 옮기는 후보 엣지 보류(B-07). Ali 2022 GTAP은 중국·타국 생산까지 고정(B-08).
+> - Ribeiro 2024(CMS): 환율 '민감도' 요약 철회(부호 서술, 2차 인용 — B-15), 정성 결론까지 인용 금지(B-16), EU 관세율 인용 보류(B-18).
+> - Flores 2026: 수분→FFA 경로는 원산지 통제 시 소멸 — "열손상→FFA·NOL, 수분→NOL"로 축소, 품질 격차는 원산지 고정 할인(C-01·C-02).
+> - Cravotto 2023 가공비: 'EUR 160/t oil' 환산 철회 — 대두 톤당 EUR 30 차감(C-06). Haro Sly 2017 체인 도식은 Fig.2가 아니라 무번호 이미지(p.4, 수치 미검증 — C-08).
+
 > Source folder: `data/raw/Market Structure (Production & Distribution)/PDF` (24 PDFs, untracked in git).
 > Method: text extracted with pdfplumber (≤45 pages each), reviewed by three expert-lens panels using the repo's
 > agent definitions. Nothing in the ontology, README or pipeline was changed — every item below is a **candidate**
