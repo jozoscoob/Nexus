@@ -143,6 +143,9 @@ RELEASE_RULES: dict[str, ReleaseRule] = {
     "BDI":       ReleaseRule("immediate", note="Baltic Exchange 일별 발표(런던 시간)"),
     "COT_":      ReleaseRule("lag_days", lag_days=7,
                              note="CFTC COT: 화요일 기준·금 15:30 ET 공개(ZL 마감 후) — 연휴 월요일 공개 포함 보수 적용(R-043)"),
+    "PW_":       ReleaseRule("lag_days", lag_days=9,
+                             note="IMF PortWatch 해협 통과 척수: 주 1회 배치 갱신·4~7일 지연(실측 2026-11-19 최신 11-15) "
+                                  "— 주 초 관측분이 다음 배치까지 밀리는 최악 지연 보수 적용"),
     "BCAA":      ReleaseRule("immediate"),
     "CPO":       ReleaseRule("immediate"),
     "VIXCLS":    ReleaseRule("immediate", lag_days=1,
