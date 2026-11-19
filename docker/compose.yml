@@ -2,7 +2,10 @@
 services:
   runner:
     build: {context: .., dockerfile: docker/Dockerfile}
-    volumes: ["..:/repo"]
+    volumes:
+      - ..:/repo
+      # Codex 로그인(호스트 ~/.codex/auth.json) — 읽기 전용, 시작 시 컨테이너 전용 사본으로 복사(entrypoint.sh)
+      - ${CODEX_AUTH_JSON:-${USERPROFILE}/.codex/auth.json}:/run/secrets/codex_auth.json:ro
     env_file: [{path: ../.env, required: false}]
     environment:
       TZ: Asia/Seoul

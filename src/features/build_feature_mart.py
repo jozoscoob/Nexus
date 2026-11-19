@@ -48,6 +48,7 @@ from __future__ import annotations
 import argparse
 import glob
 import os
+import re
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -114,6 +115,7 @@ class Loaded:
 # A-271(2026-09-14): 예보 층(climate_forecast_*.parquet — price_date=발행일·lead별 다중 값)은 마트 미등재(A-263 설계).
 #   재귀 글로브가 이를 적재하면 (지표, event_time) 값충돌 게이트가 정당 차단해 readiness 잡이 죽는다.
 EXCLUDE_PREFIXES: tuple[str, ...] = ("climate_forecast",)
+SNAPSHOT_RE = re.compile(r"^(.*)_(\d{8})$")   # <계열>_<YYYYMMDD>.parquet 일자 스냅샷
 
 
 def load_long(raw_dir: str = RAW_DIR) -> Loaded:
@@ -176,6 +178,11 @@ def load_long(raw_dir: str = RAW_DIR) -> Loaded:
             ).astype("string"),
         })
         sub = sub.dropna(subset=["value", "event_time", "available_at"])
+        # 일자 스냅샷 계열(예: commodity_data_20261117 / _20261119) 식별 — 같은 계열의 겹치는 관측은
+        # 아래에서 최신 스냅샷 값으로 정리(앞선 스냅샷은 장중 미완성 봉일 수 있음)
+        m = SNAPSHOT_RE.match(os.path.splitext(name)[0])
+        sub["_family"] = m.group(1) if m else name
+        sub["_snap"] = m.group(2) if m else ""
         if sub.empty:
             skipped.append(f"{name} — 유효 관측 0건")
             continue
@@ -214,6 +221,18 @@ def load_long(raw_dir: str = RAW_DIR) -> Loaded:
         raise RuntimeError(
             f"[오류] 동일 indicator_code에 단위가 여러 개인 지표 {len(unit_clash):,}종: {sample}. "
             "단위별 지표코드로 분리하세요.")
+
+    # ⓪ 같은 커넥터의 일자 스냅샷끼리 겹치는 (지표, event_time)은 최신 스냅샷만 남긴다(2026-11-19).
+    #    예: commodity_data_20261117의 11-17 봉은 수집 시점 장중 값, _20261119의 같은 봉은 확정 값.
+    #    서로 다른 파일 계열·같은 파일 안의 충돌은 그대로 아래 게이트에서 실패한다(지표코드 설계 오류).
+    snap = long["_snap"] != ""
+    if snap.any():
+        newest = long[snap].groupby(["_family", "indicator_code", "event_time"])["_snap"].transform("max")
+        stale = long.index[snap][long.loc[snap, "_snap"].to_numpy() != newest.to_numpy()]
+        if len(stale):
+            print(f"[정리] 같은 계열 일자 스냅샷 중복 {len(stale):,}행 → 최신 스냅샷 값 채택")
+            long = long.drop(index=stale)
+    long = long.drop(columns=["_family", "_snap"])
 
     key = ["indicator_code", "event_time"]
     clash = long.groupby(key)["value"].nunique()

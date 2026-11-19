@@ -5,6 +5,17 @@
       "args": [
         "mcp"
       ]
+    },
+    "nexus-vault": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "docker-runner-1",
+        "mcpvault",
+        "/repo/data/vault_view/Nexus",
+        "--read-only"
+      ]
     }
   }
 }
