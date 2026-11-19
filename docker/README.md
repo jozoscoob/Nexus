@@ -27,3 +27,9 @@
 
 Databento 노드는 비활성 상태로 들어있다 — 인출 상한 승인(DQ-40) 후 켠다.
 로그는 `docker/logs/`(커밋 안 함), 응답 JSON에 단계별 결과·마지막 출력이 담긴다.
+
+## n8n 워크플로우 (2026-11-19)
+- 파이프라인 전체를 n8n 워크플로우 4종으로 정의: 일일(화~토 06:00)·주간 정비(일 07:00)·Databento 유료(수동)·실패 알림.
+  원본 `docker/n8n/nexus_*.json`(생성기 `scripts/build_n8n_workflows.py`), 설명·Codex 연동 계약·API 키 조사는 `docs/operations/n8n_workflows.md`.
+- 가져오기(키 불필요): `docker compose -f docker/compose.yml exec n8n n8n import:workflow --input=/workflows/nexus_daily.json` — 파일별로.
+- 실패 알림은 runner `/alert` → `docker/logs/alerts.jsonl`. API 키·비밀번호는 README가 아니라 gitignore된 `.env`에만 둔다.

@@ -1,0 +1,170 @@
+{
+ "id": "nexusDatabento01",
+ "name": "Databento 유료 수집(수동)",
+ "nodes": [
+  {
+   "parameters": {},
+   "id": "manual",
+   "name": "수동 실행",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    0,
+    200
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/databento",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "databento",
+   "name": "Databento 수집(유료)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    240,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/mart",
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "mart",
+   "name": "마트·게이트",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    480,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const steps = [\"Databento 수집(유료)\", \"마트·게이트\"];\nconst fails = [];\nfor (const s of steps) {\n  let r;\n  try { r = $(s).first().json; } catch (e) { continue; }   // 비활성 노드는 건너뜀\n  const body = r.body || r;\n  const code = r.statusCode ?? 200;\n  if (code >= 400 || (Array.isArray(body.failed) && body.failed.length)) {\n    fails.push({ step: s, status: code, failed: body.failed || body.error || null, log: body.log || null });\n  }\n}\nreturn [{ json: { workflow: $workflow.name, ok: fails.length === 0, fails, at: new Date().toISOString() } }];"
+   },
+   "id": "check",
+   "name": "결과 점검",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    720,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "return $json.ok ? [] : [{ json: $json }];"
+   },
+   "id": "only_fail",
+   "name": "실패만 통과",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    960,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/alert",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json) }}",
+    "options": {}
+   },
+   "id": "alert",
+   "name": "실패 알림 기록",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1200,
+    100
+   ]
+  }
+ ],
+ "connections": {
+  "Databento 수집(유료)": {
+   "main": [
+    [
+     {
+      "node": "마트·게이트",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "마트·게이트": {
+   "main": [
+    [
+     {
+      "node": "결과 점검",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "결과 점검": {
+   "main": [
+    [
+     {
+      "node": "실패만 통과",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "실패만 통과": {
+   "main": [
+    [
+     {
+      "node": "실패 알림 기록",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "수동 실행": {
+   "main": [
+    [
+     {
+      "node": "Databento 수집(유료)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "timezone": "Asia/Seoul",
+  "executionOrder": "v1",
+  "errorWorkflow": "nexusErrorAlert01"
+ }
+}
