@@ -91,3 +91,10 @@ data/vault_view/
 # 실행 보고·Codex 교차검증 산출물(로컬 전용 — 수치 포함)
 reports/ops/pipeline_run_*.html
 reports/ops/codex_verify_*.md
+reports/terminal/
+
+# 저장소 제외(2026-11-20 감사) — 로컬 보관만: 이전 직장 내부 보고·인프라 문서, 유료 템플릿 WBS, 저널 원문·전문 변환본(저작권)
+docs/_private/
+reports/_private/
+docs/research_desk/references/*.pdf
+docs/research_desk/references/markdown/

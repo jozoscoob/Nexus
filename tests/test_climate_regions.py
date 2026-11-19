@@ -6,11 +6,16 @@ tier2 좌표 기대값은 설정 파일에서 읽는다(2026-09-13 벨트 중심
 from __future__ import annotations
 
 import re
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
 import pytest
+
+
+def _utc_today() -> date:
+    """예보 발행일 기준 — 요청이 timezone=UTC라 UTC 날짜(컨테이너 KST 00~09시에도 미래가 되지 않게)."""
+    return datetime.now(timezone.utc).date()
 
 from src.pipeline.asof import attach_asof, revision_status, rule_for
 from src.pipeline.connectors import climate_connector as cc
@@ -164,7 +169,7 @@ class _Resp:
 
 
 def _synthetic_forecast(days: int = 15) -> dict:
-    start = date.today()
+    start = _utc_today()
     times = [(start + timedelta(days=i)).isoformat() for i in range(days)]
     return {"daily": {"time": times, **{v: [float(i) for i in range(days)]
                                         for v in cc.FORECAST_VARS}}}
@@ -193,14 +198,14 @@ def test_forecast_rows_shape(forecast_df: pd.DataFrame) -> None:
     per = forecast_df.groupby(["region_code", "indicator_code"]).size()
     assert (per == 15).all()
     # A-263: price_date = 발행일(오늘) — 미래 price_date 0건, 유효일·리드는 별도 열
-    assert (forecast_df["price_date"] == pd.Timestamp(date.today())).all()
+    assert (forecast_df["price_date"] == pd.Timestamp(_utc_today())).all()
     assert (forecast_df["valid_date"] >= forecast_df["price_date"]).all()
-    assert (forecast_df["valid_date"] > pd.Timestamp(date.today())).sum() == 2 * 5 * 14
+    assert (forecast_df["valid_date"] > pd.Timestamp(_utc_today())).sum() == 2 * 5 * 14
     assert forecast_df["lead_days"].between(0, 16).all()
     assert ((forecast_df["valid_date"] - forecast_df["price_date"]).dt.days
             == forecast_df["lead_days"]).all()
     assert forecast_df["source_name"].eq(cc.FORECAST_SOURCE_NAME).all()
-    assert forecast_df["note"].str.startswith(f"issue_date={date.today().isoformat()}").all()
+    assert forecast_df["note"].str.startswith(f"issue_date={_utc_today().isoformat()}").all()
 
 
 def test_forecast_asof_no_future_availability(forecast_df: pd.DataFrame) -> None:
@@ -209,8 +214,8 @@ def test_forecast_asof_no_future_availability(forecast_df: pd.DataFrame) -> None
     assert (out["available_at"] <= ing).all(), "예보 행 available_at이 수집 시각을 넘음"
     # A-263: event_time = 발행일 — A-195 전망 분기(event_time > ingested_at)는 더 이상 발동하지 않는다
     assert (out["event_time"] <= ing).all()
-    assert (out["available_at"].dt.normalize() == pd.Timestamp(date.today())).all()
-    assert out["vintage_known"].all() and out["source_vintage"].eq(date.today().isoformat()).all()
+    assert (out["available_at"].dt.normalize() == pd.Timestamp(_utc_today())).all()
+    assert out["vintage_known"].all() and out["source_vintage"].eq(_utc_today().isoformat()).all()
 
 
 def test_fcst_rules_registered() -> None:

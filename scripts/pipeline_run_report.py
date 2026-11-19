@@ -72,6 +72,7 @@ def job_row(job: str, now: datetime) -> tuple[str, str]:
 
 def outputs() -> list[tuple[str, Path | None]]:
     return [
+        ("Nexus Terminal(대화형 대시보드)", newest("reports/terminal/nexus_terminal.html")),
         ("G2 미리보기(참고 범위·해상 경로)", newest("reports/g2_preview/g2_preview_latest.html")),
         ("G1 일일 브리프", newest("reports/pipeline/g1_daily_brief_*.html")),
         ("참고 범위 방식 비교(JSON)", newest("reports/g2_preview/band_method_compare.json")),

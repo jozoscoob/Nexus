@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nexus Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;600&display=swap" media="print" onload="this.media='all'">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.73.4/dist/3d-force-graph.min.js"></script>
+<style>
+:root {
+  --bg:#0a0e13; --panel:#10161d; --panel2:#0d1218; --line:#1e2731; --fg:#d3dae3; --muted:#7f8b99;
+  --oil:#e8a93c; --oil-soft:rgba(232,169,60,.18); --oil-mid:rgba(232,169,60,.38);
+  --up:#ff5f5f; --down:#4ea1ff; --ok:#3fb950; --warn:#d6a32a; --bad:#f85149; --cyan:#39d0d8;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace; --sans:"IBM Plex Sans KR","Malgun Gothic",system-ui,sans-serif;
+}
+* { box-sizing:border-box; }
+html,body { margin:0; background:var(--bg); color:var(--fg); font:13px/1.45 var(--sans); }
+header { display:flex; align-items:center; gap:14px; padding:8px 14px; border-bottom:1px solid var(--line); background:var(--panel2); position:sticky; top:0; z-index:5; flex-wrap:wrap; }
+.brand { font:600 14px var(--mono); letter-spacing:.08em; color:var(--oil); }
+.brand span { color:var(--muted); font-weight:400; }
+.chip { font:12px var(--mono); padding:2px 8px; border:1px solid var(--line); border-radius:4px; color:var(--muted); }
+.chip b { color:var(--fg); font-weight:600; }
+.tape { display:flex; gap:18px; overflow-x:auto; flex:1; min-width:0; scrollbar-width:none; }
+.tape div { white-space:nowrap; font:12px var(--mono); }
+.tape i { font-style:normal; color:var(--muted); margin-right:6px; }
+.up { color:var(--up); } .down { color:var(--down); }
+main { display:grid; gap:8px; padding:8px; grid-template-columns:290px minmax(0,1fr) 300px; grid-template-areas:
+  "g1 chart ladder" "console models routes" "surf surf graph" "sig sig graph"; }
+.panel { background:var(--panel); border:1px solid var(--line); border-radius:6px; min-width:0; display:flex; flex-direction:column; }
+.panel h2 { margin:0; padding:7px 10px; font:600 11px var(--mono); letter-spacing:.08em; color:var(--muted); text-transform:uppercase; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.panel h2 em { font-style:normal; color:var(--oil); text-transform:none; letter-spacing:0; }
+.body { padding:8px 10px; overflow:auto; }
+#g1 { grid-area:g1; } #chartP { grid-area:chart; } #ladder { grid-area:ladder; } #models { grid-area:models; }
+#console { grid-area:console; } #routes { grid-area:routes; } #surfP { grid-area:surf; } #graphP { grid-area:graph; } #sig { grid-area:sig; }
+#chart { height:380px; } #surface { height:340px; } #graph { height:100%; min-height:520px; }
+table { width:100%; border-collapse:collapse; font:12px var(--mono); }
+th,td { padding:3px 6px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap; }
+th:first-child,td:first-child { text-align:left; }
+th { color:var(--muted); font-weight:400; }
+tr.applied td { color:var(--oil); } tr.base td { color:var(--muted); }
+.tabs { display:flex; gap:4px; }
+.tabs button { background:transparent; border:1px solid var(--line); color:var(--muted); font:11px var(--mono); padding:2px 8px; border-radius:3px; cursor:pointer; }
+.tabs button[aria-pressed="true"] { color:var(--bg); background:var(--oil); border-color:var(--oil); }
+.tabs button:focus-visible { outline:2px solid var(--cyan); outline-offset:1px; }
+.rung { display:grid; grid-template-columns:44px 1fr 62px; gap:6px; align-items:center; font:12px var(--mono); padding:2px 0; }
+.rung .bar { height:14px; background:var(--panel2); position:relative; border-radius:2px; }
+.rung .bar span { position:absolute; top:0; bottom:0; border-radius:2px; }
+.lbl { color:var(--muted); }
+.stage { margin-bottom:8px; }
+.stage h3 { margin:0 0 4px; font:600 12px var(--sans); color:var(--fg); }
+.job { display:grid; grid-template-columns:14px 1fr 56px 80px; gap:6px; font:12px var(--mono); align-items:center; padding:1px 0; }
+.dot { width:8px; height:8px; border-radius:50%; }
+.ok .dot { background:var(--ok); } .fail .dot { background:var(--bad); } .stale .dot,.none .dot { background:#3a4552; }
+.fail { color:var(--bad); } .stale,.none { color:var(--muted); }
+.route { display:flex; justify-content:space-between; font:12px var(--mono); padding:3px 0; border-bottom:1px solid var(--line); }
+.st-disrupted { color:var(--bad); } .st-elevated { color:var(--warn); } .st-normal { color:var(--ok); }
+.note { color:var(--muted); font-size:12px; margin:6px 0 0; }
+.var { display:flex; justify-content:space-between; font:12px var(--mono); padding:2px 0; }
+.alert { border-left:2px solid var(--bad); padding:2px 6px; margin:4px 0; font-size:12px; }
+.sigrow { display:grid; grid-template-columns:80px 120px 1fr; gap:8px; font:12px var(--mono); padding:2px 0; border-bottom:1px solid var(--line); }
+.sigrow span:last-child { font-family:var(--sans); color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.legend { display:flex; gap:10px; flex-wrap:wrap; font:11px var(--mono); color:var(--muted); padding:6px 10px; }
+.legend i { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; }
+details.metrics summary { cursor:pointer; color:var(--oil); font:12px var(--mono); margin-top:6px; }
+details.metrics dl { margin:6px 0 0; font-size:12px; } details.metrics dt { color:var(--fg); font-family:var(--mono); } details.metrics dd { margin:0 0 6px; color:var(--muted); }
+.fallback { padding:20px; color:var(--muted); }
+footer { padding:8px 14px 16px; color:var(--muted); font-size:12px; }
+@media (max-width:1100px) { main { grid-template-columns:1fr; grid-template-areas:"chart" "ladder" "g1" "models" "console" "routes" "surf" "graph" "sig"; } #graph { min-height:420px; } }
+@media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">NEXUS <span>· 대두유 조달 터미널</span></div>
+  <div class="chip">기준일 <b id="asof"></b></div>
+  <div class="chip">CBOT 정산가 <b id="last"></b> <span id="lastchg"></span></div>
+  <div class="chip" id="verdict"></div>
+  <div class="tape" id="tape" aria-label="관련 시세"></div>
+</header>
+<main>
+  <section class="panel" id="g1"><h2>G1 핵심 변인 <em id="g1asof"></em></h2><div class="body" id="g1body"></div></section>
+  <section class="panel" id="chartP"><h2>정산가 · 참고 범위(B4a′) <span class="tabs" id="htabs"></span></h2><div id="chart"></div></section>
+  <section class="panel" id="ladder"><h2>참고 범위 래더 <em id="ladh"></em></h2><div class="body" id="ladbody"></div></section>
+  <section class="panel" id="models"><h2>모델 평가 보드 <span class="tabs" id="mtabs"></span></h2><div class="body" id="mbody"></div></section>
+  <section class="panel" id="console"><h2>파이프라인 콘솔 <em>n8n → runner → Codex 검증</em></h2><div class="body" id="cbody"></div></section>
+  <section class="panel" id="routes"><h2>해상 경로 상태</h2><div class="body" id="rbody"></div></section>
+  <section class="panel" id="surfP"><h2>범위 기간구조 표면 <em>날짜 × 지평 × 80% 폭(%)</em></h2><div id="surface"></div></section>
+  <section class="panel" id="graphP"><h2>온톨로지 3D <em id="gstat"></em></h2><div class="legend" id="glegend"></div><div id="graph"></div></section>
+  <section class="panel" id="sig"><h2>일별 비정형 신호 <em>최근 3일</em></h2><div class="body" id="sbody"></div></section>
+</main>
+<footer>과거 관측 요약·방법 검증 결과이며 가격 전망이나 구매 권고가 아닙니다. 구매·보류 판단은 담당자 승인 절차를 따릅니다. · 생성 <span id="gen"></span></footer>
+<script>
+const D = /*__NEXUS_DATA__*/null;
+const $ = s => document.querySelector(s), css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const HL = {1:"1일",5:"1주",20:"1개월",60:"3개월"}, st = { h:60, mh:60 };
+const fmt = v => v == null || isNaN(v) ? "—" : Number(v).toLocaleString("ko-KR", { maximumFractionDigits:2 });
+const pct = v => v == null ? "—" : (v > 0 ? "+" : "") + Number(v).toFixed(1) + "%";
+const P = D.price, last = P[P.length - 1][1];
+
+// 머리띠
+$("#asof").textContent = D.meta.as_of; $("#gen").textContent = D.meta.generated; $("#last").textContent = fmt(last) + " " + D.meta.unit;
+const chg = (last / P[P.length - 2][1] - 1) * 100; $("#lastchg").innerHTML = `<span class="${chg >= 0 ? "up" : "down"}">${pct(chg)}</span>`;
+$("#tape").innerHTML = D.tickers.map(t => `<div><i>${t.name}</i>${fmt(t.last)} <span class="${t.chg >= 0 ? "up" : "down"}">${pct(t.chg)}</span></div>`).join("");
+const stages = D.console.stages.flatMap(s => s.items), nf = stages.filter(j => j.state === "fail").length, nok = stages.filter(j => j.state === "ok").length;
+$("#verdict").innerHTML = nf ? `파이프라인 <b style="color:var(--bad)">실패 ${nf}</b> · 성공 ${nok}` : `파이프라인 <b style="color:var(--ok)">정상</b> · 성공 ${nok}`;
+
+// 지평 탭
+function tabs(el, key, cb) { el.innerHTML = [1,5,20,60].map(h => `<button data-h="${h}" aria-pressed="${st[key] === h}">${HL[h]}</button>`).join("");
+  el.querySelectorAll("button").forEach(b => b.onclick = () => { st[key] = +b.dataset.h; el.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(+x.dataset.h === st[key]))); cb(); }); }
+
+// 정산가 + 캔들 + 범위 부채꼴
+let chart;
+function addBiz(ds, n) { const d = new Date(ds + "T00:00:00"); let k = 0; while (k < n) { d.setDate(d.getDate() + 1); if (d.getDay() % 6) k++; }
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+function drawChart() {
+  if (!window.echarts) { $("#chart").innerHTML = '<p class="fallback">차트 라이브러리를 불러오지 못했습니다(오프라인). 오른쪽 래더와 표는 그대로 볼 수 있습니다.</p>'; return; }
+  chart = chart || echarts.init($("#chart"), null, { renderer:"canvas" });
+  const b = D.bands[String(st.h)].q, x0 = P[P.length - 1][0], view = P.slice(-120), start = view[0][0];
+  const C = D.candles.rows.filter(c => c[0] >= start && c[0] <= x0);
+  const fut = Array.from({ length:st.h }, (_, k) => addBiz(x0, k + 1));
+  const hist = [...new Set(view.map(p => p[0]).concat(C.map(c => c[0])))].sort(), dates = hist.concat(fut);
+  // 분위 경로: 지평 h의 분위를 √(경과일/h)로 보간 — 변동성 범위가 시간의 제곱근으로 넓어지는 모양
+  const at = (q, k) => last * Math.pow(b[q] / last, Math.sqrt(k / st.h));
+  const pad = new Array(hist.length - 1).fill("-");
+  const lane = q => pad.concat([last], fut.map((_, k) => +at(q, k + 1).toFixed(2)));
+  const area = (lo, hi, color, name) => { const L = lane(lo), H = lane(hi);
+    return [{ name, type:"line", data:L, stack:name, lineStyle:{ opacity:0 }, symbol:"none", silent:true },
+            { name, type:"line", data:H.map((v, i) => v === "-" ? "-" : +(v - L[i]).toFixed(2)), stack:name, lineStyle:{ opacity:0 }, symbol:"none", areaStyle:{ color }, silent:true }]; };
+  const pmap = Object.fromEntries(view), cmap = Object.fromEntries(C.map(c => [c[0], [c[1], c[2], c[3], c[4]]]));
+  chart.setOption({
+    backgroundColor:"transparent", animation:false,
+    grid:{ left:52, right:56, top:16, bottom:28 },
+    tooltip:{ trigger:"axis", backgroundColor:css("--panel2"), borderColor:css("--line"), textStyle:{ color:css("--fg"), fontFamily:"IBM Plex Mono" } },
+    xAxis:{ type:"category", data:dates, axisLine:{ lineStyle:{ color:css("--line") } }, axisLabel:{ color:css("--muted") } },
+    yAxis:{ scale:true, position:"right", splitLine:{ lineStyle:{ color:css("--line") } }, axisLabel:{ color:css("--muted") } },
+    series:[
+      ...area("p10", "p90", css("--oil-soft"), "80% 범위"), ...area("p25", "p75", css("--oil-mid"), "50% 범위"),
+      { name:"정산가", type:"line", data:dates.map(d => pmap[d] ?? "-"), connectNulls:true, symbol:"none", lineStyle:{ color:C.length ? "rgba(211,218,227,.45)" : css("--fg"), width:1.2 } },
+      C.length ? { name:"일봉", type:"candlestick", data:dates.map(d => cmap[d] || "-"), barMaxWidth:8,
+        itemStyle:{ color:css("--up"), color0:css("--down"), borderColor:css("--up"), borderColor0:css("--down") } } : null,
+      { name:"P50", type:"line", data:lane("p50"), symbol:"none", lineStyle:{ color:css("--oil"), type:"dashed" } },
+    ].filter(Boolean),
+  }, true);
+}
+
+// 래더(호가창 형식의 분위 사다리)
+function drawLadder() {
+  const b = D.bands[String(st.h)].q, s = D.bands[String(st.h)].stats || {}, lo = b.p10 * .97, hi = b.p90 * 1.03, pos = v => ((v - lo) / (hi - lo) * 100).toFixed(1) + "%";
+  $("#ladh").textContent = HL[st.h] + " 뒤";
+  const rows = [["P90", b.p90, "var(--oil-soft)"], ["P75", b.p75, "var(--oil-mid)"], ["P50", b.p50, "var(--oil)"], ["현재", last, "var(--fg)"], ["P25", b.p25, "var(--oil-mid)"], ["P10", b.p10, "var(--oil-soft)"]];
+  $("#ladbody").innerHTML = rows.map(([k, v, c]) => `<div class="rung"><span class="lbl">${k}</span><div class="bar"><span style="left:0;width:${pos(v)};background:${c}"></span></div><span>${fmt(v)}</span></div>`).join("")
+    + `<p class="note">현재가 대비 ${pct((b.p25 / last - 1) * 100)} ~ ${pct((b.p75 / last - 1) * 100)}(50%) · ${pct((b.p10 / last - 1) * 100)} ~ ${pct((b.p90 / last - 1) * 100)}(80%)</p>`
+    + (s.cov80 ? `<p class="note">${s.since.slice(0, 4)}년부터 매일 적용 시 실제가 80% 범위 안 <b>${s.cov80}%</b> · 50% 범위 안 <b>${s.cov50}%</b> · 위로 이탈 ${s.above90}% · 아래로 ${s.below10}%</p>` : "")
+    + `<p class="note">USD/MT 환산 ×${D.meta.to_usd_mt}: ${fmt(b.p10 * D.meta.to_usd_mt)} ~ ${fmt(b.p90 * D.meta.to_usd_mt)}</p>`;
+}
+
+// 모델 평가 보드
+function drawModels() {
+  const rows = D.models.rows.filter(r => r.h === st.mh);
+  const head = `<table><thead><tr><th>방식</th><th>80% 적중</th><th>50% 적중</th><th>평균 폭</th><th>pinball</th><th>지금 폭</th></tr></thead><tbody>`;
+  $("#mbody").innerHTML = head + rows.map(r => `<tr class="${r.applied ? "applied" : r.baseline ? "base" : ""}"><td>${r.model}</td><td>${r.cov80 != null ? r.cov80 + "%" : "—"}</td><td>${r.cov50 != null ? r.cov50 + "%" : "—"}</td><td>${r.width != null ? r.width + "%" : "—"}</td><td>${r.pinball ?? "—"}</td><td>${r.now != null ? r.now + "%" : "—"}</td></tr>`).join("") + "</tbody></table>"
+    + `<details class="metrics"><summary>지표 읽는 법</summary><dl>
+      <dt>80% 적중(coverage)</dt><dd>그날 계산한 80% 범위 안에 h일 뒤 실제 가격이 든 비율. 80%에 가까울수록 정직한 범위(낮으면 자주 빗나감, 높으면 지나치게 넓음).</dd>
+      <dt>50% 적중</dt><dd>가운데 50%(P25~P75) 범위의 같은 비율. 목표 50%.</dd>
+      <dt>평균 폭</dt><dd>80% 범위의 상단−하단을 현재가 대비 %로. 적중률이 같다면 좁을수록 쓸모 있음.</dd>
+      <dt>pinball(분위 손실, ×10⁻³)</dt><dd>각 분위 예측이 실제에서 벗어난 정도를 분위 방향에 맞춰 가중한 손실. 적중률과 폭을 함께 평가하는 단일 점수 — 낮을수록 좋음.</dd>
+      <dt>위·아래 이탈</dt><dd>실제가 P90 위 / P10 아래로 벗어난 비율(각 목표 10%). 조달에서는 위쪽 이탈이 더 아픔.</dd>
+      <dt>walk-forward</dt><dd>각 날짜에 그날까지 알 수 있던 정보만으로 범위를 만들고 h일 뒤 실제로 채점(2012~2025). 미래 정보 누수 없음.</dd></dl></details>`;
+}
+
+// 파이프라인 콘솔
+function drawConsole() {
+  $("#cbody").innerHTML = D.console.stages.map(s => `<div class="stage"><h3>${s.title} <span class="lbl" style="font-weight:400">${s.desc}</span></h3>`
+    + s.items.map(j => `<div class="job ${j.state}"><span class="dot"></span><span>${j.job}</span><span>${j.secs != null ? j.secs + "s" : ""}</span><span>${j.at || (j.state === "none" ? "기록 없음" : "")}</span></div>`).join("") + "</div>").join("")
+    + `<div class="stage"><h3>Codex 교차검증(읽기 전용)</h3>` + Object.entries(D.console.codex).map(([k, v]) => `<div class="job ok"><span class="dot"></span><span>${{ collect:"수집", process:"정제", analyze:"분석" }[k]} · ${v.date}</span><span class="fail">치명 ${v["치명"]}</span><span>높음 ${v["높음"]} · 참고 ${v["참고"]}</span></div>`).join("") + "</div>";
+}
+
+// 해상 경로 · G1 · 신호
+const SK = { disrupted:"차질", elevated:"증가", normal:"평시" };
+$("#rbody").innerHTML = Object.entries(D.routes).map(([k, v]) => `<div class="route"><span>${k.replaceAll("_", " ")}</span><span class="st-${v.state}">${SK[v.state] || v.state || "—"}</span></div>`).join("") + `<p class="note">PortWatch 통과량 기준(2019~2022 대비 −25% 차질 · +30% 증가)</p>`;
+$("#g1asof").textContent = D.g1.as_of || "";
+$("#g1body").innerHTML = (D.g1.alerts.length ? D.g1.alerts.map(a => `<div class="alert">${a.var} ${a.value} <span class="lbl">(기준 ${a.threshold})</span></div>`).join("") : '<p class="note">금일 경보 없음</p>')
+  + `<p class="note" style="margin-top:8px">가격과 함께 움직인 정도(상관 r)</p>` + D.g1.top.map(t => `<div class="var"><span>${t.var}</span><span class="${t.r >= 0 ? "up" : "down"}">${t.r.toFixed(3)}</span></div>`).join("");
+$("#sbody").innerHTML = D.signals.length ? D.signals.slice().reverse().map(s => `<div class="sigrow"><span>${s.date}</span><span>${s.ind}</span><span title="${(s.note || "").replaceAll('"', "'")}">${s.note || s.value}</span></div>`).join("") : '<p class="note">최근 신호 없음</p>';
+
+// 3D 범위 표면
+function drawSurface() {
+  const fail = () => { $("#surface").innerHTML = '<p class="fallback">3D 라이브러리를 불러오지 못했습니다(오프라인). 왼쪽 위 차트·래더는 그대로 볼 수 있습니다.</p>'; };
+  if (!window.echarts) return fail();
+  const S = D.surface, c = echarts.init($("#surface"));
+  try { c.setOption({ backgroundColor:"transparent", tooltip:{ formatter:p => `${S.dates[p.value[0]]} · ${S.horizons[p.value[1]]}거래일 · 80% 폭 ${p.value[2]}%` },
+    visualMap:{ show:false, min:Math.min(...S.data.map(d => d[2])), max:Math.max(...S.data.map(d => d[2])), inRange:{ color:["#123b52", "#1f7a8c", "#e8a93c", "#ff5f5f"] } },
+    xAxis3D:{ type:"category", data:S.dates, name:"날짜", axisLabel:{ color:css("--muted"), interval:10 }, nameTextStyle:{ color:css("--muted") } },
+    yAxis3D:{ type:"category", data:S.horizons.map(h => h + "일"), name:"지평", axisLabel:{ color:css("--muted") }, nameTextStyle:{ color:css("--muted") } },
+    zAxis3D:{ type:"value", name:"폭 %", axisLabel:{ color:css("--muted") }, nameTextStyle:{ color:css("--muted") } },
+    grid3D:{ boxWidth:200, boxDepth:80, viewControl:{ alpha:24, beta:38, autoRotate:!matchMedia("(prefers-reduced-motion: reduce)").matches, autoRotateSpeed:4 },
+      axisLine:{ lineStyle:{ color:css("--line") } }, splitLine:{ lineStyle:{ color:"#1a232d" } }, axisPointer:{ lineStyle:{ color:css("--oil") } } },
+    series:[{ type:"surface", wireframe:{ show:true, lineStyle:{ color:"rgba(232,169,60,.35)" } }, shading:"color", data:S.data }] });
+  } catch (e) { c.dispose(); return fail(); }
+  addEventListener("resize", () => c.resize());
+}
+
+// 온톨로지 3D 그래프
+function drawGraph() {
+  const G = D.graph; $("#gstat").textContent = `용어 ${G.n_terms} · 인과 사슬 ${G.n_edges} · 노드 ${G.nodes.length}`;
+  const pal = { 원인:"#ff5f5f", 경로:"#e8a93c", 결과:"#39d0d8", 분류:"#a78bfa" }, extra = ["#3fb950", "#4ea1ff", "#f778ba", "#d6a32a", "#8b949e", "#56d364", "#79c0ff"];
+  const groups = [...new Set(G.nodes.map(n => n.group))]; let i = 0; groups.forEach(g => { if (!pal[g]) pal[g] = extra[i++ % extra.length]; });
+  $("#glegend").innerHTML = ["원인", "경로", "결과", "분류"].concat(groups.filter(g => !["원인", "경로", "결과", "분류"].includes(g)).slice(0, 6)).map(g => `<span><i style="background:${pal[g]}"></i>${g}</span>`).join("");
+  if (!window.ForceGraph3D) { $("#graph").innerHTML = '<p class="fallback">3D 그래프 라이브러리를 불러오지 못했습니다(오프라인). Obsidian 볼트의 그래프 보기와 온톨로지 캔버스를 사용하세요.</p>'; return; }
+  const el = $("#graph"), fg = ForceGraph3D()(el).width(el.clientWidth).height(el.clientHeight || 520).backgroundColor(css("--panel"))
+    .graphData(JSON.parse(JSON.stringify({ nodes:G.nodes, links:G.links }))).nodeLabel(n => `${n.label} · ${n.group}`).nodeVal(n => n.val)
+    .nodeColor(n => pal[n.group]).nodeOpacity(.92).linkColor(l => l.edge === "분류" ? "rgba(167,139,250,.18)" : l.edge === "용어" ? "rgba(63,185,80,.35)" : "rgba(232,169,60,.55)")
+    .linkDirectionalParticles(l => l.edge && l.edge.startsWith("CE") ? 2 : 0).linkDirectionalParticleWidth(1.6).linkDirectionalParticleColor(() => css("--oil"));
+  addEventListener("resize", () => fg.width(el.clientWidth));
+}
+
+tabs($("#htabs"), "h", () => { drawChart(); drawLadder(); }); tabs($("#mtabs"), "mh", drawModels);
+drawChart(); drawLadder(); drawModels(); drawConsole(); drawSurface(); drawGraph();
+addEventListener("resize", () => chart && chart.resize());
+</script>
+</body>
+</html>
