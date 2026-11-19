@@ -165,6 +165,28 @@ def contingency_view(cfg: dict, tr: pd.DataFrame, status: dict[str, StraitStatus
     return out
 
 
+ALERT_REGION_STRAITS = {"HORMUZ": ["HORMUZ"], "RED_SEA": ["BAB_EL_MANDEB", "SUEZ"], "BLACK_SEA": [],
+                        "MALACCA": ["MALACCA"], "TAIWAN": ["TAIWAN_STRAIT"]}
+
+
+def recent_alerts(raw_dir: Path = RAW_DIR, days: int = 14) -> dict:
+    """해역별 최근 해사 경보 보도(건수·근거 3건) — maritime_alerts_connector 산출물. 없으면 빈 dict."""
+    files = sorted(glob.glob(str(raw_dir / "maritime_alerts_*.parquet")))
+    if not files:
+        return {}
+    d = pd.read_parquet(files[-1], columns=["price_date", "indicator_code", "value", "note"])
+    d = d[d["indicator_code"].str.endswith("_COUNT")]
+    d = d[d["price_date"] >= d["price_date"].max() - pd.Timedelta(days=days - 1)]
+    out = {}
+    for code, g in d.groupby("indicator_code"):
+        reg = code[len("MARALERT_"):-len("_COUNT")]
+        notes = [n for n in g.sort_values("price_date", ascending=False)["note"].dropna()]
+        items = [x.strip() for n in notes for x in n.split(" | ")][:3]
+        out[reg] = {"count": int(g["value"].sum()), "last": g["price_date"].max().strftime("%Y-%m-%d"),
+                    "straits": ALERT_REGION_STRAITS.get(reg, []), "items": items}
+    return out
+
+
 def build(raw_dir: Path = RAW_DIR, config_path: Path = CONFIG) -> dict:
     cfg = load_config(config_path)
     tr = load_transits(raw_dir)
@@ -173,6 +195,7 @@ def build(raw_dir: Path = RAW_DIR, config_path: Path = CONFIG) -> dict:
             "status": {k: v.__dict__ for k, v in status.items()},
             "routes": route_options(cfg, status),
             "contingencies": contingency_view(cfg, tr, status),
+            "alerts": recent_alerts(raw_dir),
             "caveats": ["추가 항해일은 항로 거리 차 ÷ 탱커 경제 속력(12.5~14노트)의 근사치(INFERENCE)",
                         "운하 대기일·선복 확보 지연은 PortWatch로 측정되지 않음(미측정)",
                         "과거 선례는 통과 척수 변화의 실측 요약 — 향후 지연·가격의 확률 주장이 아님"]}

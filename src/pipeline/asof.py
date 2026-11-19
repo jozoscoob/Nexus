@@ -146,6 +146,8 @@ RELEASE_RULES: dict[str, ReleaseRule] = {
     "PW_":       ReleaseRule("lag_days", lag_days=9,
                              note="IMF PortWatch 해협 통과 척수: 주 1회 배치 갱신·4~7일 지연(실측 2026-11-19 최신 11-15) "
                                   "— 주 초 관측분이 다음 배치까지 밀리는 최악 지연 보수 적용"),
+    "MARALERT_": ReleaseRule("immediate", lag_days=1,
+                             note="해사 보안 경보 보도 건수(UKMTO·JMIC·MARAD·NGA) — 수집이 장 마감 이후라 GDELT와 같은 사유로 1일 지연"),
     "BCAA":      ReleaseRule("immediate"),
     "CPO":       ReleaseRule("immediate"),
     "VIXCLS":    ReleaseRule("immediate", lag_days=1,

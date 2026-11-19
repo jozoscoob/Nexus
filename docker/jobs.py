@@ -16,7 +16,7 @@ PY = sys.executable
 # 2026-11-19: Actions 정지(09-29~)로 Actions 전용이던 geointel·shipping 수집을 로컬로 이관 +
 #   portwatch(IMF 해협 통과 척수 — AISstream 해협 집계 대체) 신규. Perplexity 키 부재 시 각 커넥터가 건너뜀.
 CONNECTORS = ["economic", "climate", "gpr", "wasde", "production", "commodity", "customs", "cot",
-              "geointel", "shipping", "portwatch"]
+              "geointel", "shipping", "portwatch", "maritime_alerts"]
 MANUAL_PARSERS = ["ingest_te_xlsx", "ingest_wasde_xlsx", "ingest_psd_data", "ingest_gats_data",
                   "ingest_ice_volumes", "ingest_nasa_power_xlsx", "ingest_customs_gw_uploads",
                   "ingest_fx_brl_usd_xlsx", "ingest_enso_oni_xlsx"]
