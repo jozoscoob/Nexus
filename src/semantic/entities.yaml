@@ -964,7 +964,7 @@ market,_price_and_procurement:
   - degummed SBO
   - crude degummed soy oil
   definition: 검질을 제거한 대두유 조유의 상업적 형태다.
-  interpretation_rules: crude와 refined 사이의 가공단계를 계약·규격 문맥에서 확인한다.
+  interpretation_rules: 'crude와 refined 사이의 가공단계를 계약·규격 문맥에서 확인한다. · 브라질산 품질 격차는 주로 원산지 고정효과다(원산지 더미 FFA 조정 R² 0.888 ≈ 전체 0.900) — 기상 경로는 열손상→FFA·NOL, 수분→NOL만 유효하고 수분→FFA는 원산지 통제 시 소멸(Flores 외 2026 표4·표7) · 원산지 효과는 가공 계절·운송 기간과 교락되므로 현지 압착 아르헨 조유로 전이 금지(R-046)'
   impact_target: Price/Quality
   price_direction: CONTEXT
   unit_range: MT or USD/MT
@@ -2300,6 +2300,9 @@ diplomacy,_policy_and_regulation:
   abbr: ''
   synonyms:
   - Argentine export duties
+  - 'silo bolsa'
+  - 'retención de granos'
+  - 'retenciones móviles'
   definition: 아르헨티나 농산물·유지류에 적용되는 수출세의 현지 정책 용어다.
   interpretation_rules: 일반 세금이 아닌 품목별 수출세율과 적용일을 확인한다. · 원곡 > 가공품 세율 차는 국내 압착을 우대하므로 아르헨티나 원곡 수출 비중 하락(수출/생산 20.54→13.46%, 2002→2017, Figueira 2023 p.2)은 대두유 공급 약화가 아니다 — 공급 신호는 대두유·대두박 수출로 판정한다(2017 압착 74.10%, p.14).
   impact_target: Export Supply/Price
@@ -2515,7 +2518,7 @@ diplomacy,_policy_and_regulation:
   synonyms:
   - EU deforestation-free regulation
   definition: 산림전용과 관련된 상품의 추적성·실사 요건을 부과하는 EU 규정이다.
-  interpretation_rules: 브라질 원산지 공급자 추적성 영향을 별도 평가하고 적용일을 확인한다.
+  interpretation_rules: '브라질 원산지 공급자 추적성 영향을 별도 평가하고 적용일을 확인한다. · EUDR 기준일 2020-12-31은 트레이더 산정 기준일(2020)과 대응하며, Cargill 등의 자사 cut-off 2025-01-01(2026-01-01부터 측정 적용)과 같은 것이 아니다(R-046)'
   impact_target: Compliance/Supply
   price_direction: UP_RISK
   unit_range: regulation
@@ -3564,7 +3567,7 @@ data,_semantics_and_quality:
   - 'Commitments of Traders'
   - 'publicreporting.cftc.gov'
   definition: '미국 상품선물거래위원회 주간 포지션 보고 — 화요일 기준·금요일 15:30 ET 공표, 대두유(ZL) 상업/비상업 순포지션. 무료·공개 API/CSV. 미구현 무료 자산(P0, B-9)'
-  interpretation_rules: '발표 규칙 lag 3일(화→금) · 주간 지표는 as-of 발표일 이후 가용 · CE-017 근거 지표 후보'
+  interpretation_rules: '발표 규칙 lag 3일(화→금) · 주간 지표는 as-of 발표일 이후 가용 · CE-017 근거 지표 후보 · COT 순포지션 부호를 리스크 프리미엄 부호로 읽지 않는다 — z-score 피처로만 쓰고 사용자 대상 해석 문구는 금지(Cortazar 외 2025 p.15 내부 부호 불일치, R-046)'
   impact_target: Demand
   price_direction: CONTEXT
   unit_range: '계약 수'
@@ -3747,8 +3750,7 @@ market_structure_and_trade:
   - C of ABCD
   - Cargill Ocean Transportation
   definition: 미주·남미·유럽 집하망과 자가 해상 물류를 함께 운영하는 비상장 곡물·유지 트레이딩 기업이다.
-  interpretation_rules: 남미 가공·항만 시설 수는 자사 공시와 외부 집계가 상충한다(가공 14·항만 13 대 자사 12·20) —
-    출처를 병기하지 않은 시설 수는 사용하지 않는다.
+  interpretation_rules: '남미 자산(엘리베이터·가공공장·항만) 수는 자사 보고서 판마다 다르다 — 2024판 가공 12·항만 20, 2025판(2024 데이터) 가공 14·항만 13. 상충이 아니라 판 차이이므로 반드시 판·연도를 병기한다 · 자산에는 자가·JV·제3자 위탁가공(toll) 설비가 포함된다(2022판 각주) — 보유 공장 수·압착능력·추세로 해석 금지(R-046)'
   role_upstream: 미주·남미·유럽 집하망
   role_midstream: 미국·남미·EU 압착(스페인 1공장 포함)
   role_downstream: 자가 물류(Cargill Ocean Transportation)
@@ -4401,6 +4403,151 @@ market_structure_and_trade:
   ambiguity_risk: 상
   relations: OPERATED_BY
   source_code: summaries/Miranda_2025_agronegocio_cerrado.md
+  status: candidate
+  owner_agent: P1-06
+# ── 2026-11-19 시장구조 PDF 33건 6관점 검토 반영(R-046) — 전부 candidate
+- term_id: TERM-238
+  canonical: 'Oilshare'
+  canonical_ko: '대두유 가치 비중(oilshare)'
+  class: SpreadIndicator
+  category: 시장·가격·조달
+  subcategory: 가격·스프레드
+  abbr: 'OILSHARE'
+  synonyms:
+  - 'oil share'
+  definition: '대두 1부셸 압착 가치 중 대두유 비중 = 대두유가×11lb ÷ (대두유가×11lb + 대두박 가치). 2020년까지 25~35%, 2021~22 급등 후 약 40%(Fousekis·Grigoriadis 2025 p.5)'
+  interpretation_rules: '선물 기준 산식 — 실제 수율(약 11~12lb)은 별도 변형으로 둔다 · ZL·ZM은 같은 원천·같은 근월 규칙·같은 롤 달력으로 계산(혼합 원천 금지)'
+  impact_target: Processing
+  price_direction: CONTEXT
+  unit_range: '% (0–100)'
+  alert_criteria: '-'
+  priority: B
+  ambiguity_risk: 중
+  relations: AFFECTS
+  source_code: docs/research_desk/2026-11/p1_review_2026_11_19/batch_A.md
+  status: candidate
+  owner_agent: P1-06
+- term_id: TERM-239
+  canonical: 'Board Crush Spread'
+  canonical_ko: '보드 크러시 스프레드'
+  class: SpreadIndicator
+  category: 시장·가격·조달
+  subcategory: 가격·스프레드
+  abbr: 'BOARD_CRUSH'
+  synonyms:
+  - 'soybean crush margin'
+  - 'Gross Processing Margin'
+  definition: '대두 1부셸에서 나오는 대두유·대두박 선물 가치에서 대두 선물가를 뺀 압착 마진(USD/bu)'
+  interpretation_rules: '인도월을 맞춘 조합으로 계산(예: ZSX·ZMZ·ZLZ — 상품별 거래량 1위 월물 혼합 금지) · 가공비는 대두 톤당으로 차감(기름 톤당 환산 금지) · 평균회귀 성향(반지속성, Fousekis·Grigoriadis 2025 p.9)'
+  impact_target: Processing
+  price_direction: CONTEXT
+  unit_range: 'USD/bu'
+  alert_criteria: '-'
+  priority: B
+  ambiguity_risk: 중
+  relations: AFFECTS
+  source_code: docs/research_desk/2026-11/p1_review_2026_11_19/batch_A.md
+  status: candidate
+  owner_agent: P1-06
+- term_id: TERM-240
+  canonical: 'BOPO Spread'
+  canonical_ko: '대두유–팜유 선물 스프레드(BOPO)'
+  class: SpreadIndicator
+  category: 시장·가격·조달
+  subcategory: 가격·스프레드
+  abbr: 'BOPO'
+  synonyms:
+  - 'soybean-palm oil spread'
+  definition: 'CBOT 대두유 선물과 팜유 선물(BMD FCPO)의 가격 차이(Fousekis 2024 p.3)'
+  interpretation_rules: '통화·단위 환산(USc/lb ↔ MYR/t) 후 비교 · 국면 비대칭은 1개월 이상 척도에서만 유의(CE-015 해석 규칙) · TERM-053(현물 CIF 스프레드)과 기준이 달라 혼용 금지'
+  impact_target: Substitution
+  price_direction: CONTEXT
+  unit_range: 'USD/MT'
+  alert_criteria: '-'
+  priority: B
+  ambiguity_risk: 중
+  relations: AFFECTS
+  source_code: docs/research_desk/2026-11/p1_review_2026_11_19/batch_A.md
+  status: candidate
+  owner_agent: P1-06
+- term_id: TERM-241
+  canonical: 'Sinograin'
+  canonical_ko: '시노그레인(중국 국가곡물비축)'
+  class: Processor
+  category: 시장구조·기업
+  subcategory: 가공사(중국)
+  abbr: ''
+  synonyms: []
+  definition: '중앙 국유 곡물비축 기업 — 비축·국가 매집 채널(Fares 2023 p.8)'
+  interpretation_rules: '국가 비축·국유(SOE) 채널과 상업 채널을 분리 태깅한다 — 중국 구매 신호를 국가 매집으로 단정하지 않는다(A-219) · 압착능력·물량은 1차 공시 확인 전 DATA GAP'
+  impact_target: Demand
+  price_direction: CONTEXT
+  unit_range: 'company'
+  alert_criteria: '-'
+  priority: C
+  ambiguity_risk: 중
+  relations: OPERATED_BY
+  source_code: docs/research_desk/2026-11/p1_review_2026_11_19/batch_B.md
+  status: candidate
+  owner_agent: P1-06
+- term_id: TERM-242
+  canonical: 'Jiusan Group'
+  canonical_ko: '주산그룹'
+  class: Processor
+  category: 시장구조·기업
+  subcategory: 가공사(중국)
+  abbr: ''
+  synonyms: []
+  definition: '북대황(Beidahuang) 계열 지방 국유 압착 기업(Fares 2023 p.8)'
+  interpretation_rules: '국가 비축·국유(SOE) 채널과 상업 채널을 분리 태깅한다 — 중국 구매 신호를 국가 매집으로 단정하지 않는다(A-219) · 압착능력·물량은 1차 공시 확인 전 DATA GAP'
+  impact_target: Demand
+  price_direction: CONTEXT
+  unit_range: 'company'
+  alert_criteria: '-'
+  priority: C
+  ambiguity_risk: 중
+  relations: OPERATED_BY
+  source_code: docs/research_desk/2026-11/p1_review_2026_11_19/batch_B.md
+  status: candidate
+  owner_agent: P1-06
+- term_id: TERM-243
+  canonical: 'Hopefull Grain & Oil'
+  canonical_ko: '하오푸 곡물유지'
+  class: Processor
+  category: 시장구조·기업
+  subcategory: 가공사(중국)
+  abbr: ''
+  synonyms: []
+  definition: '민영 압착 기업(Fares 2023 p.8)'
+  interpretation_rules: '국가 비축·국유(SOE) 채널과 상업 채널을 분리 태깅한다 — 중국 구매 신호를 국가 매집으로 단정하지 않는다(A-219) · 압착능력·물량은 1차 공시 확인 전 DATA GAP'
+  impact_target: Demand
+  price_direction: CONTEXT
+  unit_range: 'company'
+  alert_criteria: '-'
+  priority: C
+  ambiguity_risk: 중
+  relations: OPERATED_BY
+  source_code: docs/research_desk/2026-11/p1_review_2026_11_19/batch_B.md
+  status: candidate
+  owner_agent: P1-06
+- term_id: TERM-244
+  canonical: 'Chinatex'
+  canonical_ko: '차이나텍스(중국중방)'
+  class: Processor
+  category: 시장구조·기업
+  subcategory: 가공사(중국)
+  abbr: ''
+  synonyms: []
+  definition: '국유 무역·압착 기업(Fares 2023)'
+  interpretation_rules: '국가 비축·국유(SOE) 채널과 상업 채널을 분리 태깅한다 — 중국 구매 신호를 국가 매집으로 단정하지 않는다(A-219) · 압착능력·물량은 1차 공시 확인 전 DATA GAP'
+  impact_target: Demand
+  price_direction: CONTEXT
+  unit_range: 'company'
+  alert_criteria: '-'
+  priority: C
+  ambiguity_risk: 중
+  relations: OPERATED_BY
+  source_code: docs/research_desk/2026-11/p1_review_2026_11_19/batch_B.md
   status: candidate
   owner_agent: P1-06
 media_and_collection_channels:

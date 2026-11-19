@@ -39,6 +39,8 @@ evidence_span:
     - bbox               # [x0, y0, x1, y1] — pdfplumber 좌표계 (Phase B)
     - table_cell         # {table_index, row, col} — 표 셀 근거일 때
     - char_offset        # 페이지 내 문자 오프셋
+    - funding            # 연구 재정 지원·이해상충(예: 업계 기금) — 2026-11-19 승인(R-046)
+    - data_reproducibility  # 원자료 재현 가능성(공개 API / 요청 시 제공 / 유료 단말 등)
   validation:
     - exact_quote는 원문 문자열과 100% 일치해야 함 (근거 일치율 평가 대상 — ERD §9)
     - page 없는 EvidenceSpan은 C-08 DQSOps가 반려

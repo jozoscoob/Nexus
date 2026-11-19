@@ -55,12 +55,12 @@ models (C-03, G2, G3).
 | Aspect Domain | Indicator Code | Tracked Drivers & Keywords |
 |---|---|---|
 | SBO General Trade | `SBO_NEWS_SENTIMENT` | Export volumes, port congestion, crusher margins, spot offer premiums |
-| Argentina Policy | `ARG_EXPORT_TAX_SENTIMENT` | Export tax rates (retenciones), strike actions, peso devaluation |
+| Argentina Policy | `ARG_EXPORT_TAX_SENTIMENT` | Export tax rates (retenciones), strike actions, peso devaluation · farmer selling/holding (`silo bolsa`, `retención de granos`, `venta de productores`, 2008 `retenciones móviles`) — 정책 발표와 농가 행동 기사는 극성을 분리(R-046) |
 | India Trade Duty | `INDIA_DUTY_SENTIMENT` | Crude/refined import tariff adjustments, domestic inventory caps |
 | Biofuel Policy | `BIODIESEL_POLICY_SENTIMENT` | US EPA RFS mandates (RVOs), Indonesia B35/B40, Malaysia B20 |
 | USDA WASDE Surprise | `WASDE_CONSENSUS_SCORE` | Yield revisions, ending stocks vs. consensus |
 | Geopolitical Tariffs | `US_CN_TARIFF_SENTIMENT` | Trade war escalations, retaliatory tariffs, agricultural exemptions |
-| Logistics / Shock | `LOGISTICS_DISRUPTION_FLAG` | Hormuz Strait, Black Sea, Panama Canal delays / freight spikes |
+| Logistics / Shock | `LOGISTICS_DISRUPTION_FLAG` | Hormuz Strait, Black Sea, Panama Canal delays / freight spikes · Brazil inland logistics (`greve dos caminhoneiros`, `tabela do frete`, `BR-163 bloqueio`) — 내륙 물류 차질은 플래그만, 인과엣지 신설 없음(R-046) |
 
 ### Stage 3 — Scoring
 - **S ∈ [−1.0, +1.0]** per aspect: `+1.0` = 강한 SBO 가격 **상방**(공급 부족·관세 인상·의무 확대) ·
@@ -140,3 +140,7 @@ exact_quote·extractor_version)을 따르고, 사건형 신호는 `src/semantic/
 - **다의어·이중부정**: "recommending against the expiration of import tariffs" 류 법률 문어체는
   bag-of-words 실패 → 양방향 트랜스포머(FinBERT/Claude)로 문법 의존성 보존.
 - **검증가능한 출처 = 환각 방어**: 모든 수치에 verbatim `evidence_snippet` 의무.
+
+### COT·포지셔닝 해석 규칙 (2026-11-19 — R-046)
+- CFTC COT 순포지션은 z-score 피처로만 쓴다. 순매수/순매도를 리스크 프리미엄 부호나 가격 방향으로 설명하는 사용자 대상 문구는 생성하지 않는다(대두 단기 프리미엄 음수와 투기 순매수가 공존 — Cortazar 외 2025 p.15).
+- 무역합의 구매 '약속' 기사는 상한 정보로 감액 채점하고, 이행은 ESR 선적 실측으로만 반영한다(Phase One 이행률 약 52%).

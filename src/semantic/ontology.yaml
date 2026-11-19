@@ -920,6 +920,15 @@ supply_chain:
     class: TradingHouse
     entity_term: TERM-155
     footprint_note: 미국·브라질·아르헨티나 압착·수출 체계 전반 (§3a)
+    sa_soy_assets_by_edition:   # 데이터 전용(CE 엣지 비연결) — 자가·JV·위탁가공 포함(2022판 각주), 능력·추세로 해석 금지 (R-046 · 2026-11-19 승인)
+      basis: 'Cargill 남미 대두 보고서 판별 자산 패널 — 판·데이터연도 병기 필수'
+      ref: docs/research_desk/2026-11/p1_review_2026_11_19/batch_D.md
+      editions:
+        - {edition: 2019, elevators: 145, plants: 10, ports: 14, locator: 'SA Soy Progress Report 2019 p.7'}
+        - {edition: 2022, elevators: 145, plants: 13, ports: 14, locator: 'ESG Report 2022 Soy p.3'}
+        - {edition: 2023, elevators: 135, plants: 9, ports: 14, locator: 'ESG Report 2023 Soy p.4'}
+        - {edition: 2024, elevators: 133, plants: 12, ports: 20, locator: 'Impact Report 2024 Soy p.2'}
+        - {edition: 2025, elevators: 136, plants: 14, ports: 13, locator: 'Impact Report 2025 Soy p.2 (2024 데이터)'}
   - company_id: SC-LDC
     name: LDC (Louis Dreyfus Company)
     class: TradingHouse
@@ -1049,6 +1058,17 @@ supply_chain:
     refined_1507_90_1010: {world_t: 115095, collected_countries_t: 86757, coverage_pct: 75.4}
     rule: 수집국 합계는 전 세계 수입의 일부다. 원산지 비중을 가중치로 쓰는 합성 지수는
       커버리지 비율을 함께 표기하지 않으면 발행하지 않는다(특히 조유 25.2%는 대표성 부족).
+    derived_metric_candidates:     # 2026-11-19 승인(R-046) — 산출 전 설계 계약, 미구현
+    - code: KR_SBO_ORIGIN_HHI
+      definition: 한국 대두유 수입 원산지 집중도(HHI) — 분모는 관세청 전 세계 수입 합계, 조유(1507.10)·정제유(1507.90) 분리
+      required_fields: [coverage_pct]
+      rule: 수집국 합계만으로 계산 금지(조유 커버리지 25.2%). 정제유는 중국발 99.9%라 HHI≈1 — 정보가 아니라 구조로 표기
+      ref: docs/research_desk/2026-11/p1_review_2026_11_19/batch_B.md
+    - code: KR_SBO_DEPENDENCY_INDEX
+      definition: 의존지수(Liu 2025 식1) = R²·(한국 측 원산지 집중도 ÷ 수출국 측 행선지 집중도)
+      status: DATA GAP — 수출국 측 행선지 집중도는 관세청 자료로 산출 불가, BACI HS150710/150790 연간치 보완 전까지 한국 측 항만 산출
+      rule: 연간 수출국 항을 월별 피처에 붙일 때 available_at을 발표 시점으로 고정(as-of 누수 방지)
+      ref: docs/research_desk/2026-11/p1_review_2026_11_19/batch_B.md
 
   # ── 시장구조 집중도 (v3.2 신설) ─────────────────────────────────────────
   # 목적: 도착가 잔차층(CIF−CBOT)의 귀속 해석과 원산지 채널 서술의 사실 기반.
@@ -1280,6 +1300,11 @@ causal_edges:
     locator: 'Figueira & Galache 2023, RESR 61(1) e245403, p.14 · p.16 · p.2'
     exact_quote: 'a Argentina direcionou 40,73 milhões de toneladas de soja em grão para o esmagamento, representando 74,10% de toda a soja produzida pelo país'
     note: '수출세의 공급 ''구성'' 효과 — 원곡 수출세가 국내 압착을 우대(Song 2006 재인용, p.14·p.16). AR 원곡 수출/생산 20.54→13.46%(2002→2017, p.2)·원곡 CMS 경쟁력 −98.19 Mt(표 2) — 원곡 지표 하락을 대두유 공급 약화로 읽지 말 것. 세율·가격 결과 미제시 → 강도·승격 근거 아님. 원곡 전용 논문(저자 범위 한정 p.1·p.14) (R-045)'
+  - source_type: research_doc
+    ref: 'docs/research_desk/2026-11/p1_review_2026_11_19/batch_C.md'
+    locator: 'Figueira & Galache 2023 p.14 (doc23) 대비 Haro Sly 2017, Palgrave Comms 3:17095, p.7 (doc31)'
+    exact_quote: 'plastic silos, which in 2007 represented approximately 30% of the total capacity'
+    note: '후보 메커니즘(방향·시차 공란) — 사일로백이 저장 능력의 약 30%: 농가가 수출세 단계 인하(Decreto 423/2026 일정)를 기다리며 출하를 늦출 물리적 여력. 경로 ''인하 기대→농가 출하 지연→압착 원료 지연→아르헨 조유 선적 지연''은 INFERENCE — CIARA 월별 압착·BCR 농가 판매 진도 확보 후 재심 (R-046 · 2026-11-19 승인)'
 - edge_id: CE-004
   label_ko: EUDR 팜유 규제 강화 → EU 팜유 접근 차단 → EU 내 SBO 대체 수요 증가 → 국제가 상승
   category: 정책·규제
@@ -1456,6 +1481,9 @@ causal_edges:
   status: candidate
   validated_by: []
   domain_mechanism_ref: null
+  interpretation_rules:
+    - '무역합의 구매약속은 상한이다 — 이행분은 ESR 선적 실측으로만 반영하고, 약속 발표의 감성 강도는 감액해 채점한다(Phase One 이행률 약 52% 선례, doc12 p.2) (R-046 · 2026-11-19 승인)'
+    - '미국 ZL과 수입국 대두유 가격은 관세 충격에 반대 방향으로 움직일 수 있다 — 단일 SBO_INTL_PRICE 방향 표기는 수입국(한국) 관점에서 재확인한다 (R-046 · 2026-11-19 승인)'
   evidence:
   - source_type: research_doc
     ref: src/semantic/causal_chains.md
@@ -1477,6 +1505,16 @@ causal_edges:
     locator: 'Figueira & Galache 2023, p.13(Wesz Junior 2011 재인용) · p.2 · 표 1'
     exact_quote: 'existência de escalada tarifária nas importações da soja pela China, tendo menor incidência sobre tributos sobre importações de soja em grão'
     note: '무역전쟁 이전(2002~2017) 중국 수입 구조 배경 — 원곡 우대 관세(세율 수치 없음 = DATA GAP)·3국이 중국 원곡 수입의 93.64% 공급(p.2)·브라질 점유 29→44%(p.10). 후보 엣지 ''중국 관세 역진 → 수입 원곡 자국 압착 → 중국 대두유 수입 저위''는 MOFCOM 세율·PSD 순수입 확보 전 보류 (R-045)'
+  - source_type: research_doc
+    ref: 'docs/research_desk/2026-11/p1_review_2026_11_19/batch_A.md'
+    locator: 'Baryshpolets·Devadoss·Sabala 2022, JAAEA 1, p.7 (doc12)'
+    exact_quote: 'almost every country sees a decrease in domestic price ... except for the United States and Mexico'
+    note: '공간균형 비교정학 — 관세 철폐 시 미국 대두유는 상승, 수입국 대두유는 하락: 결과 노드를 미국(ZL)과 수입국 CIF로 분리할 후보(candidate). 크기(%) 인용 금지 (R-046 · 2026-11-19 승인)'
+  - source_type: research_doc
+    ref: 'docs/research_desk/2026-11/p1_review_2026_11_19/batch_A.md'
+    locator: '같은 문헌 p.2'
+    exact_quote: 'China only purchased $6.50 billion more in 2020 than it did in 2017'
+    note: 'Phase One 추가구매 약속 125억 달러 중 이행 65억 달러 — 무역합의 구매약속은 상한이며 이행은 ESR 실측으로만 반영 (R-046 · 2026-11-19 승인)'
 - edge_id: CE-012
   label_ko: 중국 SBO 비축 발표 → 수입 기대 형성 → 재고 감소 우려 → 선물 단기 급등
   category: 지정학·무역
@@ -1571,6 +1609,11 @@ causal_edges:
     ref: docs/research_desk/2026-09/market_structure_update_2026_09_25.md
     locator: "§4 M5·M6·A8 · 검증 ③-9 — Fastmarkets 2026-09-21(유럽 유지 가격 분화): 해바라기유는 2026/27 공급 회복 전망에도 흑해 물류 불확실성으로 상승, 유채유·수입 CPO는 하락"
     note: "흑해 물류 리스크 프리미엄이 공급 회복기에도 잔존하는 실측(2026-09 셋째 주). 우크라 2026/27 해바라기유 생산 전망은 기관별 상이(APK-Inform 5.75 Mt — 2026-03-10 vintage · UkrAgroConsult 5.8 Mt)이며 Fastmarkets 기사에는 수치 없음 → 전망치는 vintage 병기. EU 해바라기유 수입의 우크라 편중 약 92%(EU GAIN 2026-04, 귀속 INFERENCE) (A-281)"
+  - source_type: research_doc
+    ref: 'docs/research_desk/2026-11/p1_review_2026_11_19/batch_A.md'
+    locator: 'Kyriazis 2024, Economies 12:57, p.9 (doc14)'
+    exact_quote: 'a non-negligible absorber of spillover impacts during the pandemic and the Russia–Ukraine conflict'
+    note: '러우 전쟁기 해바라기유 대외 연결성 40% 직전 상승, 대두유는 흡수자 — 충격이 대체유→대두유로 들어오는 기제 근거. 월간 평활 경로라 선후행 주장 금지 (R-046 · 2026-11-19 승인)'
 - edge_id: CE-015
   label_ko: CPO-SBO 스프레드 확대(>$175/MT) → 팜유 대체 → SBO 수요 감소 → 하락 압력
   category: 시장 구조
@@ -1591,6 +1634,7 @@ causal_edges:
   - 스프레드의 평균회귀를 가정하지 않는다 — 2020년 이후 SBO-팜유 공행성 구조가
     붕괴함(farmdoc 실증). 다이버전스가 자동으로 좁혀진다는 통념은 성립하지 않음.
   - $175/MT 임계는 레짐 인지 하에서만 사용한다(공행성 붕괴 이후 구간은 별도 레짐).
+  - '국면 비대칭(랠리 시 팜유 비추종)은 1개월·1년 척도에서만 유의하고 1주 척도에서는 유의하지 않다(p=0.423) — h=20/60 해석에만 적용하고 h=1/5에는 적용하지 않는다(Fousekis 2024 p.7–8) (R-046 · 2026-11-19 승인)'
   evidence:
   - source_type: research_doc
     ref: src/semantic/causal_chains.md
@@ -1618,6 +1662,10 @@ causal_edges:
     ref: docs/research_desk/2026-09/market_structure_update_2026_09_25.md
     locator: "§4 M1·M2·M3 · 검증 ③-2 — 인도 CFR 스프레드 2026-08-04: CPO 1,230 vs SBO 1,260~1,265 USD/t(SBO 프리미엄 32.5) · 10~12월 선적 SBO −10 USD/t(부호 역전) · CME BOPO 2026-08 말 326.51 USD/t · MPOB 8월 재고 2.82 Mt"
     note: "★2026 에피소드 — 스프레드 부호 전환 국면(팜유 대체 → 대두유 회귀). 해석 규칙: 본 엣지의 임계 175 USD/MT는 '대두유 프리미엄이 큰' 국면 전제이므로 부호 전환 국면에서는 발화 조건이 성립하지 않는다(예외 명시 — 평균회귀 가정 금지 규칙과 정합). CME BOPO(ZL 환산 vs BMD/USD 선물)와 CFR 인도 현물 스프레드는 기준이 달라 NOT COMPARABLE — 시계열 결합 금지. '연초 507 USD/t'는 검증 불가로 미반영 (A-281)"
+  - source_type: research_doc
+    ref: 'docs/research_desk/2026-11/p1_review_2026_11_19/batch_A.md'
+    locator: 'Fousekis 2024, J. Econ. Finance 48, p.6 표1·p.7 표2·p.8 표3 (doc15)'
+    note: 'bull-bull coherency 0.149–0.175 vs bear-bear 최대 0.506 — 하락 동조가 상승 동조보다 강함. 1주 척도 비대칭 비유의. 자료 investing.com(재현 제한) (R-046 · 2026-11-19 승인)'
 - edge_id: CE-016
   label_ko: BDI 급등 → 해운비 상승 → 남미 수출 채산성 악화 → 수출 감소 → 국제가 상승
   category: 시장 구조
@@ -1724,6 +1772,11 @@ causal_edges:
     ref: docs/research_desk/2026-09/market_structure_update_2026_09_25.md
     locator: "§4 A1·A6·M8·M9 · 검증 ③-1 — Avileis(UNL 교원, UC Davis 세미나 워킹페이퍼 2026-01) '바이오연료 시대의 상품가격 변동성' · Purdue PAER 2026 · ADM/Bunge 2Q26 공시 귀속"
     note: "①의무수요가 수요곡선을 가파르게 만들어 대두유 내재변동성 +19%(2026-01판 · 2025 NCCC-134판은 +18% — 판본 의존, 비심사 워킹페이퍼라 '저자 추정'으로 병기) ②Purdue 비대칭 규칙: 정책 바닥(RVO)은 하방 경직, 유가 상승분의 상방 전이는 자발적 혼합 구간에서만 ③ADM·Bunge 2분기 압착 마진 급등의 귀속이 'RVO·45Z·이란 분쟁발 에너지 가격'으로 공시됨(기업 측 실증). G2 변동성 층(EGARCH-X) 설계 근거 (A-281)"
+  - source_type: research_doc
+    ref: 'docs/research_desk/2026-11/p1_review_2026_11_19/batch_A.md'
+    locator: 'Schaefer 외 2022, AERE 51, p.11 (doc11)'
+    exact_quote: 'increased to 0.96% for soy oil'
+    note: '미국 대두유의 원유 총탄력 0.29(2000년대 초)→0.96(EPAct 후)→0.18(2015-01)·EU 0.67→0.07 — 시기 의존. 표본이 2020에서 끝나 재생디젤 시대 외삽 금지 (R-046 · 2026-11-19 승인)'
 - edge_id: CE-021
   label_ko: 브라질 헤알 약세 → 농가 헤알 수취가 상승 → 판매·수출 가속 → 달러 표시 가격 하락 압력
   category: 시장 구조
@@ -1831,6 +1884,11 @@ causal_edges:
       ref: docs/research_desk/2026-09/market_structure_update_2026_09_25.md
       locator: "§3 3-2~3-3 · 4-1~4-2 · 검증 ①-4/5 — FAO 유지류 가격지수 2026-08 196.9(+0.6% m/m, 2022-06 이후 최고): 팜·남미산 대두유 강세 vs 미국산 대두유는 '바이오연료 정책 불확실성'으로 완만한 하락(원산지 분화) · OECD-FAO 2026-2035: 바이오디젤이 세계 식물성유지 사용의 약 18%(기준기간) · 원료 투입 +2.1%/yr"
       note: "미국산과 남미산 대두유 가격의 분화는 본 엣지의 '미국 채널 프리미엄' 서사와 단기적으로 반대 방향 — 정책 불확실성 국면에서는 프리미엄이 축소될 수 있다(INFERENCE) (A-281)"
+    - source_type: research_doc
+      ref: 'docs/research_desk/2026-11/p1_review_2026_11_19/batch_B.md'
+      locator: 'Cordeiro Junior 외 2025, p.13 (doc19)'
+      exact_quote: 'from 2021 it was observed the absence of revealed comparative advantages'
+      note: '미국 대두유 RCA<1(2021~) — 재생디젤 국내 흡수로 수출 비교우위 소멸과 정합. 금액 기준 지표 (R-046 · 2026-11-19 승인)'
 - edge_id: CE-023
   label_ko: "브라질 바이오디젤 의무 인상(B15→B16) → 내수 압착 흡수 → 수출 잉여 축소 → 국제가 상승"
   category: "정책·규제"
@@ -1868,6 +1926,11 @@ causal_edges:
       locator: '同 p.17 — 혼합 단계 2005 B2 허용·2008 의무·2010 B5·2014 B6→B7·2017-03 B8·2018-03 B10·2019 B11·2020 B12'
       exact_quote: 'Do total de biodiesel produzido no Brasil, cerca de 70% têm como base o óleo de soja.'
       note: '의무 → 대두유 산업수요 경로의 원료 비중 근거(≈70%, 기간 미기재 → 연도별 ANP 원료 통계로 대체 권고). B3/B4/B9 누락·시행일 기준 서술(공포일 미기재) — 단계 시계열(BR_BIODIESEL_BLEND_PCT 후보)은 ANP/CNPE 원문 대조 후 published_at(available_at)·effective_from 분리 저장(D-023) (R-045)'
+    - source_type: research_doc
+      ref: 'docs/research_desk/2026-11/p1_review_2026_11_19/batch_B.md'
+      locator: 'Cordeiro Junior 외 2025, p.13 (doc19)'
+      exact_quote: 'with the reduction in the biodiesel mandate, the national crushing industry relocated this product to the international market'
+      note: '양방향 증거 — 2008 의무화 이후 브라질 대두유 RCA 하락, 2020 의무 완화 후 수출 재배치. RCA는 금액 기준(물량 해석 금지)·인과는 2차 서술이라 candidate 유지 (R-046 · 2026-11-19 승인)'
 - edge_id: CE-024
   label_ko: "한국 압착 채산성 악화(대두박가 압박) → 국내 압착 축소 → 조유 수입 수요 증가 → 한국 수입 CIF 상방"
   category: "시장 구조"
@@ -1895,6 +1958,11 @@ causal_edges:
       ref: docs/research_desk/2026-09/market_structure_update_2026_09_25.md
       locator: "§3 7-2 · §4 A9·M19 · 검증 ①-12/③-10 — USDA FAS Seoul Oilseeds Annual KS2026-0006(2026-03-04) · 아시아경제 2026-09-09"
       note: "공식 진단(FAS Seoul): MY2026/27 압착이 설비·3년 평균 하회 — 원인은 '부산물(대두박) 국제가 유리'로 인한 약한 압착 수요 · 대두유 수입이 압착 감소를 상쇄하며 증가 · 미국산 점유 등락·조유/정제유 원산지 다변화 · 2026년부터 식용 대두 WTO TRQ 자율 증량 중단. ⚠️ 2026-09 '가공용(두부·장류) 수입대두 약 3만 t 부족'(필요 250,000 t vs 계획 223,899 t)은 착유용 대두와 **별개 채널**(TRQ·aT 국영무역) — 본 엣지의 압착 축과 합산 금지(NOT COMPARABLE). 국내 GMO 완전표시제(식용유지류 확정 2027-12-31·조기안 행정예고)는 수입 정제유 vs 국산 압착유 상대 경쟁력 변화 후보(INFERENCE) (A-281)"
+    - source_type: research_doc
+      ref: 'docs/research_desk/2026-11/p1_review_2026_11_19/batch_A.md'
+      locator: 'Fousekis·Grigoriadis 2025, Modern Finance 3(3), p.5·p.9 (doc16)'
+      exact_quote: 'fluctuated between 25 and 35 per cent until 2020; it rose precipitously in 2021 and 2022'
+      note: '배경 — 2021년 이후 oilshare ≈40%·대두유–대두박 상관 최저 −0.5: 압착 수익이 대두유에 쏠려 대두박가 압박이 구조화. 미국 선물 지표라 한국 압착 마진의 직접 대리 금지, 한국 실측과 병기 (R-046 · 2026-11-19 승인)'
 
 non_causal_correlations:
   note: 상관은 높으나 인과 경로가 없는 것으로 확정된 조합 — 인과엣지 등록 금지(S-1)
