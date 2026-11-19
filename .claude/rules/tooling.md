@@ -1,5 +1,5 @@
 # .claude/rules/tooling.md
-> 승인자 지시(2026-09-28): 이후 작업은 아래 공개 도구 3종을 작업 유형별로 사용한다. 모든 세션에서 적용.
+> 승인자 지시(2026-09-28, 화면 도구 2026-11-19 추가): 이후 작업은 아래 공개 도구를 작업 유형별로 사용한다. 모든 세션에서 적용.
 
 ## 작업 유형 → 도구
 
@@ -8,6 +8,9 @@
 | 코딩(작성·수정·리팩터·리뷰·의존성 선택) | **Ponytail** (MIT) | `.claude/skills/ponytail/` | 코드 작업 시작 시 `ponytail` 스킬 로드 — 기본 강도 `full` |
 | 전체 아키텍처·워크플로우 도식 | **drawio-skill** (MIT) | `.claude/skills/drawio-skill/` | 편집 가능한 `.drawio` 산출 — 저장 위치 `docs/architecture/` |
 | 비정형 자료 작업(GAIN·FAO PDF 요약, 일별 뉴스 다이제스트, 시맨틱 레이어) | **Graft** (NanoNets, MIT) | CLI `graft` + `.claude/skills/graft/` | 관련 코드 탐색·영향 범위 확인을 `graft ask/callers/skeleton`으로 먼저 수행 |
+| 화면(UI) 설계·구현 — G1·G2 브리프, 미리보기 | **frontend-design**(Anthropic) · **web-design-guidelines**(Vercel) · **ui-ux-pro-max**(MIT) | `.claude/skills/{frontend-design,web-design-guidelines,ui-ux-pro-max}/` | 화면 작업 시작 시 로드 — 토큰 먼저, 대담함은 한 곳, 접근성 점검(승인 2026-11-19) |
+| 화면 품질 점검(결정론적·LLM 없음) | **impeccable** 검사기(Apache-2.0) | 스킬 `.claude/skills/impeccable/` + `scripts/design_check.sh` | 도커 Node로 `detect` 실행(버전 고정 4.8.0). 정적 소스 검사는 테마 토큰을 섞어 대비 오탐을 낼 수 있음 |
+| 화면 설계안 공유·스케치 | **Penpot**(MPL-2.0, 자체 호스팅) | `docker/penpot/` → http://localhost:9001 | 127.0.0.1 전용·텔레메트리 끔·비밀키는 `docker/penpot/.env`(gitignore) |
 
 ## 우선순위 (충돌 시)
 1. CLAUDE.md §2 하드 제약·§6 휴먼 게이트·as-of 규칙이 도구 지침보다 우선한다.
