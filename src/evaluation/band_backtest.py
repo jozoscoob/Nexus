@@ -33,7 +33,13 @@ from src.evaluation.g1_reliability import HORIZONS, STRESS_SLICES, WINDOW_END, W
 
 QUANTILES = (0.10, 0.25, 0.50, 0.75, 0.90)
 ROLL = 250
-LOCKBOX = ("2025-07-01", "2025-12-31")
+# 락박스(2026-11-20 개정): 구 2025-07-01~12-31은 방식 선택(B4a′, 2026-11-19 동결) 과정에서 이미 열람돼
+# '손대지 않은 구간' 자격을 잃음 → 본 평가에 편입하고, 동결 이후부터 전향 락박스로 새로 쌓는다.
+LOCKBOX = ("2026-11-20", "2099-12-31")
+PRIOR_LOCKBOX = ("2025-07-01", "2025-12-31")   # 편입한 구 락박스(1회 결과 보고용 표기)
+B4A_LAMBDA = {1: 0.94, 5: 0.94, 20: 0.97, 60: 0.97}
+B4A_Z = {0.10: -1.2816, 0.25: -0.6745, 0.50: 0.0, 0.75: 0.6745, 0.90: 1.2816}
+EWMA_SEED_DAILY_VOL = 0.015
 
 
 def pinball(y: pd.Series, q_pred: pd.Series, q: float) -> float:
@@ -49,27 +55,39 @@ def _baseline_bands(logc: pd.Series, h: int) -> dict[str, pd.DataFrame]:
     b1 = pd.DataFrame({q: 0.0 for q in QUANTILES}, index=logc.index)      # 최근값 유지 = 수익률 0
     seasonal_center = r_past.shift(252 - h).fillna(0.0)                   # 1년 전 같은 시점의 h일 수익률
     b3 = b2.sub(b2[0.50], axis=0).add(seasonal_center, axis=0)
-    return {"B1 최근값": b1, "B2 롤링 경험 분위(250일)": b2, "B3 계절 naive": b3}
+    # B4a′(적용 방식): 중심 0, 폭 = EWMA 일변동성(t 종가까지) × √h × 정규 분위 — 화면과 같은 산식
+    r = logc.diff().to_numpy()
+    lam = B4A_LAMBDA.get(h, 0.97)
+    s2 = np.empty(len(r))
+    s2[0] = EWMA_SEED_DAILY_VOL ** 2
+    for t in range(1, len(r)):
+        rt = r[t] if not np.isnan(r[t]) else 0.0
+        s2[t] = lam * s2[t - 1] + (1 - lam) * rt ** 2
+    sd = pd.Series(np.sqrt(s2) * np.sqrt(h), index=logc.index)
+    b4 = pd.DataFrame({q: sd * z for q, z in B4A_Z.items()})
+    return {"B1 최근값": b1, "B2 롤링 경험 분위(250일)": b2, "B3 계절 naive": b3, "B4a′ EWMA 지평별 λ(적용)": b4}
 
 
 def run_backtest(close: pd.Series) -> dict[str, Any]:
     logc = np.log(close.astype(float).sort_index())
     out: dict[str, Any] = {"quantiles": list(QUANTILES), "roll": ROLL, "window": [WINDOW_START, WINDOW_END],
-                           "lockbox": list(LOCKBOX), "horizons": {}}
+                           "lockbox": list(LOCKBOX), "prior_lockbox": list(PRIOR_LOCKBOX), "horizons": {}}
     for h in HORIZONS:
         realized = logc.shift(-h) - logc
         outcome_date = pd.Series(logc.index, index=logc.index).shift(-h)   # t 예측의 채점일(t+h)
         bands = _baseline_bands(logc, h)
         res_h: dict[str, Any] = {}
         for name, bd in bands.items():
-            j = pd.concat([realized.rename("y"), bd], axis=1).dropna()
-            j = j[(j.index >= pd.Timestamp(WINDOW_START)) & (j.index <= pd.Timestamp(WINDOW_END))]
+            j_all = pd.concat([realized.rename("y"), bd], axis=1).dropna()
+            j = j_all[(j_all.index >= pd.Timestamp(WINDOW_START)) & (j_all.index <= pd.Timestamp(WINDOW_END))]
             if len(j) < 300:
                 res_h[name] = {"status": "표본 부족"}
                 continue
-            lock = (j.index >= pd.Timestamp(LOCKBOX[0])) & (j.index <= pd.Timestamp(LOCKBOX[1]))
+            # 전향 락박스는 분석창 밖(동결 이후)이므로 전체 실현 쌍에서 따로 뽑음
+            lock_df = j_all[(j_all.index >= pd.Timestamp(LOCKBOX[0])) & (j_all.index <= pd.Timestamp(LOCKBOX[1]))]
             # 본 평가는 채점일까지 락박스 이전이어야 함 — 경계 h일을 비워 락박스 실측이 섞이지 않게(정화)
-            main = j[~lock & (outcome_date.reindex(j.index) < pd.Timestamp(LOCKBOX[0])).to_numpy()]
+            main = j[(outcome_date.reindex(j.index) < pd.Timestamp(LOCKBOX[0])).to_numpy()]
+            prior = main[(main.index >= pd.Timestamp(PRIOR_LOCKBOX[0])) & (main.index <= pd.Timestamp(PRIOR_LOCKBOX[1]))]
             def _score(sub: pd.DataFrame) -> dict[str, Any]:
                 y = sub["y"]
                 return {
@@ -81,7 +99,9 @@ def run_backtest(close: pd.Series) -> dict[str, Any]:
                     "coverage_80": round(float(((y >= sub[0.10]) & (y <= sub[0.90])).mean()), 3),
                     "width_80_pct": round(float((sub[0.90] - sub[0.10]).mean() * 100), 2),
                     "mae_p50_pct": round(float((y - sub[0.50]).abs().mean() * 100), 2)}
-            entry = {"walk_forward": _score(main), "lockbox": _score(j[lock]) if lock.sum() >= 20 else {"status": "표본 부족"},
+            entry = {"walk_forward": _score(main),
+                     "lockbox": _score(lock_df) if len(lock_df) >= 20 else {"status": f"축적 중({len(lock_df)}건)"},
+                     "prior_lockbox": _score(prior) if len(prior) >= 20 else {"status": "표본 부족"},
                      "by_slice": {}}
             for sname, (s, e) in STRESS_SLICES.items():
                 m = (main.index >= pd.Timestamp(s)) & (main.index <= pd.Timestamp(e))
@@ -95,7 +115,7 @@ def run_backtest(close: pd.Series) -> dict[str, Any]:
 
 def render_markdown(res: dict[str, Any], basis: str) -> str:
     L = [f"# G2 밴드 백테스트 — 기준선 3종 (기대 정확도 하한) — {date.today().isoformat()}", "",
-         f"> 입력 기반: **{basis}** · 분석창 {res['window'][0]}~{res['window'][1]} · 락박스 {res['lockbox'][0]}~{res['lockbox'][1]} 별도 · 롤링 창 {res['roll']}거래일",
+         f"> 입력 기반: **{basis}** · 분석창 {res['window'][0]}~{res['window'][1]} · 전향 락박스 {res['lockbox'][0]}~(동결 이후 축적) · 구 락박스 {res['prior_lockbox'][0]}~{res['prior_lockbox'][1]}는 방식 선택에 이미 쓰여 본 평가에 편입 · 롤링 창 {res['roll']}거래일",
          "> 산출은 기준선의 과거 표본 성적이며 Champion 스택 성적이 아니다. 방향 판단·오를 가능성 같은 확률 주장은 산출하지 않는다.", ""]
     for h in HORIZONS:
         L.append(f"## 지평 {h}거래일")

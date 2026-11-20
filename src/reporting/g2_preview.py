@@ -38,12 +38,13 @@ ROLL = 250                      # 케인스 렌즈의 경험 분위 창(참고 �
 EWMA_LAMBDA = {1: 0.94, 5: 0.94, 20: 0.97, 60: 0.97}
 Z = {0.10: -1.2816, 0.25: -0.6745, 0.50: 0.0, 0.75: 0.6745, 0.90: 1.2816}
 EVAL_START = "2012-01-01"        # 범위 적중 이력 산출 시작(walk-forward, 결과가 실현된 구간만)
+RECENT_ORIGINS = 250             # 최근 적중률 창(결과가 실현된 최근 250개 발행일 ≈ 1년)
 HISTORY_DAYS = 1300             # 화면 차트 표시 이력(약 5년)
 USC_LB_TO_USD_MT = 22.0462      # 1 USc/lb = 22.0462 USD/MT (정확 환산)
 TICKERS = [("TE_PALM_OIL", "팜유 (Bursa)"), ("TE_SOYBEANS", "대두 (CBOT)"),
            ("TE_RAPESEED", "유채 (Euronext)"), ("TE_SUNFLOWER_OIL", "해바라기유"),
            ("TE_BRENT_CRUDE_OIL", "브렌트유"), ("TE_BDI", "BDI 운임"),
-           ("DEXBZUS", "헤알/달러"), ("DEXKOUS", "원/달러")]
+           ("DEXBZUS", "헤알/달러"), ("FX_KRW_USD_YF", "원/달러")]
 
 
 def _close() -> pd.Series:
@@ -78,6 +79,18 @@ def bands(close: pd.Series, with_stats: bool = True) -> dict:
             start = int(np.searchsorted(close.index.values, np.datetime64(EVAL_START)))
             t = np.arange(start, len(lp) - h)
             zs = (lp[t + h] - lp[t]) / (sig[t] * math.sqrt(h))
+            recent = zs[-RECENT_ORIGINS:]
+            o = len(lp) - 1 - h                               # h거래일 전에 낸 범위 → 오늘 실제로 채점
+            so = float(sig[o]) * math.sqrt(h)
+            qo = {f"p{int(q * 100)}": round(math.exp(lp[o] + Z[q] * so), 2) for q in QUANTS}
+            real = float(close.iloc[-1])
+            item["check"] = {"origin": close.index[o].strftime("%Y-%m-%d"), "q": qo, "realized": real,
+                             "in80": qo["p10"] <= real <= qo["p90"], "in50": qo["p25"] <= real <= qo["p75"],
+                             "pos": round((real - qo["p10"]) / (qo["p90"] - qo["p10"]) * 100, 0) if qo["p90"] > qo["p10"] else None}
+            item["recent"] = {"n": int(len(recent)), "cov80": round(float(np.mean(np.abs(recent) <= Z[0.90])) * 100, 1),
+                              "cov50": round(float(np.mean(np.abs(recent) <= Z[0.75])) * 100, 1),
+                              "above90": round(float(np.mean(recent > Z[0.90])) * 100, 1)}
+            item["vol_change"] = round((float(sig[-1]) / float(sig[-6]) - 1) * 100, 1)   # 지난주 대비 변동성(=폭) 변화
             item["stats"] = {"n": int(len(t)), "since": EVAL_START,
                              "cov80": round(float(np.mean(np.abs(zs) <= Z[0.90])) * 100, 1),
                              "cov50": round(float(np.mean(np.abs(zs) <= Z[0.75])) * 100, 1),
@@ -85,6 +98,120 @@ def bands(close: pd.Series, with_stats: bool = True) -> dict:
                              "below10": round(float(np.mean(zs < Z[0.10])) * 100, 1)}
         out[str(h)] = item
     return out
+
+
+LANDED_MC = 20_000
+LANDED_LAG_MONTHS = 2     # 잔차 정렬 시차(월) — 0~3개월 비교에서 상관 −0.61~−0.73, 2개월은 운송 기간과 일치
+TARIFF_CONFIG = ROOT / "config" / "procurement_metrics.yaml"
+
+
+def _residual_history(close: pd.Series) -> tuple[pd.Series, pd.Series, str]:
+    """월별 (CBOT 월평균 USD/MT, 관세청 실측 CIF − CBOT 잔차) — 측정 계열."""
+    from src.forecasting import landed_cost as lc
+    cif, _, src = lc.load_customs_sbo_cif()
+    # 리드타임 정렬: 통관 CIF는 약 2개월 전에 가격이 정해진 화물(운송 40~50일 + 선적 전 가격 결정) → CBOT를 2개월 앞당겨 비교
+    cbot_m = (close * USC_LB_TO_USD_MT).resample("MS").mean().shift(LANDED_LAG_MONTHS)
+    cif = cif.copy()
+    cif.index = pd.to_datetime(cif.index).to_period("M").to_timestamp()
+    j = pd.concat([cbot_m.rename("f"), cif.rename("cif")], axis=1).dropna()
+    return j["f"], (j["cif"] - j["f"]).rename("r"), src
+
+
+def landed_layers(close: pd.Series, krw: pd.Series) -> dict:
+    """도착가 참고 범위(USD/MT·원/MT, 관세 전): 선물(B4a′) + 잔차(관세청 CIF − CBOT) + 환율. 관세는 화면에서 원산지별로 곱함.
+
+    측정: 정산가 · 관세청 월별 실측 CIF(1507.10 벌크) · 원/달러 일별.
+    가정: ①잔차는 선물 변동에 반응(월별 회귀 ΔR = β·ΔF + ε — 실측 상관 −0.73, 독립 합성은 폭을 과장) ②중심은 최근 실측 잔차
+    ③환율은 선물과 독립 EWMA ④관세는 원산지 FTA 세율(config/procurement_metrics.yaml). 참고 범위이며 확률 약속이 아님.
+    """
+    try:
+        f_m, r_m, basis_src = _residual_history(close)
+        df_, dr_ = f_m.diff().dropna(), r_m.diff().dropna()
+        k = df_.index.intersection(dr_.index)
+        beta = float(np.cov(df_[k], dr_[k])[0, 1] / np.var(df_[k], ddof=1)) if len(k) > 24 else 0.0
+        eps = (dr_[k] - beta * df_[k]).to_numpy()
+        eps = eps - eps.mean()
+        r_now, r_hist = float(r_m.iloc[-1]), r_m.to_numpy()
+        r_info = {"now": round(r_now, 1), "date": r_m.index[-1].strftime("%Y-%m"), "n_months": int(len(r_m)),
+                  "pctile": round(float((r_hist <= r_now).mean() * 100), 1), "median": round(float(np.median(r_hist)), 1),
+                  "p10": round(float(np.quantile(r_hist, .1)), 1), "p90": round(float(np.quantile(r_hist, .9)), 1),
+                  "beta": round(beta, 3), "corr": round(float(np.corrcoef(df_[k], dr_[k])[0, 1]), 2), "lag_months": LANDED_LAG_MONTHS,
+                  "source": basis_src}
+    except Exception as e:  # 관세청 자료 부재 — 선물·환율 층만
+        print(f"[경고] 잔차 층 산출 실패({type(e).__name__}: {e}) — 선물·환율 층만 표시")
+        beta, eps, r_now, r_info = 0.0, np.array([0.0]), 0.0, None
+    lp, lx = np.log(close.to_numpy()), np.log(krw.to_numpy())
+    fx_sig = float(_ewma_sigma(lx, 0.97)[-1]) if len(lx) > 30 else 0.0
+    f_now, x_now = float(close.iloc[-1]) * USC_LB_TO_USD_MT, float(krw.iloc[-1])
+    rng = np.random.default_rng(20261120)
+    qs = [0.10, 0.25, 0.50, 0.75, 0.90]
+    out = {}
+    for h in HORIZONS:
+        sd_f = float(_ewma_sigma(lp, EWMA_LAMBDA[h])[-1]) * math.sqrt(h)
+        f = f_now * np.exp(sd_f * rng.standard_normal(LANDED_MC))
+        r = r_now + beta * (f - f_now) + rng.choice(eps, LANDED_MC) * math.sqrt(h / 21)
+        x = x_now * np.exp(fx_sig * math.sqrt(h) * rng.standard_normal(LANDED_MC))
+        usd = f + r
+        krw_mt, krw_fixed = usd * x, usd * x_now
+        w = lambda a: float(np.quantile(a, .9) - np.quantile(a, .1))
+        out[str(h)] = {"usd": [round(float(v), 1) for v in np.quantile(usd, qs)],
+                       "krw": [round(float(v), 0) for v in np.quantile(krw_mt, qs)],
+                       "fx": [round(float(v), 1) for v in np.quantile(x, [0.10, 0.50, 0.90])],
+                       "fx_share": round(max(0.0, 1 - (w(krw_fixed) / w(krw_mt)) ** 2) * 100, 1) if w(krw_mt) else 0.0}
+    tariffs = {}
+    if TARIFF_CONFIG.exists():
+        cfg = yaml.safe_load(TARIFF_CONFIG.read_text(encoding="utf-8")) or {}
+        for org, v in ((cfg.get("tariff") or {}).get("by_origin") or {}).items():
+            row = {"agreement": v.get("agreement")}
+            for line in ("1507.10", "1507.90"):
+                t = v.get(line) or {}
+                rate = t.get("rate_pct") if t.get("verified") else t.get("fallback_pct", t.get("rate_pct"))
+                row[line] = {"rate": rate if rate is not None else (cfg.get("tariff") or {}).get("basic_pct", 5),
+                             "verified": bool(t.get("verified"))}
+            tariffs[org] = row
+    return {"futures_usd_mt": round(f_now, 1), "fx_now": round(x_now, 2), "fx_vol_ann": round(fx_sig * math.sqrt(252) * 100, 1),
+            "residual": r_info, "h": out, "tariffs": tariffs}
+
+
+def state_metrics(close: pd.Series) -> dict:
+    """G2 서술 지표(과거 표본 위치) — 판단·권고 아님."""
+    last = float(close.iloc[-1])
+    pct = lambda s: round(float((s <= last).mean() * 100), 1)
+    lp = np.log(close.to_numpy())
+    vol = pd.Series(_ewma_sigma(lp, 0.97) * math.sqrt(252) * 100, index=close.index)
+    r60 = np.exp(lp[60:] - lp[:-60]) - 1
+    top = np.sort(r60)[-max(1, int(len(r60) * 0.05)):]
+    return {"pct_1y": pct(close.iloc[-252:]), "pct_5y": pct(close.iloc[-1260:]), "pct_all": pct(close),
+            "since": close.index[0].strftime("%Y"), "vol_ann": round(float(vol.iloc[-1]), 1),
+            "vol_pct_5y": round(float((vol.iloc[-1260:] <= vol.iloc[-1]).mean() * 100), 1),
+            "tail60_up": round(float(top.mean()) * 100, 1)}
+
+
+def policy_backtest(close: pd.Series) -> dict:
+    """G3 미리보기: 구매 방식별 과거 사후 차이 — 겹치지 않는 60거래일 창(2012~). 같은 계약 라벨 재계산 전 참고값."""
+    p = close[close.index >= "2012-01-01"].to_numpy()
+    W = 60
+    starts = list(range(0, len(p) - W, W))
+    pol = {"지금 일괄": lambda b: b[0]}
+    for w in (20, 40, 60):
+        pol[f"{w}거래일 뒤 일괄"] = (lambda w: lambda b: b[w])(w)
+    for k in (2, 3, 4):
+        pol[f"{k}회 분할(60일)"] = (lambda k: lambda b: float(np.mean([b[j * (W // k)] for j in range(k)])))(k)
+    rows = []
+    for name, fn in pol.items():
+        reg, vs_now = [], []
+        for t in starts:
+            blk = p[t:t + W + 1]
+            c = fn(blk)
+            reg.append(c / blk.min() - 1)
+            vs_now.append(c / blk[0] - 1)
+        reg, vs_now = np.array(reg) * 100, np.array(vs_now) * 100
+        worst = np.sort(vs_now)[-max(1, int(round(len(vs_now) * 0.05))):]
+        rows.append({"policy": name, "vs_now_mean": round(float(vs_now.mean()), 2),
+                     "vs_now_se": round(float(vs_now.std(ddof=1) / math.sqrt(len(vs_now))), 2),
+                     "vs_now_worst5": round(float(worst.mean()), 1), "regret_mean": round(float(reg.mean()), 1),
+                     "regret_worst5": round(float(np.sort(reg)[-max(1, int(round(len(reg) * 0.05))):].mean()), 1)})
+    return {"n_blocks": len(starts), "since": "2012", "window": W, "rows": rows}
 
 
 def report_card() -> dict:
@@ -124,6 +251,9 @@ def tickers() -> list[dict]:
     eco = sorted(glob.glob(str(RAW / "economic_indicators_*.parquet")))
     if eco:
         frames.append(pd.read_parquet(eco[-1], columns=["price_date", "indicator_code", "value"]))
+    com = sorted(glob.glob(str(RAW / "commodity_data_*.parquet")))      # 원/달러 일별(KRW=X)
+    if com:
+        frames.append(pd.read_parquet(com[-1], columns=["price_date", "indicator_code", "value", "unit"]))
     if not frames:
         return []
     df = pd.concat(frames, ignore_index=True)
@@ -170,8 +300,21 @@ LB_PER_GAL = 7.5                                 # 대두유 1갤런 ≈ 7.5lb (
 SOY_EXPORT_CR4 = 45                              # 대두 수출 상위 4사 점유율 %(Wilson AEPP 2025, 선박 실거래)
 
 
+def _krw() -> tuple[pd.Series, str]:
+    """원/달러 — 일별 yfinance(KRW=X) 우선, 없거나 더 오래됐으면 FRED DEXKOUS(주 1회 일괄 게시)."""
+    yf_s, fred = _mkt("FX_KRW_USD_YF"), _mkt("DEXKOUS")
+    if len(yf_s) and (not len(fred) or yf_s.index[-1] >= fred.index[-1]):
+        return yf_s, "yfinance KRW=X 일별"
+    return fred, "FRED DEXKOUS(주 1회 게시)"
+
+
 def _mkt(code: str) -> pd.Series:
-    if code.startswith("TE_"):
+    if code.startswith("FX_KRW_"):
+        f = sorted(glob.glob(str(RAW / "commodity_data_*.parquet")))
+        if not f:
+            return pd.Series(dtype=float)
+        df = pd.read_parquet(f[-1], columns=["price_date", "indicator_code", "value"])
+    elif code.startswith("TE_"):
         df = pd.read_parquet(RAW / "te_commodities_historical.parquet", columns=["price_date", "indicator_code", "value"])
     else:
         f = sorted(glob.glob(str(RAW / "economic_indicators_*.parquet")))
@@ -298,13 +441,17 @@ def build() -> dict:
     routes = json.loads(routes_p.read_text(encoding="utf-8")) if routes_p.exists() else {}
     disrupted = {k for k, s in routes.get("status", {}).items() if s.get("state") == "disrupted"}
     classical = classical_lens(close)
-    krw = _mkt("DEXKOUS")
+    krw, krw_src = _krw()
     return {
         "lenses": {"classical": classical, "keynesian": keynesian_lens(close),
                    "value": value_lens(close, classical)},
         "prev_bands": bands(close.iloc[:-5], with_stats=False),
         "prev_as_of": close.index[-6].strftime("%Y-%m-%d"),
-        "fx_krw": {"value": round(float(krw.iloc[-1]), 2), "date": krw.index[-1].strftime("%Y-%m-%d")} if len(krw) else None,
+        "landed": landed_layers(close, krw) if len(krw) else None,
+        "state": state_metrics(close),
+        "policies": policy_backtest(close),
+        "fx_krw": {"value": round(float(krw.iloc[-1]), 2), "date": krw.index[-1].strftime("%Y-%m-%d"), "source": krw_src,
+                   "vol_ann": round(float(np.log(krw).diff().iloc[-250:].std() * math.sqrt(252)) * 100, 1)} if len(krw) else None,
         "meta": {"as_of": close.index[-1].strftime("%Y-%m-%d"),
                  "generated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
                  "unit": "USc/lb", "to_usd_mt": USC_LB_TO_USD_MT, "roll": ROLL,

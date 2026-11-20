@@ -1,0 +1,137 @@
+# 조달 지표 사양 — G2 도착원가 참고 범위 · G3 3-시뮬레이션 매개변수 · 화면 배치 · 국문 표기
+# 근거 문서: docs/research_desk/2026-11/g2_g3_procurement_metrics_panel_2026_11_20.md
+# 규칙: A-191(과거 표본 서술만 — 확률 약속·구매/보류 권고 금지), D-021(외부 데이터 전용 — 보유 개월 등
+#       실무 입력은 화면 세션 값으로만 쓰고 저장·백테스트·학습에 투입하지 않음).
+# verified=false 세율은 확정 전까지 계산에 basic(5%)을 쓰고 화면에 '미확인'을 표기한다.
+
+version: 1
+as_of: "2026-11-20"
+status: provisional   # 승인자 검토 전
+
+tariff:
+  base: CIF            # 과세가격 = CIF(보험 포함), 원화 환산은 관세청 주간 과세환율
+  vat_pct: 10          # 수입 부가세 — 매입세액 공제 대상이라 원가에서 제외(자금 부담만)
+  basic_pct: 5         # 기본세율(MFN 적용) — 미확인 세율의 대체값
+  wto_bound_pct: 5.4
+  trq: none            # 대두유 세번에는 TRQ 없음(식용 대두 1201.90·참기름 등과 구분)
+  quota_tariff_history:
+    - {period: "2022-06/2023-12", rate_pct: 0, lines: ["1507.10", "1507.90"],
+       source: "USDA GAIN KS2024-0010 Vegetable Oil Market Overview p.9 (2024-01-01 환원)", verified: true}
+    - {period: "2026", rate_pct: null, note: "2026 할당관세 운용방안 보도에서 대두유 미확인 — 부재 미입증",
+       source: "nocutnews 2025-12 / taxtimes 2026 할당관세 기사", verified: false}
+  sources:
+    gain_2026: "data/raw/USDA/FAS/GAIN/Oilseeds/2026/03/26.03_South Korea_Oilseeds and Products Annual.pdf (p.25, 표21 p.29 — 출처 CLIP)"
+    gain_2023: "data/raw/USDA/FAS/GAIN/Oilseeds/2023/03/23.03_South Korea_Oilseeds and Products Annual.pdf (p.29, 표31 p.32)"
+    gain_2025: "data/raw/USDA/FAS/GAIN/Oilseeds/2025/03/25.03_South Korea_Oilseeds and Products Annual.pdf (p.22, 표18 p.25)"
+    ks2024_0010: "data/raw/USDA/FAS/GAIN/Biofuels/2024/03/24.03_South Korea_Vegetable Oil Market Overview.pdf (p.3, p.9, p.10, 표7 p.11)"
+  by_origin:            # 단위 % · 1507.10 = 조유(.1000 식용 / .2000 바이오디젤 / .9000 기타) · 1507.90 = 정제유(.10xx)
+    US:
+      agreement: KORUS
+      "1507.10": {rate_pct: 0, verified: true, source: "ks2024_0010 p.10; gain_2026 표21 p.29"}
+      "1507.90": {rate_pct: 0, verified: true, source: "ks2024_0010 p.10; gain_2026 표21 p.29"}
+    EU:
+      agreement: Korea-EU FTA
+      "1507.10": {rate_pct: 0, verified: true, source: "ks2024_0010 p.10; gain_2026 p.25"}
+      "1507.90": {rate_pct: 0, verified: true, source: "ks2024_0010 p.10; gain_2026 p.25"}
+    ASEAN:
+      agreement: Korea-ASEAN FTA (AKFTA)
+      "1507.10": {rate_pct: 0, verified: true, source: "ks2024_0010 p.3, 표7 p.11"}
+      "1507.90": {rate_pct: 5, verified: true, source: "ks2024_0010 p.3 (국내 정제 보호 — 단일 출처)"}
+    VN:
+      agreement: "Korea-Vietnam FTA 또는 AKFTA 중 유리한 쪽"
+      "1507.10": {rate_pct: 0, verified: true, source: "AKFTA 경로(ks2024_0010 p.3)"}
+      "1507.90": {rate_pct: 0, verified: false, fallback_pct: 5,
+                  source: "gain_2026 p.25가 정제유 0% 상대국에 베트남 명시 — AKFTA 5%와 상충, CLIP 확인 필요"}
+    CN:
+      agreement: Korea-China FTA
+      "1507.10": {rate_pct: null, verified: false, fallback_pct: 5,
+                  note: "식용(.1000) 미확인 · 기타(.9000)는 ks2024_0010 표7 p.11에 0% 표기(레이아웃 깨짐)"}
+      "1507.90": {rate_pct: null, verified: false, fallback_pct: 5,
+                  note: "식용(.1010) 미확인 · 기타(.1090)는 0% 표기"}
+    AR:
+      agreement: none
+      "1507.10": {rate_pct: 5, verified: true, source: "gain_2023 p.29 (비FTA국 5%)"}
+      "1507.90": {rate_pct: 5, verified: true, source: "gain_2023 p.29"}
+    BR:
+      agreement: none
+      "1507.10": {rate_pct: 5, verified: false, source: "FTA 미발효 → 기본세율 추론"}
+      "1507.90": {rate_pct: 5, verified: false, source: "FTA 미발효 → 기본세율 추론"}
+    PY:
+      agreement: none
+      "1507.10": {rate_pct: 5, verified: false, source: "FTA 미발효 → 기본세율 추론"}
+      "1507.90": {rate_pct: 5, verified: false, source: "FTA 미발효 → 기본세율 추론"}
+    RU:
+      agreement: none
+      "1507.10": {rate_pct: 5, verified: false, source: "FTA 미발효 → 기본세율 추론"}
+      "1507.90": {rate_pct: 5, verified: false, source: "FTA 미발효 → 기본세율 추론"}
+  exceptions:
+    "1507.90.9000": {rate_pct: 5, verified: false, note: "gain_2026 5% vs gain_2023 표31 2022·2023 열 8% — 상충, 물량 미미"}
+
+landed_cost:
+  formula: "L_krw_per_mt(h) = (F_h * 22.0462 + R_h_origin) * X_h * (1 + tariff_origin) + C_user"
+  usc_lb_to_usd_mt: 22.0462
+  layers:
+    cbot:     {measured: "CBOT_BO_CLOSE 일별 정산가", assumed: "중심 무변화·EWMA×√h×정규 분위(B4a′)", distribution: b4a_prime, status: primary}
+    residual: {measured: "관세청 1507.10 벌크(>=100 MT) 월별 CIF − CBOT 월평균(원산지별)",
+               assumed: "리드타임 정렬 1~2개월 시차, 원산지 표본 <12개월이면 합산 표본",
+               distribution: joint_paired_bootstrap,   # (h기간 CBOT 수익률, 같은 기간 잔차 변화) 쌍 재추출 — 독립 합성 금지
+               min_origin_months: 12, status: reference}
+    fx:       {measured: "FRED DEXKOUS 일별", assumed: "과세환율≈DEXKOUS, T+2", distribution: ewma_with_empirical_corr,
+               ewma_lambda: 0.97, status: reference, fixed_fx_toggle: true}
+    tariff:   {measured: "관세율표(tariff.by_origin)", assumed: "원산지증명 충족·할당관세 없음", distribution: deterministic, status: reference}
+    excluded: [vat, port_inland, lc_cost, demurrage, refining_cost]
+  evidence_2026_11_19:
+    corr_dresidual_dcbot_monthly: -0.73
+    corr_dcif_dcbot_lag1_1m_2m_3m: [0.19, 0.41, 0.55]
+    fx_var_share_krw_cost_pct: 11.3
+
+decision_params:
+  cost_asymmetry: {c_u: 2, c_o: 1, tau_star: 0.667, sensitivity: [[1, 1], [3, 1]], user_adjustable: true,
+                   note: "D6 잠정치 — 실무 확인 후 조정, 규칙만 사전 등록"}
+  horizons_trading_days: [1, 5, 20, 60]
+  wait_horizons_trading_days: [20, 40, 60]
+  split_k_grid: [2, 3, 4]
+  split_windows_trading_days: [40, 60]
+  split_offsets_rule: "j * floor(W / k), j = 0..k-1 (균등 톤수)"
+  regret_definition: "정책 원가 − 같은 60거래일 창의 사후 최저가 (일괄 대비 차이 병기, % 및 USD/MT)"
+  tail_metric: {name: CVaR95, alpha: 0.95}
+  backtest: {start: "2012-01-01", min_independent_blocks_per_cell: 3, block_trading_days: 60,
+             same_contract_labels_required: true}   # R-046 — 정식 판정은 같은 계약 라벨 재계산 후
+  lead_time: {calendar_days: [40, 50], trading_days_approx: [28, 36], route: "남미·미국 걸프 → 한국"}
+  coverage_months: {source: user_session_input, persist: false}   # D-021
+
+placement:
+  G1: [term_structure_slope, residual_percentile]          # 상태 변수로도 등재
+  G2: [price_position, volatility_regime, price_cvar95_empirical, residual_percentile, fx_layer, landed_cost_reference]
+  G3: [budget_price_tau, regret_by_policy, regret_cvar95, coverage_vs_lead_time, origin_tariff_breakeven,
+       term_structure_slope, policy_options_table]
+  not_displayed: [position_in_reference_band]               # B4a′ 중심 = 현재가 → 항상 P50
+
+labels_ko:
+  price_position: "가격 위치(최근 1년·5년·2010년 이후 백분위)"
+  volatility_regime: "변동성 국면(최근 5년 대비)"
+  price_cvar95_empirical: "과거 표본 기준 상위 5% 평균 상승폭"
+  residual_percentile: "관세청 실측 도착가와 CBOT 환산의 차이(이력 백분위)"
+  fx_layer: "원/달러 변동이 원화 원가에 더하는 폭"
+  landed_cost_reference: "도착원가 참고 범위(원/톤, 관세 포함)"
+  budget_price_tau: "비용 비중 반영 기준가"
+  regret_by_policy: "구매 방식별 과거 사후 차이(톤당)"
+  regret_cvar95: "불리한 상위 5% 경우의 평균 차이"
+  coverage_vs_lead_time: "보유 개월과 운송 기간으로 본 마지막 가격 결정 시점"
+  origin_tariff_breakeven: "관세 포함 원산지 간 차이 계산 예시"
+  term_structure_slope: "근월 대비 다음 월물 가격 차이(연율)"
+  policy_options_table: "가격 결정 방식 비교(미고정·고정·선물 헤지)"
+  badge_measured: "측정"
+  badge_assumed: "가정"
+  badge_unverified: "미확인"
+  badge_reference: "참고 범위(적중률 검증 전)"
+
+wording:
+  banned: ["매수 적기", "추천", "상승 확률", "하락 확률", "기대 이익", "지금 사야", "사세요", "팔아야", "Buy", "Hold"]
+  templates_ko:
+    price_position: "오늘 정산가는 최근 1년 중 하위 {p1y}%, 최근 5년 중 {p5y}% 위치임(과거 분포 내 위치이며 방향을 뜻하지 않음)."
+    budget_price_tau: "비용 비중(부족 {cu} : 과잉 {co})을 적용한 기준가임. 같은 방식의 과거 표본에서 {h_label} 뒤 가격이 이 값 이하였던 비율은 {hit}%였음."
+    regret_by_policy: "2012년 이후 같은 구매 규칙을 매일 적용했을 때의 과거 결과이며, 향후 결과나 권고가 아님. 최종 판단은 담당자 승인 절차를 따름."
+    price_cvar95_empirical: "과거 표본 기준, {h_label} 뒤 상승이 컸던 상위 5% 경우의 평균 상승폭은 현재 변동성 환산 약 {cvar}%임."
+    residual_percentile: "최근 관세청 실측 도착가는 같은 달 CBOT 환산보다 톤당 약 {gap}달러 {dir}, 2010년 이후 {pct} 수준임(월별·지연 자료)."
+    landed_cost_reference: "도착원가 줄은 관세청 실측 잔차·환율·관세를 반영한 참고 범위이며 적중률 검증 전임."

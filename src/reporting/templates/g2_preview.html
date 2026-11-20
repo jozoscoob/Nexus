@@ -47,6 +47,12 @@ h3 { font-size: 13.5px; margin: 0; font-weight: 600; }
 .up { color: var(--up); } .down { color: var(--down); } .flat { color: var(--muted); }
 .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; border: 1px solid currentColor; white-space: nowrap; }
 .pill.ok { color: var(--ok); } .pill.bad { color: var(--bad); } .pill.warn { color: var(--warn); } .pill.mute { color: var(--muted); }
+/* 상태 지표 띠 · 층 표 */
+.statebar { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.statebar div { border:1px solid var(--line); border-radius:6px; padding:6px 10px; font-size:12.5px; }
+.statebar b { display:block; font-size:15px; }
+.tag { font-size:11px; padding:1px 6px; border-radius:3px; border:1px solid var(--line); margin-left:4px; }
+.tag.m { color:var(--ok, #1a7f37); } .tag.a { color:var(--warn, #9a6700); }
 /* 한 줄 결론 + 구매 영향 */
 .lead { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; }
 .verdict { padding: 18px 20px; display: grid; gap: 12px; align-content: start; }
@@ -215,9 +221,18 @@ footer.hitl { color: var(--muted); font-size: 12.5px; }
         <label for="q-cur">표시 통화
           <select id="q-cur"><option value="krw" selected>원화</option><option value="usd">달러</option></select>
         </label>
+        <label for="q-org">원산지(관세)
+          <select id="q-org"></select>
+        </label>
+        <label for="q-line">품목
+          <select id="q-line"><option value="1507.10" selected>조대두유(1507.10)</option><option value="1507.90">정제 대두유(1507.90)</option></select>
+        </label>
+        <label for="q-fix">기타 비용(원/톤, 직접 입력)<input id="q-fix" type="number" min="0" step="1000" value="0"></label>
       </div>
       <div class="cost" id="cost"></div>
+      <div class="tblwrap"><table id="layers"></table></div>
       <p class="note" id="calc-note"></p>
+      <div class="statebar" id="statebar"></div>
     </div>
   </section>
 
@@ -251,6 +266,7 @@ footer.hitl { color: var(--muted); font-size: 12.5px; }
     <div class="card box">
       <h2>기간별 참고 범위</h2>
       <div class="tblwrap"><table id="htbl"></table></div>
+      <p class="note" id="htbl-note"></p>
       <p class="note">적중률 = 같은 방식으로 과거에 만든 80% 범위가 실제 정산가를 담은 비율(목표 80%).</p>
     </div>
     <div class="card box">
@@ -260,9 +276,18 @@ footer.hitl { color: var(--muted); font-size: 12.5px; }
     </div>
   </section>
 
-  <section class="card box">
-    <h2>선택지별 결과 비교</h2>
-    <p class="note" id="opt-note">위 계산기의 물량·시점 기준. 판단이 아니라 범위 양 끝에서 각 선택이 어떤 결과가 되는지 보여 줍니다.</p>
+  <section class="card box" id="g3">
+    <h2>G3 미리보기 — 구매 방식·시점 시뮬레이션 <span class="note" style="font-weight:400">과거 표본 서술 · 판단은 담당자 승인 절차</span></h2>
+    <div class="row">
+      <label for="q-cu">비용 비중: 부족(늦게 사서 비싸짐)<input id="q-cu" type="number" min="1" max="9" step="1" value="2"></label>
+      <label for="q-co">: 과잉(일찍 사서 손해)<input id="q-co" type="number" min="1" max="9" step="1" value="1"></label>
+      <label for="q-cov">보유 개월(이 화면에서만 쓰고 저장 안 함)<input id="q-cov" type="number" min="0" max="12" step="0.5" value="2"></label>
+    </div>
+    <div class="cost" id="g3kpi"></div>
+    <h3 style="margin:14px 0 6px">구매 방식별 과거 사후 차이(톤당, 겹치지 않는 60거래일 창)</h3>
+    <div class="tblwrap"><table id="policy"></table></div>
+    <p class="note" id="policy-note"></p>
+    <h3 style="margin:14px 0 6px">범위 양 끝에서의 선택지 결과(위 계산기 물량·시점 기준)</h3>
     <div class="tblwrap"><table id="opts"></table></div>
   </section>
 
@@ -378,17 +403,61 @@ const D = /*__G2_DATA__*/null;
     $("#caution-t").textContent = parts.join(" · ") + ".";
   }
 
+  const ORG = { US: "미국(KORUS)", AR: "아르헨티나", BR: "브라질", PY: "파라과이", VN: "베트남", CN: "중국", ASEAN: "아세안", EU: "EU", RU: "러시아" };
+  const L = D.landed || null;
+  if (L && L.tariffs) $("#q-org").innerHTML = Object.keys(L.tariffs).map(k => `<option value="${k}" ${k === "AR" ? "selected" : ""}>${ORG[k] || k}</option>`).join("");
+  const tariffOf = () => { const t = L && L.tariffs[$("#q-org").value]; const x = t ? t[$("#q-line").value] : null; return x || { rate: 5, verified: false }; };
+  // 표준정규 역함수(Acklam 근사) — 비용 비중 기준가
+  function invN(p) { const a = [-39.6968302866538, 220.946098424521, -275.928510446969, 138.357751867269, -30.6647980661472, 2.50662827745924],
+      b = [-54.4760987982241, 161.585836858041, -155.698979859887, 66.8013118877197, -13.2806815528857], c = [-.00778489400243029, -.322396458041136, -2.40075827716184, -2.54973253934373, 4.37466414146497, 2.93816398269878],
+      d = [.00778469570904146, .32246712907004, 2.445134137143, 3.75440866190742], pl = .02425;
+    if (p < pl) { const q = Math.sqrt(-2 * Math.log(p)); return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+    if (p > 1 - pl) return -invN(1 - p);
+    const q = p - .5, r = q * q; return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1); }
+
   function drawCalc() {
     const b = D.bands[String(st.h)].q, vol = Math.max(1, +st.vol || 1), fx = D.fx_krw ? D.fx_krw.value : null;
     const money = usd => st.cur === "krw" && fx ? (usd * fx / 1e8).toFixed(2) + "억 원" : "$" + Math.round(usd).toLocaleString("ko-KR");
     const usd = v => v * K * vol, now = usd(last.v);
-    const days = st.h, cells = [["낮은 쪽(P10)", b.p10], ["지금 가격", last.v], ["높은 쪽(P90)", b.p90]];
-    $("#cost").innerHTML = cells.map(([lab, v]) => { const d = usd(v) - now;
-      return `<div><span class="lab">${lab}</span><span class="val">${money(usd(v))}</span><span class="sub ${cls(d)}">${v === last.v ? "기준" : (d > 0 ? "+" : "") + money(d)}</span></div>`; }).join("");
-    $("#calc-note").textContent = `${vol.toLocaleString("ko-KR")}MT × CBOT 정산가 환산(1 USc/lb = ${K} $/MT), 가격 결정까지 약 ${days}거래일(${iso(addBiz(last.d, days))} 무렵). `
-      + (fx ? `원화는 ${D.fx_krw.date} 원/달러 ${fx.toLocaleString("ko-KR")}원 고정 — 환율 변동은 넣지 않았습니다. ` : "")
-      + "basis·운임·관세가 빠진 선물 기준 금액이라 실제 도착가와 다릅니다.";
-    drawOptions(b, vol, money, usd, now);
+    const T = tariffOf(), tr = (T.rate || 0) / 100, fix = Math.max(0, +$("#q-fix").value || 0), H = L && L.h[String(st.h)];
+    if (H) {   // 도착원가 참고 범위(원/톤) = (선물 + 잔차) × 환율 × (1+관세) + 기타 비용
+      const per = H.krw.map(v => v * (1 + tr) + fix), tot = v => st.cur === "krw" ? (v * vol / 1e8).toFixed(2) + "억 원" : "$" + Math.round(v * vol / (fx || 1)).toLocaleString("ko-KR");
+      const cells = [["낮은 쪽(P10)", per[0]], ["중앙(P50)", per[2]], ["높은 쪽(P90)", per[4]]];
+      $("#cost").innerHTML = cells.map(([lab, v]) => `<div><span class="lab">${lab}</span><span class="val">${tot(v)}</span><span class="sub">톤당 ${Math.round(v).toLocaleString("ko-KR")}원</span></div>`).join("");
+      const R = L.residual;
+      $("#layers").innerHTML = `<thead><tr><th>층</th><th>지금</th><th>${HL[st.h]} 뒤 P10~P90</th><th>근거</th></tr></thead><tbody>
+        <tr><td>선물(CBOT 정산가)</td><td>$${L.futures_usd_mt.toLocaleString("ko-KR")}/t</td><td>$${Math.round(b.p10 * K)}~${Math.round(b.p90 * K)}/t</td><td><span class="tag m">측정</span> 정산가 <span class="tag a">가정</span> B4a′ 범위</td></tr>
+        <tr><td>basis·운임·보험(잔차)</td><td>${R ? "$" + R.now + "/t" : "—"}</td><td>${R ? `선물이 $1 오르면 약 $${Math.abs(R.beta).toFixed(2)} ${R.beta < 0 ? "상쇄" : "가산"}` : "—"}</td><td><span class="tag m">측정</span> 관세청 CIF − CBOT(${R ? R.n_months : 0}개월, 지금 이력 하위 ${R ? R.pctile : "—"}%) <span class="tag a">가정</span> ${R ? R.lag_months : 2}개월 시차 정렬·선물 반응 β</td></tr>
+        <tr><td>환율(원/달러)</td><td>${fx ? fx.toLocaleString("ko-KR") : "—"}</td><td>${H.fx[0].toLocaleString("ko-KR")}~${H.fx[2].toLocaleString("ko-KR")}</td><td><span class="tag m">측정</span> ${D.fx_krw ? D.fx_krw.source + " " + D.fx_krw.date : ""} <span class="tag a">가정</span> 선물과 독립 · 원화 폭의 약 ${H.fx_share}%</td></tr>
+        <tr><td>관세(${ORG[$("#q-org").value] || ""} · ${$("#q-line").value})</td><td>${T.rate}%</td><td>—</td><td>${T.verified ? '<span class="tag m">세율표 확인</span>' : '<span class="tag a">미확인 — 기본세율 5% 적용</span>'} 과세가격 CIF 기준</td></tr>
+        <tr><td>기타 비용</td><td>${fix.toLocaleString("ko-KR")}원/t</td><td>—</td><td><span class="tag a">직접 입력</span> 항만·내륙 운송·LC·정제비 등</td></tr></tbody>`;
+      $("#calc-note").textContent = `도착원가 참고 범위 = (선물 + 잔차) × 환율 × (1 + 관세) + 기타 비용. 잔차(관세청 실측 CIF와 CBOT 환산의 차이)는 미국 선물에만 있는 움직임을 상당 부분 상쇄해(월별 상관 ${L.residual ? L.residual.corr : "—"}), 도착원가 폭이 선물만 볼 때보다 좁습니다. 부가세(매입세액 공제)는 원가에서 빼고 자금 부담으로만 봅니다. 과거 표본에 근거한 참고 범위이며 확률 약속이 아닙니다.`;
+    } else {
+      $("#cost").innerHTML = ""; $("#layers").innerHTML = "";
+      $("#calc-note").textContent = "도착원가 층 자료가 없어 선물 기준만 표시합니다.";
+    }
+    const S = D.state;
+    if (S) $("#statebar").innerHTML = `<div>가격 위치<b>${S.pct_1y} · ${S.pct_5y} · ${S.pct_all}</b>최근 1년·5년·${S.since}~ 백분위</div>`
+      + `<div>변동성<b>${S.vol_ann}%</b>최근 5년 중 하위 ${S.vol_pct_5y}%</div>`
+      + `<div>3개월 상승 꼬리<b>+${S.tail60_up}%</b>과거 표본 상위 5% 평균</div>`
+      + (L && L.residual ? `<div>도착가−CBOT 잔차<b>$${L.residual.now}/t</b>이력 하위 ${L.residual.pctile}%(${L.residual.date})</div>` : "");
+    drawOptions(b, vol, money, usd, now); drawG3();
+  }
+
+  function drawG3() {
+    const cu = Math.max(1, +$("#q-cu").value || 2), co = Math.max(1, +$("#q-co").value || 1), tau = cu / (cu + co);
+    const sig = h => Math.log(D.bands[String(h)].q.p90 / last.v) / 1.2816;
+    const bud = h => last.v * Math.exp(invN(tau) * sig(h));
+    const covM = Math.max(0, +$("#q-cov").value || 0), today = new Date(), dd = n => { const x = new Date(today); x.setDate(x.getDate() + n); return iso(x); };
+    const T = tariffOf(), tr = (T.rate || 0) / 100, need = tr / (1 + tr) * 100;
+    $("#g3kpi").innerHTML = [20, 60].map(h => `<div><span class="lab">비용 비중 반영 기준가 · ${HL[h]}</span><span class="val">${fmt(bud(h))}</span><span class="sub">지금 대비 ${sign((bud(h) / last.v - 1) * 100)} · 분위 ${Math.round(tau * 100)}%</span></div>`).join("")
+      + `<div><span class="lab">마지막 가격 결정 시점(보유 ${covM}개월 · 운송 40~50일)</span><span class="val">${covM * 30 - 50 >= 0 ? dd(covM * 30 - 50) + " ~ " + dd(covM * 30 - 40) : "이미 지남"}</span><span class="sub">보유분 소진 전 도착 기준</span></div>`
+      + `<div><span class="lab">관세 ${T.rate}% 원산지가 0% 원산지와 같아지려면</span><span class="val">${need.toFixed(2)}% 이상 저렴</span><span class="sub">과세가격(CIF) 기준</span></div>`;
+    const P_ = D.policies;
+    if (!P_) return;
+    $("#policy").innerHTML = `<thead><tr><th>방식</th><th>지금 일괄 대비 평균</th><th>불리한 상위 5% 평균</th><th>창 안 최저가 대비 평균</th><th>최저가 대비 불리한 상위 5%</th></tr></thead><tbody>`
+      + P_.rows.map(r => `<tr><td>${r.policy}</td><td>${sign(r.vs_now_mean)} <span class="note">(±${r.vs_now_se})</span></td><td>${sign(r.vs_now_worst5)}</td><td>+${r.regret_mean}%</td><td>+${r.regret_worst5}%</td></tr>`).join("") + "</tbody>";
+    $("#policy-note").textContent = `${P_.since}년부터 겹치지 않는 ${P_.window}거래일 창 ${P_.n_blocks}개의 과거 표본입니다. 평균 차이는 표준오차(±) 안에서 서로 구분되지 않고, 차이는 주로 불리한 꼬리에서 납니다. 비용 비중 기준가는 '늦게 사서 비싸지는 비용 : 일찍 사서 손해 보는 비용' 비율로 범위의 분위를 고른 값입니다. 연속 근월 계열이라 같은 계약 라벨로 다시 계산하기 전까지 참고값이며, 구매·보류 권고가 아닙니다.`;
   }
 
   function drawOptions(b, vol, money, usd, now) {
@@ -442,12 +511,17 @@ const D = /*__G2_DATA__*/null;
   }
 
   function drawHorizonTable() {
-    let h = `<thead><tr><th>기간</th><th>P10</th><th>P50</th><th>P90</th><th>지난주 대비 중앙값</th><th>적중률(80% 범위)</th></tr></thead><tbody>`;
-    [1, 5, 20, 60].forEach(k => { const b = D.bands[String(k)].q, pb = (D.prev_bands[String(k)] || {}).q, c = pb ? (b.p50 / pb.p50 - 1) * 100 : null, hr = hit80(k);
-      h += `<tr class="${k === st.h ? "cur" : ""}"><td>${HL[k]} 뒤</td><td>${fmt(b.p10)}</td><td>${fmt(b.p50)}</td><td>${fmt(b.p90)}</td>`
-        + `<td class="${c == null ? "flat" : cls(c)}">${c == null ? "—" : sign(c)}</td>`
-        + `<td>${hr == null ? '<span class="pill mute">미산출</span>' : `<span class="pill ${hr >= 75 ? "ok" : hr >= 65 ? "warn" : "bad"}">${hr.toFixed(1)}%</span>`}</td></tr>`; });
+    const pill = v => v == null ? '<span class="pill mute">미산출</span>' : `<span class="pill ${v >= 75 ? "ok" : v >= 65 ? "warn" : "bad"}">${v.toFixed(1)}%</span>`;
+    let h = `<thead><tr><th>기간</th><th>P10</th><th>P25</th><th>P50(지금)</th><th>P75</th><th>P90</th><th>80% 폭 · 지난주 대비</th>`
+      + `<th>적중 2012~(80%)</th><th>최근 1년 적중(80%)</th><th>그 기간 전 범위 → 오늘 실제</th></tr></thead><tbody>`;
+    [1, 5, 20, 60].forEach(k => { const B = D.bands[String(k)], b = B.q, w = (b.p90 - b.p10) / last.v * 100, ck = B.check, rc = B.recent || {};
+      const verdict = ck ? (ck.in50 ? '<span class="pill ok">50% 범위 안</span>' : ck.in80 ? '<span class="pill ok">80% 범위 안</span>' : `<span class="pill bad">${ck.realized > ck.q.p90 ? "위로" : "아래로"} 벗어남</span>`) : "—";
+      h += `<tr class="${k === st.h ? "cur" : ""}"><td>${HL[k]} 뒤</td><td>${fmt(b.p10)}</td><td>${fmt(b.p25)}</td><td>${fmt(b.p50)}</td><td>${fmt(b.p75)}</td><td>${fmt(b.p90)}</td>`
+        + `<td>${w.toFixed(1)}% <span class="${cls(B.vol_change || 0)}">${B.vol_change == null ? "" : sign(B.vol_change)}</span></td>`
+        + `<td>${pill(hit80(k))}</td><td>${pill(rc.cov80)}</td>`
+        + `<td>${ck ? `${ck.origin} 발행 ${fmt(ck.q.p10)}~${fmt(ck.q.p90)} → ${verdict}` : "—"}</td></tr>`; });
     $("#htbl").innerHTML = h + "</tbody>";
+    $("#htbl-note") && ($("#htbl-note").textContent = "P50은 설계상 지금 가격(무드리프트)이라 주간 변화가 가격 변화와 같습니다. 2012년부터의 적중은 3,700여 일의 장기 성적이라 한 주로는 거의 움직이지 않으므로, 최근 1년 적중과 '그 기간 전에 낸 범위가 오늘 실제로 맞았는지'를 함께 봅니다. 폭 변화는 최근 변동성 변화와 같습니다.");
   }
 
   function drawEvents() {
@@ -521,7 +595,7 @@ const D = /*__G2_DATA__*/null;
   }
   function drawCard() {
     const c = D.card; if (!c.horizons) { $("#card-tbl").innerHTML = "<tr><td>성적표 자료 없음</td></tr>"; return; }
-    $("#card-note").textContent = `평가 기간 ${c.window[0]}~${c.window[1]}, 마지막 반년(${c.lockbox[0]}~${c.lockbox[1]})은 손대지 않은 점검 구간입니다. 80% 범위가 실제 값을 담은 비율이 80%에 가까울수록 정직한 범위입니다. 같은 방식이라도 지평이 길수록 맞힌 비율이 떨어집니다.`;
+    $("#card-note").textContent = `평가 기간 ${c.window[0]}~${c.window[1]}(walk-forward). 이전에 따로 떼어 둔 2025년 하반기는 방식 선택 과정에서 이미 열람돼 본 평가에 넣었고, 방식을 고정한 ${c.lockbox[0]}부터 새 점검 구간(전향 락박스)을 쌓습니다. 80% 범위가 실제 값을 담은 비율이 80%에 가까울수록 정직한 범위입니다.`;
     const lbl = { "5": "1주", "20": "1개월", "60": "3개월" };
     let h = "<thead><tr><th>지평 · 방식</th><th>80% 범위 포함률</th><th>50% 범위 포함률</th><th>80% 범위 폭</th><th>중앙값 오차</th><th>점검 구간 80% 포함률</th></tr></thead><tbody>";
     for (const [hz, rows] of Object.entries(c.horizons)) {
@@ -529,7 +603,7 @@ const D = /*__G2_DATA__*/null;
         const v = r.cov80 * 100, p = v >= 75 ? "ok" : v >= 65 ? "warn" : "bad";
         h += `<tr><td>${lbl[hz] || hz} · ${r.model}</td>`
           + `<td><span class="pill ${p}">${v.toFixed(1)}%</span></td><td>${(r.cov50 * 100).toFixed(1)}%</td>`
-          + `<td>${r.width80.toFixed(1)}%</td><td>${r.mae.toFixed(2)}%</td><td>${(r.lock_cov80 * 100).toFixed(1)}%</td></tr>`;
+          + `<td>${r.width80.toFixed(1)}%</td><td>${r.mae.toFixed(2)}%</td><td>${r.lock_cov80 == null ? '<span class="pill mute">축적 중</span>' : (r.lock_cov80 * 100).toFixed(1) + "%"}</td></tr>`;
       });
     }
     $("#card-tbl").innerHTML = h + "</tbody>";
@@ -676,7 +750,8 @@ const D = /*__G2_DATA__*/null;
       <li>바꾼 이유: 이전 방식(최근 250구간 경험 분위)은 3개월 80% 범위 적중률이 63.5%로 목표(80%)에 크게 못 미쳤고, 같은 비교에서 이 방식은 76.8%였습니다(2012~2025 walk-forward). 급등 국면(2020·2025 하반기·2026)에서는 어느 방식이든 위쪽 이탈이 많아, 이 위험은 사건 정보와 함께 봐야 합니다.</li>
       <li>숨 쉬는 폭: 최근 20일 변동성 ÷ 1년 변동성에 비례한 시각 효과일 뿐 범위 숫자를 바꾸지 않습니다.</li>
       <li>두 관점·가치 렌즈: 상대가격 분포·변동성 비율·재고율에서 계산한 참고값이며 백테스트 전입니다. 범위 숫자는 기준선 그대로입니다.</li>
-      <li>구매 영향: 선물 정산가 × 물량 × 고정 환율. basis·운임·관세·환율 변동은 빠져 있습니다.</li>
+      <li>구매 영향(도착원가 참고 범위): (선물 + 관세청 실측 잔차) × 원/달러 × (1 + 원산지 관세) + 직접 입력 비용. 잔차는 basis·운임·보험이 섞인 측정값이며 선물 변동을 일부 상쇄하는 관계(월별 회귀)를 반영합니다. 환율은 일별 시세와 최근 변동성을 씁니다. 부가세·항만·내륙 운송·LC·정제비는 직접 입력 칸으로 넣습니다.</li>
+      <li>G2(이 화면)는 범위와 상태를 서술하고, 구매 방식·시점 비교와 비용 비중 기준가는 G3 미리보기로 분리했습니다(선호와 행동 비교가 들어가는 판단 보조이기 때문).</li>
       <li>표시하지 않는 것: 상승 확률, 특정 가격을 넘을 확률, 구매·보류 권고.</li></ul>`;
   }
 
@@ -692,6 +767,7 @@ const D = /*__G2_DATA__*/null;
   $("#q-h").onchange = e => { st.h = +e.target.value; sync(); };
   $("#q-vol").oninput = e => { st.vol = +e.target.value || 1; drawCalc(); save(); };
   $("#q-cur").onchange = e => { st.cur = e.target.value; drawCalc(); save(); };
+  ["#q-org", "#q-line", "#q-fix", "#q-cu", "#q-co", "#q-cov"].forEach(id => { const el_ = $(id); if (el_) el_.oninput = el_.onchange = () => drawCalc(); });
   $("#u-usc").onclick = () => { st.unit = "usc"; sync(); };
   $("#u-mt").onclick = () => { st.unit = "mt"; sync(); };
   $("#theme").onclick = () => { const r = document.documentElement, cur = r.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); r.setAttribute("data-theme", cur === "dark" ? "light" : "dark"); sync(); };

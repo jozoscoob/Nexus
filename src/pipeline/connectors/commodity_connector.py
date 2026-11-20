@@ -136,6 +136,35 @@ def fetch_bo_futures_yfinance(days_back: int = 10) -> pd.DataFrame:
     return pd.DataFrame()
 
 
+def fetch_krw_usd_yfinance(days_back: int = 400) -> pd.DataFrame:
+    """원/달러 일별 종가 — yfinance KRW=X(2026-11-20 신설).
+
+    화면의 원화 환산이 FRED DEXKOUS(주 1회 일괄 게시 → 최대 1주 지연)에 묶여 11/13에 멈춰 있던 문제 대응.
+    실패해도 비치명 — 화면은 DEXKOUS로 대체하고 기준일을 그대로 표시한다.
+    """
+    try:
+        import yfinance as yf
+    except ImportError:
+        return pd.DataFrame()
+    session = _yf_session()
+    try:
+        t = yf.Ticker("KRW=X", session=session) if session else yf.Ticker("KRW=X")
+        h = t.history(period=f"{days_back}d", auto_adjust=False)
+    except Exception as e:  # 네트워크·레이트리밋 — 비치명
+        print(f"[경고] 원/달러(KRW=X) 수집 실패: {e} — FRED DEXKOUS로 대체")
+        return pd.DataFrame()
+    h = h.dropna(subset=["Close"])
+    if h.empty:
+        print("[경고] 원/달러(KRW=X) 데이터 없음 — FRED DEXKOUS로 대체")
+        return pd.DataFrame()
+    out = pd.DataFrame({"price_date": pd.to_datetime(h.index).tz_localize(None).normalize(),
+                        "indicator_code": "FX_KRW_USD_YF", "value": h["Close"].astype(float).to_numpy(),
+                        "unit": "KRW per USD", "source_name": "yfinance/KRW=X", "ingested_at": pd.Timestamp.utcnow()})
+    out = out.drop_duplicates("price_date", keep="last")
+    print(f"[정보] 원/달러 일별 {len(out)}일 수집(최신 {out['price_date'].max():%Y-%m-%d})")
+    return out
+
+
 def fetch_cbot_soybean_oil(days_back: int = 10) -> pd.DataFrame:
     """CBOT 대두유 선물 종합 수집 — yfinance(무료, IP차단 위험).
     심볼: ZL=F 1순위, BO=F 폴백 (A-151 — BO=F는 야후 상장폐지 표기).
@@ -518,6 +547,8 @@ def run() -> None:
     if not cpo_te.empty:
         frames.append(cpo_te)
     frames.append(fetch_cpo_proxy_fred())
+    # 2-1. 원/달러 일별(화면 원화 환산·환율 범위층)
+    frames.append(fetch_krw_usd_yfinance())
     # 3. ARS/USD 공식 환율
     frames.append(fetch_ars_usd_bcra(days_back=10))
     # 4. 미국 가뭄 지수
