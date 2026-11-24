@@ -138,7 +138,9 @@ def _today_outputs() -> list[str]:
 
 
 def _codex_cmd(prompt: str) -> list[str] | None:
-    if shutil.which("codex"):
+    """codex CLI와 로그인(CODEX_HOME/auth.json)이 모두 있을 때만 실행 — 로그인 없는 서버에서는 건너뜀(비치명)."""
+    auth = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))) / "auth.json"
+    if shutil.which("codex") and auth.is_file() and auth.stat().st_size > 0:
         return ["codex", "exec", "--sandbox", "read-only", "--skip-git-repo-check", prompt]
     return None
 
@@ -154,7 +156,7 @@ def verify_stage(stage: str) -> int:
     cmd = _codex_cmd(STAGE_PROMPT.format(stage=stage, checks=spec["checks"], outputs="\n".join(outputs[:60]),
                                          code="\n".join(code)))
     if cmd is None:
-        print("[정보] codex CLI 없음 — 교차검증 건너뜀")
+        print("[정보] codex CLI 또는 로그인 없음 — 교차검증 건너뜀")
         return 0
     proc = _run(cmd)
     OPS.mkdir(parents=True, exist_ok=True)

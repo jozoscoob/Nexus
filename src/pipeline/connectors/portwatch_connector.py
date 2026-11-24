@@ -43,6 +43,10 @@ CHOKEPOINTS = {
 FIELDS = {"n_tanker": "TANKER", "n_dry_bulk": "DRY_BULK", "n_total": "TOTAL"}
 
 
+QUOTA_WAIT_S = 65          # ArcGIS 분당 요청 단위 한도 초과 시 대기(초)
+PAGE_PAUSE_S = 2           # 페이지 사이 간격 — 분당 한도 소진 방지
+
+
 def _get(params: dict) -> dict:
     """ArcGIS 질의 — 지수 백오프 재시도(data_pipeline.md)."""
     delay = 2
@@ -57,7 +61,10 @@ def _get(params: dict) -> dict:
         except (httpx.HTTPError, RuntimeError, ValueError) as e:
             if attempt == MAX_RETRIES - 1:
                 raise RuntimeError(f"[오류] PortWatch 호출 실패: {e}") from e
-            time.sleep(delay)
+            # ArcGIS 분당 요청 한도(429) — 1분 창이 지나도록 기다린 뒤 재시도(2026-11-24 서버 실측)
+            wait = QUOTA_WAIT_S if "429" in str(e) or "Too many requests" in str(e) else delay
+            print(f"[정보] PortWatch 재시도 {attempt + 1}/{MAX_RETRIES - 1} — {wait}초 대기({str(e)[:60]})")
+            time.sleep(wait)
             delay *= 2
     return {}
 
@@ -73,6 +80,7 @@ def fetch_portwatch(start: str) -> pd.DataFrame:
                      "resultRecordCount": PAGE_SIZE, "f": "json"})
         feats = body.get("features", [])
         rows += [f["attributes"] for f in feats]
+        time.sleep(PAGE_PAUSE_S)
         if len(feats) < PAGE_SIZE and not body.get("exceededTransferLimit"):
             break
         offset += len(feats)

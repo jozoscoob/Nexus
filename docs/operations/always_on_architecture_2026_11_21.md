@@ -82,3 +82,23 @@
   3. 부수: x86이라 이미지 호환은 문제없으나, 위 두 이유로 runner·n8n 어느 쪽도 올릴 수 없음. 생존 신호 같은 아주 작은 역할에만 쓸 수 있음.
 - **같은 날 재발한 Docker 500의 원인**: 메모리 상한 6 GB 안에 runner(3.4 GB)+n8n(1.1 GB)+Penpot(약 1.7 GB, 엔진 재시작 때 다시 켜짐)이 겹쳐 가상머신 메모리가 소진 → 상한을 **8 GB(스왑 8 GB)**로 올리고 Penpot 자동 재시작을 끔. 이후 마트 작업 정상 완료.
 - **권고 순서**: ①A1을 **2 OCPU·12 GB 이하**(예: 2/12 또는 1/6)로 계속 시도 + 계정을 Pay As You Go로 전환(무료 한도는 그대로, 용량 배정 우선) ②보장이 필요하면 저가 ARM VPS(8 GB급) ③장기적으로 미니 PC. E2.1.Micro는 쓰지 않음.
+
+## 9. 2026-11-24 상시 서버 배포(Oracle Cloud, ARM 4 OCPU·24 GB)
+
+> 서버 주소·키는 저장소에 적지 않는다. 노트북의 `~/.ssh/config` 별칭 `nexus-oracle`과 `~/.ssh/nexus_oracle`(새 키)로만 접속.
+
+| 단계 | 내용 |
+|---|---|
+| 접속 키 | 대화로 공유된 최초 키는 **폐기** — 노트북에서 새 ed25519 키를 만들어 서버에 등록하고, 서버 `authorized_keys`에서 최초 키를 삭제. 노트북의 최초 키 사본(업로드 파일 포함)도 삭제 |
+| 서버 준비 | Ubuntu 24.04 aarch64 · 시간대 Asia/Seoul · 스왑 8 GB · Docker 29.x + Compose 플러그인(공식 ARM 저장소) · 인바운드는 SSH(22)만(이미지 기본 iptables 규칙 확인) |
+| 코드 | `/opt/nexus` ← 커밋된 HEAD를 `git archive`로 전송(다른 작업 세션의 미커밋 변경은 보내지 않음, 원문 PDF 제외) |
+| 데이터 | `data/`(PDF 제외, 1.8 GB) + `data/raw/References` 전송 — parquet 42/42 일치. GAIN·FAO 원본 PDF는 요약으로 대체해 보내지 않음 |
+| 비밀값 | 루트 `.env`를 열지 않고 파일째 복사(권한 600). `docker/.env`에는 Codex 로그인 자리표시자 경로만 |
+| Codex | 서버에는 로그인 파일이 없어 교차검증 단계는 **건너뜀**(비치명). `codex_bridge.py`가 로그인 없으면 건너뛰도록 수정 |
+| n8n | 노트북 n8n 데이터 볼륨(워크플로우 8개·소유자 계정·게시 상태)을 그대로 이전. n8n은 서버 127.0.0.1:5678에만 바인딩 — 노트북에서 `ssh -N -L 5678:localhost:5678 nexus-oracle` 후 http://localhost:5678 |
+| runner | ARM에서 이미지 빌드 성공(공식 다중 아키텍처 베이스) |
+
+### 운영 메모
+- 코드 갱신: 노트북에서 커밋 후 `git -c core.protectNTFS=false archive HEAD -- <바뀐 경로> | ssh nexus-oracle 'tar x -C /opt/nexus'` → 필요 시 `docker compose build runner && up -d`. 장기적으로는 서버 전용 읽기 전용 배포 키로 `git pull` 권장.
+- 노트북 n8n·runner는 중복 실행을 막기 위해 정지(서버가 스케줄 담당). 노트북은 개발·시연·열람용.
+- 남은 일: 실패 알림(이메일/텔레그램) · 생존 신호(healthchecks.io) · rclone(Google Drive — 볼트·산출물·백업) · 서버 Codex(API 키 여부 결정).

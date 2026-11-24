@@ -570,8 +570,10 @@ def check_methods_layer(methods: dict[str, Any] | None, report: Report) -> None:
         ref = precedent.get("ref")
         if not ref:
             report.violation("C13", f"{pid} — ref(원문 파일명) 없음")
-        elif not (REFERENCES_DIR / str(ref)).is_file():
-            report.violation("C13", f"{pid} — 원문 파일 실재하지 않음: references/{ref}")
+        elif not ((REFERENCES_DIR / str(ref)).is_file()
+                  or (REFERENCES_DIR / "summaries" / f"{Path(str(ref)).stem}.md").is_file()):
+            # 원문 PDF는 저작권상 저장소 밖(로컬) 보관 — 요약이 작업 입력이므로 둘 중 하나면 출처 추적 가능(2026-11-24)
+            report.violation("C13", f"{pid} — 원문·요약 모두 없음: references/{ref}")
         evidence = precedent.get("evidence") or {}
         if not isinstance(evidence, dict):
             report.violation("C13", f"{pid} — evidence가 매핑이 아님")
