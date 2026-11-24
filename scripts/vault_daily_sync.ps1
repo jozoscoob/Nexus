@@ -7,7 +7,7 @@ $repo = Resolve-Path (Join-Path $PSScriptRoot "..")
 $log = Join-Path $repo "docker\logs\vault_daily_sync.log"
 function Write-Log($m) { $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $m"; Add-Content -Path $log -Value $line -Encoding utf8; Write-Output $line }
 
-$py = "import urllib.request,urllib.error,json`ntry:`n r=urllib.request.urlopen(urllib.request.Request('http://localhost:8000/run/vault_export',method='POST'),timeout=1800)`n d=json.loads(r.read()); print('FAILED' if d.get('failed') else 'OK')`nexcept urllib.error.HTTPError as e:`n print('BUSY' if e.code==409 else f'HTTP{e.code}')"
+$py = "import urllib.request,urllib.error,json,os`ntry:`n r=urllib.request.urlopen(urllib.request.Request('http://localhost:8000/run/vault_export',method='POST',headers={'X-Runner-Token':os.environ.get('RUNNER_TOKEN','')}),timeout=1800)`n d=json.loads(r.read()); print('FAILED' if d.get('failed') else 'OK')`nexcept urllib.error.HTTPError as e:`n print('BUSY' if e.code==409 else f'HTTP{e.code}')"
 $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($py))
 $state = "BUSY"
 for ($i = 0; $i -lt 45 -and $state -eq "BUSY"; $i++) {

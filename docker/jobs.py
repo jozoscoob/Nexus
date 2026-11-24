@@ -3,6 +3,7 @@
 POST /run/<job> 로 정해진 작업만 실행한다(임의 명령 불가). 한 번에 하나만 실행.
 subprocess는 파이프라인 단계 오케스트레이션 용도이며 데이터 접근은 각 스크립트의 SDK가 담당한다.
 """
+import hmac
 import json
 import os
 import subprocess
@@ -34,6 +35,20 @@ JOBS: dict[str, tuple[list[list[str]], bool]] = {
               [PY, "-m", "src.features.build_feature_mart", "--self-test"],
               [PY, "-m", "src.features.build_feature_mart"],
               [PY, "scripts/validate_asof.py"]], True),
+    # 단일 파이프라인(SPEC §3.1): ②정제의 마트 생성 / ③품질 점검을 분리한 작업 — 기존 'mart'는 시연·주간 정비용으로 유지
+    "mart_build": ([[PY, "scripts/validate_session_close.py"],
+                    [PY, "-m", "src.features.build_feature_mart", "--self-test"],
+                    [PY, "-m", "src.features.build_feature_mart"]], True),
+    "quality": ([[PY, "scripts/data_readiness.py"],
+                 [PY, "scripts/validate_asof.py"],
+                 [PY, "scripts/validate_semantic_layer.py", "--strict"],
+                 [PY, "-m", "pytest", "-q", "tests"]], False),
+    # Codex 검증(SPEC §3.2): 정형=요약 통계만(라이선스 원값 미전달) / 비정형·시맨틱=전체 열람
+    "codex_verify_data": ([[PY, "scripts/codex_bridge.py", "verify", "data"]], False),
+    "codex_verify_semantic": ([[PY, "scripts/codex_bridge.py", "verify", "semantic"]], False),
+    # 메일 본문 생성(실행 요약·주간 요약) — n8n이 응답의 마지막 줄 JSON을 메일로 보냄
+    "pipeline_summary": ([[PY, "scripts/pipeline_summary.py", "daily"]], False),
+    "weekly_summary": ([[PY, "scripts/pipeline_summary.py", "weekly"]], False),
     # TE 시세 xlsx 증분 갱신(TRADING_ECONOMICS_API_KEY) → 정형화 — Actions te_xlsx_update.yml 대체
     "te_update": ([[PY, "scripts/update_te_xlsx_from_api.py", "--mode", "snapshot"],
                    [PY, "scripts/ingest_te_xlsx.py"]], False),
@@ -68,6 +83,7 @@ JOBS: dict[str, tuple[list[list[str]], bool]] = {
     "tests": ([[PY, "-m", "pytest", "-q", "tests"]], True),
 }
 REPO = os.environ.get("NEXUS_REPO", "/repo")
+RUNNER_TOKEN = os.environ.get("RUNNER_TOKEN", "")
 LOG_DIR = Path(REPO) / "docker" / "logs"
 TAIL_CHARS = 4000
 ALERT_MAX_BYTES = 16384
@@ -110,6 +126,9 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, {"status": "ok", "jobs": sorted(JOBS)})
 
     def do_POST(self) -> None:
+        # 작업 API 인증(SPEC §3.4): RUNNER_TOKEN이 설정돼 있으면 같은 토큰을 가진 요청만 실행 — 같은 네트워크의 다른 컨테이너 차단
+        if RUNNER_TOKEN and not hmac.compare_digest(self.headers.get("X-Runner-Token", ""), RUNNER_TOKEN):
+            return self._send(401, {"error": "[오류] 인증 토큰 없음 또는 불일치"})
         if self.path == "/alert":            # n8n 실패 알림 수신 — 크기 제한 후 로그에 한 줄씩 기록
             n = min(int(self.headers.get("Content-Length") or 0), ALERT_MAX_BYTES)
             raw = self.rfile.read(n).decode("utf-8", "replace")

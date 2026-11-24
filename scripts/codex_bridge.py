@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import glob
+import json
 import os
 import shlex
 import shutil
@@ -168,6 +169,115 @@ def verify_stage(stage: str) -> int:
     return 0 if proc.returncode == 0 else 1
 
 
+# ── SPEC §3.2 / §3.7: 정형 데이터는 요약 통계만, 비정형·시맨틱은 전체 열람 ─────────────────────────────
+DATA_CODE = ["src/pipeline/connectors/*_connector.py", "src/pipeline/asof.py", "src/features/build_feature_mart.py",
+             "scripts/validate_asof.py", "scripts/validate_session_close.py", "scripts/data_readiness.py"]
+DATA_PROMPT = (
+    "You are a read-only reviewer for the Nexus soybean-oil data pipeline. LICENSED DATA RULE: do NOT open any file under "
+    "data/ and do NOT print raw price or market values. Review ONLY the per-file summary statistics JSON below and the code. "
+    "Checks: (a) every dataset keeps the as-of fields (use asof_fields_present, not the truncated columns list) and has "
+    "zero available_at<event_time and zero future available_at; (b) duplicate keys (dup_key_columns) and null rates look "
+    "sane — layers with mart_excluded=true are not model inputs, so treat their duplicates as reference only;(c) date coverage per source is fresh for its "
+    "release cycle; (d) the code would not silently report a failed source as success. Report a Korean markdown table: "
+    "파일 | 심각도(치명/높음/참고) | 내용 | 근거(통계 키·코드 줄). Do not modify any file.\n\nSummary JSON:\n{summary}\n\nCode:\n{code}\n"
+)
+SEMANTIC_INPUTS = ["data/processed/unstructured_daily_signals.csv", "reports/market/daily_unstructured_digest_*.md",
+                   "src/semantic/*.yaml", "src/semantic/causal_chains.md", "data/raw/**/Summary/*.md"]
+SEMANTIC_PROMPT = (
+    "You are the semantic-layer reviewer for the Nexus soybean-oil project. You MAY read the unstructured inputs below in full "
+    "(news/RSS digests, daily signals, GAIN/FAO summaries) and the ontology files. Tasks: (1) new terms or events in the last "
+    "days that the dictionary (src/semantic/entities.yaml) does not cover; (2) existing terms whose meaning or price direction "
+    "seems to be shifting; (3) candidate causal chains (cause → mechanism → soybean-oil price) with the supporting snippet and "
+    "file; (4) daily signal indicators with no dictionary or ontology mapping. PROPOSALS ONLY — do not modify any file. Output "
+    "Korean markdown: a table per task (항목 | 제안 | 근거 파일·발췌 | 확신도) and, for task 1 and 3, a YAML snippet a human "
+    "can paste after review.\n\nInputs:\n{inputs}\n"
+)
+
+
+ASOF_FIELDS = ("event_time", "period_end", "release_time", "available_at", "source_vintage")
+IDENTITY_AXES = ("region_code", "country_code", "hs_code", "lead_days", "valid_date")
+MART_EXCLUDED = ("climate_forecast",)   # build_feature_mart.EXCLUDE_PREFIXES와 동일 — 마트 미투입 층
+
+
+def _data_summary() -> dict:
+    """라이선스 원값 없이 파일별 구조·품질 통계만 — Codex에 넘기는 유일한 데이터 정보."""
+    import re as _re
+    latest: dict[str, Path] = {}
+    for f in sorted(ROOT.glob("data/raw/**/*.parquet")):
+        fam = _re.sub(r"_\d{8}$", "", f.stem)
+        if fam not in latest or f.stat().st_mtime > latest[fam].stat().st_mtime:
+            latest[fam] = f
+    now = pd.Timestamp.now(tz="UTC").tz_localize(None)
+    out = {}
+    for fam, f in sorted(latest.items()):
+        try:
+            df = pd.read_parquet(f)
+        except Exception as e:  # 손상 파일 — 요약에 표시
+            out[fam] = {"error": type(e).__name__}
+            continue
+        cols = list(df.columns)
+        item = {"file": str(f.relative_to(ROOT)).replace("\\", "/"), "rows": int(len(df)), "n_columns": len(cols),
+                "columns": cols[:40],
+                # as-of 5필드 존재를 명시 — 열 목록 절단으로 '필드 없음' 오판이 나지 않게(2026-11-24 첫 서버 검증)
+                "asof_fields_present": [c for c in ASOF_FIELDS if c in cols],
+                "mart_excluded": fam.startswith(MART_EXCLUDED)}
+        if "indicator_code" in df.columns:
+            item["indicators"] = int(df["indicator_code"].nunique())
+        if "price_date" in df.columns:
+            d = pd.to_datetime(df["price_date"], errors="coerce")
+            item["date_min"], item["date_max"] = str(d.min())[:10], str(d.max())[:10]
+        if "value" in df.columns:
+            item["value_null_rate"] = round(float(df["value"].isna().mean()), 4)
+        if {"indicator_code", "event_time"} <= set(df.columns):
+            # 식별 키 = 지표·시점 + 원천이 따로 둔 축(지역·국가·품목·예보 선행일) — 축을 빼면 정상 행이 중복으로 집계됨
+            key = ["indicator_code", "event_time"] + [c for c in IDENTITY_AXES if c in cols]
+            item["dup_key_columns"] = key
+            item["dup_keys"] = int(df.duplicated(key).sum())
+        if {"available_at", "event_time"} <= set(df.columns):
+            av = pd.to_datetime(df["available_at"], errors="coerce", utc=True).dt.tz_localize(None)
+            ev = pd.to_datetime(df["event_time"], errors="coerce", utc=True).dt.tz_localize(None)
+            item["available_before_event"] = int((av < ev).sum())
+            item["future_available"] = int((av > now + pd.Timedelta(days=1)).sum())
+        else:
+            item["asof_fields"] = "missing"
+        out[fam] = item
+    return out
+
+
+def verify_data() -> int:
+    summary = _data_summary()
+    OPS.mkdir(parents=True, exist_ok=True)
+    sp = OPS / f"codex_data_summary_{date.today():%Y-%m-%d}.json"
+    sp.write_text(json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")
+    code = sorted({str(Path(f).relative_to(ROOT)).replace("\\", "/") for pat in DATA_CODE for f in glob.glob(str(ROOT / pat))})
+    cmd = _codex_cmd(DATA_PROMPT.format(summary=json.dumps(summary, ensure_ascii=False)[:60000], code="\n".join(code)))
+    return _run_and_save("data", cmd, f"요약 통계 {len(summary)}개 원천 · 코드 {len(code)}건")
+
+
+def verify_semantic() -> int:
+    files = []
+    for pat in SEMANTIC_INPUTS:
+        hits = sorted(glob.glob(str(ROOT / pat), recursive=True), key=os.path.getmtime)
+        files += hits[-40:] if "Summary" in pat else hits[-5:] if "digest" in pat else hits
+    rel = [str(Path(f).relative_to(ROOT)).replace("\\", "/") for f in files]
+    cmd = _codex_cmd(SEMANTIC_PROMPT.format(inputs="\n".join(rel)))
+    return _run_and_save("semantic", cmd, f"비정형·온톨로지 입력 {len(rel)}건")
+
+
+def _run_and_save(stage: str, cmd: list[str] | None, scope: str) -> int:
+    if cmd is None:
+        print(f"[경고] codex CLI 또는 로그인 없음 — {stage} 검증 미실행")   # 요약 메일에 '검증 미실행'으로 표시됨
+        return 0
+    proc = _run(cmd)
+    OPS.mkdir(parents=True, exist_ok=True)
+    out = OPS / f"codex_verify_{stage}_{date.today():%Y-%m-%d}.md"
+    out.write_text(f"# Codex 검증 — {stage} · {date.today()}\n\n{scope} · 종료 코드 {proc.returncode}\n\n{proc.stdout}\n",
+                   encoding="utf-8")
+    print(f"[{'완료' if proc.returncode == 0 else '오류'}] {stage} 검증 → {out}")
+    print(proc.stdout[-2500:])
+    return 0 if proc.returncode == 0 else 1
+
+
 def verify() -> int:
     files = _today_outputs()
     if not files:
@@ -195,8 +305,12 @@ if __name__ == "__main__":
     stage = sys.argv[2] if len(sys.argv) > 2 else ""
     if mode == "crawl":
         sys.exit(crawl())
+    if mode == "verify" and stage == "data":
+        sys.exit(verify_data())
+    if mode == "verify" and stage == "semantic":
+        sys.exit(verify_semantic())
     if mode == "verify" and stage in STAGES:
         sys.exit(verify_stage(stage))
     if mode == "verify" and not stage:
         sys.exit(verify())
-    raise SystemExit("[오류] 사용법: codex_bridge.py crawl | verify [collect|process|analyze]")
+    raise SystemExit("[오류] 사용법: codex_bridge.py crawl | verify [data|semantic|collect|process|analyze]")

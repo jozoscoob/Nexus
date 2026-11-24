@@ -108,7 +108,15 @@ def to_long(raw: pd.DataFrame) -> pd.DataFrame:
 
 def run() -> None:
     start_year = int(os.environ.get("HISTORICAL_START_YEAR", "2019"))  # 원천 시작 2019-01-01
-    raw = fetch_portwatch(f"{max(start_year, 2019)}-01-01")
+    try:
+        raw = fetch_portwatch(f"{max(start_year, 2019)}-01-01")
+    except RuntimeError as e:
+        # 2026-11-24 확인: IMF가 Daily_Chokepoints_Data를 비공개 전환(질의 499 Token Required·항목 403).
+        # 코드 결함이 아닌 원천 접근 변경 — 기존 parquet 유지, 경고로 요약 메일에 노출(실패로 매일 빨간불 방지).
+        if "Token Required" in str(e) or "GWM_0003" in str(e):
+            print("[경고] PortWatch 원천 비공개 전환(토큰 필요) — 갱신 건너뜀, 이전 해협 데이터 유지")
+            return
+        raise
     if raw.empty:
         raise SystemExit("[오류] PortWatch 응답 0건 — 엔드포인트·네트워크 확인 필요")
     df = attach_asof(to_long(raw), source="IMF_PORTWATCH")

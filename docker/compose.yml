@@ -1,15 +1,19 @@
 # 실행: 저장소 루트에서 `docker compose -f docker/compose.yml up -d --build`
+# 비밀값은 저장소 밖: 루트 .env(API 키) · docker/.env(RUNNER_TOKEN·CODEX_AUTH_JSON) — 둘 다 gitignore
 services:
   runner:
     build: {context: .., dockerfile: docker/Dockerfile}
     volumes:
       - ..:/repo
-      # Codex 로그인(호스트 ~/.codex/auth.json) — 읽기 전용, 시작 시 컨테이너 전용 사본으로 복사(entrypoint.sh)
+      # Codex 로그인 ①(노트북) 호스트 ~/.codex/auth.json 읽기 전용 → 시작 시 CODEX_HOME으로 복사(entrypoint.sh)
       - ${CODEX_AUTH_JSON:-${USERPROFILE}/.codex/auth.json}:/run/secrets/codex_auth.json:ro
+      # Codex 로그인 ②(상시 서버) 서버 자체 로그인을 영구 볼륨에 보관 — 재빌드·재시작에도 유지
+      - codex_home:/root/.codex
     env_file: [{path: ../.env, required: false}]
     environment:
       TZ: Asia/Seoul
       HISTORICAL_START_YEAR: "2010"
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}          # 작업 API 공유 토큰(비어 있으면 인증 없이 동작 — 노트북 개발용)
     expose: ["8000"]
     restart: unless-stopped
   n8n:
@@ -19,6 +23,13 @@ services:
       TZ: Asia/Seoul
       GENERIC_TIMEZONE: Asia/Seoul
       N8N_DIAGNOSTICS_ENABLED: "false"
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}          # HTTP 노드가 {{$env.RUNNER_TOKEN}}으로 헤더에 실음(워크플로우 JSON에 값 없음)
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      NEXUS_ALERT_EMAIL: ${NEXUS_ALERT_EMAIL:-}  # 알림 수신·발신 주소(docker/.env — 저장소에 없음)
+      # 실행 이력 자동 정리 — SQLite 무한 증가 방지(14일 · 최대 1만 건)
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "336"
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: "10000"
     volumes:
       - n8n_data:/home/node/.n8n
       - ./n8n:/workflows:ro
@@ -26,3 +37,5 @@ services:
     restart: unless-stopped
 volumes:
   n8n_data:
+  codex_home:
+    name: codex_home

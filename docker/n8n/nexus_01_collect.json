@@ -30,6 +30,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/collect_free",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -53,6 +62,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/te_update",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -76,6 +94,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/codex_crawl",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -99,6 +126,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/digest",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -122,6 +158,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/codex_verify_collect",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -171,6 +216,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/alert",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "sendBody": true,
     "specifyBody": "json",
     "jsonBody": "={{ JSON.stringify($json) }}",

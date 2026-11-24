@@ -30,6 +30,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/manual_parsers",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -53,6 +62,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/mart",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -76,6 +94,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/vault_export",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -99,6 +126,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/codex_verify_process",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -148,6 +184,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/alert",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "sendBody": true,
     "specifyBody": "json",
     "jsonBody": "={{ JSON.stringify($json) }}",
