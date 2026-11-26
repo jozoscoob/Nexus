@@ -89,6 +89,16 @@ def daily() -> dict:
         lines = [f"{len(res)}단계 모두 성공 · 소요 {secs / 60:.0f}분",
                  codex_note,
                  "산출물: 터미널·G2 화면·G1 보고서 갱신" + ("" if asof else " (터미널 없음)")]
+    prop_p = OPS / f"codex_proposals_{date.today():%Y-%m-%d}.json"
+    if prop_p.exists():   # Codex 제안 — 실제 데이터는 승인 후에만 반영(SPEC §3.8)
+        props = json.loads(prop_p.read_text(encoding="utf-8"))
+        if props:
+            data_ok = [p["id"] for p in props if p.get("gate") == "통과"]
+            sem = sum(p.get("count", 0) for p in props if p.get("kind") == "semantic")
+            lines.append(f"Codex 제안: 데이터 {sum(p.get('kind') == 'data' for p in props)}건"
+                         f"(수정본 게이트 통과 {len(data_ok)}건{': ' + ', '.join(data_ok) if data_ok else ''})"
+                         f" · 시맨틱 {sem}건 — 승인할 ID를 회신하면 백업 후 반영 "
+                         f"(목록: reports/ops/codex_proposals_{date.today():%Y-%m-%d}.md)")
     warns = _warnings(res)
     if warns:
         lines += ["주의(실패 아님 — 갱신 건너뜀):"] + [f"- {w}" for w in warns]

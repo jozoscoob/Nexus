@@ -14,7 +14,46 @@ services:
       TZ: Asia/Seoul
       HISTORICAL_START_YEAR: "2010"
       RUNNER_TOKEN: ${RUNNER_TOKEN:-}          # 작업 API 공유 토큰(비어 있으면 인증 없이 동작 — 노트북 개발용)
+      VERIFIER_TOKEN: ${VERIFIER_TOKEN:-}      # Codex 검증 컨테이너 호출용(검증 컨테이너는 runner 토큰을 모름)
+    image: nexus-runner
     expose: ["8000"]
+    networks: [default, codex_net]
+    restart: unless-stopped
+  # Codex 검증 컨테이너(SPEC §3.8) — 서버에서만: docker/.env에 COMPOSE_PROFILES=verifier
+  #   보이는 것: 공개 데이터 사본·요약 통계·비정형 입력(읽기 전용) + 스테이징·출력(쓰기) + 코드(읽기 전용) + Codex 로그인.
+  #   보이지 않는 것: .env(API 키)·data/·SSH 키·n8n DB·docker 소켓. Docker 기본 보안 설정 그대로.
+  codex-verifier:
+    image: nexus-runner
+    profiles: [verifier]
+    command: ["python", "/opt/jobs.py"]
+    volumes:
+      - ../src:/repo/src:ro
+      - ../scripts:/repo/scripts:ro
+      - ../config:/repo/config:ro
+      - ../codex_work/inputs:/work/inputs:ro
+      - ../codex_work/staging:/work/staging
+      - ../codex_work/out:/work/out
+      - ../codex_work/logs:/work/logs
+      - codex_home:/root/.codex
+    environment:
+      TZ: Asia/Seoul
+      NEXUS_ROLE: verifier
+      CODEX_WORK: /work
+      JOB_LOG_DIR: /work/logs
+      VERIFIER_TOKEN: ${VERIFIER_TOKEN:-}
+      HTTPS_PROXY: http://codex-proxy:3128
+      HTTP_PROXY: http://codex-proxy:3128
+      NO_PROXY: localhost,127.0.0.1
+    expose: ["8000"]
+    networks: [codex_net]                     # 내부 전용 망 — 바깥으로는 프록시를 통해서만
+    depends_on: [codex-proxy]
+    restart: unless-stopped
+  codex-proxy:
+    image: ubuntu/squid:6.6-24.04_edge
+    profiles: [verifier]
+    volumes:
+      - ./codex-proxy/squid.conf:/etc/squid/squid.conf:ro
+    networks: [default, codex_net]
     restart: unless-stopped
   n8n:
     image: n8nio/n8n:2.22.6
@@ -35,6 +74,9 @@ services:
       - ./n8n:/workflows:ro
     depends_on: [runner]
     restart: unless-stopped
+networks:
+  codex_net:
+    internal: true          # 이 망에만 붙은 컨테이너(검증 컨테이너)는 인터넷에 직접 나갈 수 없음
 volumes:
   n8n_data:
   codex_home:
