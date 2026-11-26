@@ -194,7 +194,7 @@ SEMANTIC_PROMPT = (
 )
 
 
-ASOF_FIELDS = ("event_time", "period_end", "release_time", "available_at", "source_vintage")
+SUMMARY_ASOF_FIELDS = ("event_time", "period_end", "release_time", "available_at", "source_vintage")
 IDENTITY_AXES = ("region_code", "country_code", "hs_code", "lead_days", "valid_date")
 MART_EXCLUDED = ("climate_forecast",)   # build_feature_mart.EXCLUDE_PREFIXES와 동일 — 마트 미투입 층
 
@@ -219,7 +219,7 @@ def _data_summary() -> dict:
         item = {"file": str(f.relative_to(ROOT)).replace("\\", "/"), "rows": int(len(df)), "n_columns": len(cols),
                 "columns": cols[:40],
                 # as-of 5필드 존재를 명시 — 열 목록 절단으로 '필드 없음' 오판이 나지 않게(2026-11-24 첫 서버 검증)
-                "asof_fields_present": [c for c in ASOF_FIELDS if c in cols],
+                "asof_fields_present": [c for c in SUMMARY_ASOF_FIELDS if c in cols],
                 "mart_excluded": fam.startswith(MART_EXCLUDED)}
         if "indicator_code" in df.columns:
             item["indicators"] = int(df["indicator_code"].nunique())

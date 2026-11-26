@@ -98,3 +98,8 @@ docs/_private/
 reports/_private/
 docs/research_desk/references/*.pdf
 docs/research_desk/references/markdown/
+
+# Codex 검증 컨테이너 작업 폴더(공개 데이터 사본·스테이징·제안 — 재생성) · 승인 적용 전 백업(SPEC §3.8)
+codex_work/
+data/snapshots/codex_backup/
+reports/ops/codex_proposals_*

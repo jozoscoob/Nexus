@@ -99,7 +99,7 @@
 | runner | ARM에서 이미지 빌드 성공(공식 다중 아키텍처 베이스) |
 
 ### 운영 메모
-- 코드 갱신: 노트북에서 커밋 후 `git -c core.protectNTFS=false archive HEAD -- <바뀐 경로> | ssh nexus-oracle 'tar x -C /opt/nexus'` → 필요 시 `docker compose build runner && up -d`. 장기적으로는 서버 전용 읽기 전용 배포 키로 `git pull` 권장.
+- 코드 갱신(11-26부터): 노트북에서 커밋·push → 서버 `sudo sh /opt/nexus/docker/deploy.sh`(§10). 이전의 `git archive` 전송 방식은 폐기.
 - 노트북 n8n·runner는 중복 실행을 막기 위해 정지(서버가 스케줄 담당). 노트북은 개발·시연·열람용.
 - 남은 일: 실패 알림(이메일/텔레그램) · 생존 신호(healthchecks.io) · rclone(Google Drive — 볼트·산출물·백업) · 서버 Codex(API 키 여부 결정).
 
@@ -115,7 +115,8 @@
 | 작업 API 인증 | runner `POST /run/<job>`에 공유 토큰 헤더(`X-Runner-Token`) 필수 — 값은 서버 `docker/.env`에만, n8n은 환경 변수 식으로 참조(워크플로우 JSON에 값 없음). 토큰 없으면 401 |
 | 실행 이력 정리 | n8n `EXECUTIONS_DATA_PRUNE` — 14일·최대 1만 건(SQLite 무한 증가 방지) |
 | SSH 보강 | 비밀번호 로그인 끔(이미지 기본) + 루트 로그인 끔 + 인증 시도 3회 + fail2ban(10분 내 5회 실패 시 1시간 차단). 변경 후 새 연결로 키 로그인 확인 |
-| 배포 키 | 서버 전용 **읽기 전용** 배포 키 생성(공개키만 GitHub에 등록) — 등록 후 `/opt/nexus`를 `git pull` 방식으로 전환(`data/`·`.env`는 유지) |
+| Codex 검증 컨테이너(11-26) | 별도 컨테이너 + 내부 전용 망 + 허용 목록 프록시(OpenAI·ChatGPT만). 공개 데이터는 사본 전체·라이선스는 통계만, 쓰기는 스테이징·출력 폴더만. 제안은 게이트 → 승인 → 작업자 적용(백업 14일). 서버에서만 켬(`COMPOSE_PROFILES=verifier`) — SPEC §3.8 |
+| 배포 키 | ✅ 11-26 등록·전환 완료 — `/opt/nexus`는 git 작업 사본(원문 PDF 제외 sparse checkout·blob 지연 받기, 브랜치 `claude/codex-obsidian-g2-framework`). 갱신은 `sudo sh /opt/nexus/docker/deploy.sh` 한 줄: fast-forward만, 서버가 갱신하는 추적 데이터 9개(TE xlsx 5·신호 아카이브·경보 원장 등)는 유지하고 겹치면 아무것도 바꾸지 않고 중단, 이미지·compose 변경 시에만 재빌드·재기동 |
 | 노트북 볼트 복사 | 07:00 작업이 서버 runner를 토큰 헤더와 함께 호출하도록 갱신 |
 
 ### 다음 단계(SPEC 2순위 — 승인 후)
