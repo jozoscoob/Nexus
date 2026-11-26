@@ -237,6 +237,8 @@ RELEASE_RULES: dict[str, ReleaseRule] = {
                              note="복합 위험 지수(USGS·NOAA·GDELT·FIRMS 합성) — 구성 요소가 "
                                   "마감 후 수집분을 포함 → 1일 지연"),
     "FIRMS_":    ReleaseRule("immediate", lag_days=1, note="NASA FIRMS — 동일 사유"),
+    "NOAA_WEATHER_ALERT_": ReleaseRule("immediate", lag_days=1,
+                                       note="GeoIntel NOAA 경보 스냅샷 — 익일 사용"),
 
     # ── 비정형 파생: 문서 발행일이 곧 이용 가능 시점 ────────────────────────
     "UNSTR_":    ReleaseRule("monthly_on_day", day=20,
@@ -494,7 +496,10 @@ def leak_inversions(df: pd.DataFrame) -> "pd.Series":
     inv = av < ev
     if "ingested_at" in df.columns:
         ing = pd.to_datetime(df["ingested_at"], utc=True, errors="coerce").dt.tz_localize(None)
-        inv &= ~(ev > ing)   # 전망 라벨: 역전이 정상 — 누수 판정에서 제외
+        forecast = ev > ing   # 전망 라벨: 역전이 정상 — 누수 판정에서 제외
+        if "source_name" in df.columns:   # GeoIntel은 전망이 아닌 스냅샷 — 역전은 결함으로 판정(B1)
+            forecast &= ~df["source_name"].eq("GeoIntel").fillna(False)
+        inv &= ~forecast
     return inv.fillna(False)
 
 

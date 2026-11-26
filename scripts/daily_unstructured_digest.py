@@ -381,6 +381,10 @@ def _match_keyword(title: str, desc: str, indicator: str = "") -> str | None:
     return None
 
 
+def _local_today() -> pd.Timestamp:
+    return pd.Timestamp.now(tz=LOCAL_TZ).tz_localize(None).normalize()
+
+
 def _items_from_rss(content: bytes) -> list[dict]:
     """RSS 2.0 <item> 및 Atom <entry> → 항목 dict {title, link, desc, date}. pubDate 부재·파싱 실패는 당일.
 
@@ -394,16 +398,22 @@ def _items_from_rss(content: bytes) -> list[dict]:
 
     def _date(txt: str | None) -> pd.Timestamp:
         if not txt:
-            return pd.Timestamp(date.today())
+            return _local_today()
         try:
             # 원천 시각(대개 UTC)을 실행 시간대(Asia/Seoul)로 바꾼 뒤 날짜를 취함 — KST 00~09시 실행 시
             # 전날로 밀리던 결함(2026-11-25·26 06:00 실행 테스트 실패) 수정, 기후 커넥터 KST 결함과 같은 유형
-            return pd.Timestamp(parsedate_to_datetime(txt).astimezone().date())
+            stamp = pd.Timestamp(parsedate_to_datetime(txt))
+            if stamp.tzinfo is None:
+                stamp = stamp.tz_localize(LOCAL_TZ)
+            return pd.Timestamp(stamp.tz_convert(LOCAL_TZ).date())
         except Exception:
             try:
-                return pd.Timestamp(pd.Timestamp(txt).date())
+                stamp = pd.Timestamp(txt)
+                if stamp.tzinfo is None:
+                    stamp = stamp.tz_localize(LOCAL_TZ)
+                return pd.Timestamp(stamp.tz_convert(LOCAL_TZ).date())
             except Exception:
-                return pd.Timestamp(date.today())
+                return _local_today()
 
     for it in root.findall(".//item"):                       # RSS 2.0
         desc = (it.findtext("description") or it.findtext("{http://purl.org/rss/1.0/modules/content/}encoded") or "")
@@ -472,9 +482,9 @@ def _items_from_gdelt(spec: dict) -> list[dict]:
         try:
             d = pd.Timestamp(pd.to_datetime(seen, format="%Y%m%dT%H%M%SZ", utc=True)
                              .tz_convert(LOCAL_TZ).date()) if seen \
-                else pd.Timestamp(date.today())
+                else _local_today()
         except (ValueError, TypeError):
-            d = pd.Timestamp(date.today())
+            d = _local_today()
         items.append({"title": str(a.get("title", "") or "").strip(),
                       "link": str(a.get("url", "") or "").strip(),
                       "desc": "", "date": d})
@@ -537,7 +547,7 @@ def _fetch_specialist_media() -> list[dict]:
         print("[경고] httpx 미설치 — 전문 매체 RSS 수집 건너뜀")
         return []
 
-    cutoff = pd.Timestamp(date.today()) - pd.Timedelta(days=2)
+    cutoff = _local_today() - pd.Timedelta(days=2)
     rows: list[dict] = []
     winners: dict[str, str] = {}
     seen_titles: set[str] = set()                            # A-274: 채널 간 동일 기사 1회만

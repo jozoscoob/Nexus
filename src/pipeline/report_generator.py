@@ -31,7 +31,7 @@ _T: dict[str, dict[str, str]] = {
     "generated": {"ko": "생성 시각 (UTC)", "en": "Generated (UTC)"},
     "total_files": {"ko": "총 파일", "en": "Total Files"},
     "total_rows": {"ko": "총 행 수", "en": "Total Rows"},
-    "success": {"ko": "성공", "en": "Success"},
+    "success": {"ko": "판독 가능 파일", "en": "Readable files"},   # 파일을 읽었다는 뜻일 뿐 수집 성공이 아님
     "error": {"ko": "오류", "en": "Error"},
     "section_connector": {"ko": "커넥터별 수집 결과", "en": "Connector Collection Results"},
     "col_file": {"ko": "파일명", "en": "Filename"},
@@ -59,10 +59,8 @@ def _t(key: str, lang: str) -> str:
 
 
 def _collect_stats() -> list[dict]:
-    files = sorted(
-        glob.glob(f"{OUTPUT_DIR}/**/*.parquet", recursive=True)
-        + glob.glob(f"{OUTPUT_DIR}/*.parquet")
-    )
+    # 재귀 glob이 최상위 파일도 포함 — 최상위 glob을 더하면 같은 파일을 두 번 셌음(Codex 근본 원인 조사 H)
+    files = sorted(glob.glob(f"{OUTPUT_DIR}/**/*.parquet", recursive=True))
     results = []
     for f in files:
         try:

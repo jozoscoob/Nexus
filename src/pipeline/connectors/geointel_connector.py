@@ -102,7 +102,6 @@ def _nearest_region(lat: float, lon: float) -> str | None:
 
 def _make_row(indicator: str, value: float, unit: str, note: str) -> dict:
     return {
-        "price_date":     date.today().isoformat(),
         "source_name":    "GeoIntel",
         "indicator_code": indicator,
         "value":          value,
@@ -115,9 +114,22 @@ def _to_df(rows: list[dict]) -> pd.DataFrame:
     if not rows:
         return pd.DataFrame()
     df = pd.DataFrame(rows)
-    df["price_date"]  = pd.to_datetime(df["price_date"])
-    df["ingested_at"] = pd.Timestamp.utcnow()
+    # 관측일·수집 시각을 같은 UTC 시계로 — KST 달력 날짜(자정)와 UTC 수집 시각을 섞으면
+    # KST 00~09시 실행에서 관측일이 수집 시각보다 늦어지는 역전이 생김(2026-11-26 Codex 근본 원인 조사 B1)
+    collected = pd.Timestamp.now(tz="UTC")
+    df["price_date"] = collected.tz_localize(None).normalize()
+    df["ingested_at"] = collected
     return df
+
+
+def _confirmed_frame(rows: list[dict]) -> pd.DataFrame:
+    frame = _to_df(rows)
+    frame.attrs["confirmed"] = True
+    frame.attrs["observation_day"] = (
+        frame["price_date"].iloc[0] if not frame.empty
+        else pd.Timestamp.now(tz="UTC").tz_localize(None).normalize()
+    )
+    return frame
 
 
 def fetch_usgs_earthquakes() -> pd.DataFrame:
@@ -127,12 +139,15 @@ def fetch_usgs_earthquakes() -> pd.DataFrame:
     """
     try:
         data = _retry_get(USGS_EQ_URL).json()
+        features = data["features"]
+        if not isinstance(features, list):
+            raise ValueError("USGS features 형식 오류")
     except RuntimeError as e:
         print(f"[경고] USGS 지진 수집 실패: {e}")
         return pd.DataFrame()
 
     rows = []
-    for f in data.get("features", []):
+    for f in features:
         props = f.get("properties", {})
         geo   = f.get("geometry", {}).get("coordinates", [])
         if len(geo) < 2:
@@ -161,7 +176,7 @@ def fetch_usgs_earthquakes() -> pd.DataFrame:
                 r["note"] = f"[집계 {counts[code]}건·최대 규모] " + str(r.get("note", ""))[:300]
             rows.append(r)
     print(f"[완료] USGS 지진 — 지역별 최대 규모 {len(rows)}행 (SBO 반경 내)")
-    return _to_df(rows)
+    return _confirmed_frame(rows)
 
 
 def fetch_noaa_weather_alerts() -> pd.DataFrame:
@@ -171,7 +186,9 @@ def fetch_noaa_weather_alerts() -> pd.DataFrame:
     """
     try:
         r = _retry_get(NOAA_URL, params={"area": "IA,IL,IN,OH,MO,KS,NE,MN", "status": "actual"})
-        features = r.json().get("features", [])
+        features = r.json()["features"]
+        if not isinstance(features, list):
+            raise ValueError("NOAA features 형식 오류")
     except RuntimeError as e:
         print(f"[경고] NOAA 기상경보 수집 실패: {e}")
         return pd.DataFrame()
@@ -180,7 +197,7 @@ def fetch_noaa_weather_alerts() -> pd.DataFrame:
     # (런 #79·#80 Readiness RuntimeError — D-033 게이트 정당 차단). 일 단위 1행으로 집계:
     # 값 = 최대 심각도(경보 지표의 의미론), 건수·이벤트 목록은 note에 보존(S-5).
     alerts = []
-    for f in features[:20]:
+    for f in features:
         props    = f.get("properties", {})
         severity = ALERT_SEVERITY.get(props.get("severity", "Unknown"), 0)
         if severity < 2:
@@ -188,7 +205,7 @@ def fetch_noaa_weather_alerts() -> pd.DataFrame:
         alerts.append((severity, props.get("event", "경보"), props.get("areaDesc", "중서부")))
     if not alerts:
         print("[완료] NOAA 기상경보 0건 (Moderate+)")
-        return pd.DataFrame()
+        return _confirmed_frame([])
     max_sev = max(a[0] for a in alerts)
     events = " · ".join(f"{e}({a[:40]})" for _, e, a in alerts[:5])
     rows = [_make_row(
@@ -197,7 +214,7 @@ def fetch_noaa_weather_alerts() -> pd.DataFrame:
         f"[GEOINTEL:NOAA] 경보 {len(alerts)}건 · 최대 심각도 {max_sev} — {events}",
     )]
     print(f"[완료] NOAA 기상경보 {len(alerts)}건 → 일 단위 최대 심각도 1행 집계 (Moderate+)")
-    return _to_df(rows)
+    return _confirmed_frame(rows)
 
 
 def fetch_gdelt_sbo_events() -> pd.DataFrame:
@@ -237,13 +254,11 @@ def fetch_gdelt_sbo_events() -> pd.DataFrame:
                     print(f"[경고] GDELT '{query[:30]}' 재시도 후에도 429 — 건너뜀")
                     break
                 r.raise_for_status()
-                count = len(r.json().get("articles", []))
-                if count > 0:
-                    # A-242: 쿼리별 행을 그대로 append하면 같은 날 동일 코드에 복수 값
-                    # → mart 값충돌 하드 실패(런 #84 — A-220 재시도 수정으로 복수 쿼리
-                    # 성공이 처음 가능해지며 드러난 잠재 결함). 루프 밖에서 일 단위
-                    # 합산 1행으로 집계한다(쿼리별 내역은 note 보존 — A-216 NOAA 동일 원리).
-                    query_counts.append((query[:40], count))
+                body = r.json()
+                articles = body.get("articles") if isinstance(body, dict) else None
+                if not isinstance(articles, list):
+                    raise ValueError("GDELT articles 형식 오류")
+                query_counts.append((query[:40], len(articles)))
                 break
             except (httpx.HTTPStatusError, httpx.RequestError, ValueError) as e:
                 if attempt < 2:
@@ -253,20 +268,16 @@ def fetch_gdelt_sbo_events() -> pd.DataFrame:
                     continue
                 print(f"[경고] GDELT '{query[:30]}' 3회 실패: {e}")
                 break
-    if query_counts:
-        total = sum(c for _, c in query_counts)
-        detail = " · ".join(f"'{q}' {c}건" for q, c in query_counts)
-        # A-259 — 코드명을 소비자(chokepoints.yaml·digest·ontology·brief)와 일치시킴,
-        #   값 의미는 기사 수 합산(단위 문자열에 범위 명시).
-        rows.append(_make_row(
-            "GDELT_EVENT_SCORE", float(total), "articles/day (5쿼리×최대5건 합산, 0~25)",
-            f"[GEOINTEL:GDELT] {len(query_counts)}/{len(GDELT_QUERIES)}쿼리 합산 — {detail}",
-        ))
-    if query_counts:
-        print(f"[완료] GDELT 이벤트 {len(query_counts)}/{len(GDELT_QUERIES)}개 쿼리 성공 → 일 합산 1행")
-    else:   # 성공 쿼리 0개면 행을 만들지 않음 — '완료'로 보이지 않게 경고로 남김(Codex 교차검증 지적)
-        print(f"[경고] GDELT 성공 쿼리 0/{len(GDELT_QUERIES)}개 — 오늘 GDELT 행 없음(이전 값으로 진행)")
-    return _to_df(rows)
+    if len(query_counts) != len(GDELT_QUERIES):
+        print(f"[경고] GDELT 응답 확인 {len(query_counts)}/{len(GDELT_QUERIES)}개 — 일 합산 보류")
+        return pd.DataFrame()
+    total = sum(c for _, c in query_counts)
+    detail = " · ".join(f"'{q}' {c}건" for q, c in query_counts)
+    rows.append(_make_row(
+        "GDELT_EVENT_SCORE", float(total), "articles/day (5쿼리×최대5건 합산, 0~25)",
+        f"[GEOINTEL:GDELT] {len(query_counts)}/{len(GDELT_QUERIES)}쿼리 합산 — {detail}",
+    ))
+    return _confirmed_frame(rows)
 
 
 def fetch_nasa_firms_fires() -> pd.DataFrame:
@@ -278,28 +289,44 @@ def fetch_nasa_firms_fires() -> pd.DataFrame:
     firms_key = os.environ.get("NASA_FIRMS_MAP_KEY", "").strip()
     if not firms_key:
         print("[정보] NASA_FIRMS_MAP_KEY 미등록 — FIRMS 산불 건너뜀 (무료 가입: firms.modaps.eosdis.nasa.gov)")
-        return pd.DataFrame()
+        # '오늘 실패'가 아니라 '설정 안 됨' — 복합 지수를 영구 보류하지 않도록 확인 완료·미설정으로 표시하고,
+        # 지수 note에 미반영을 명시한다(지금까지의 지수도 FIRMS 0으로 산출돼 왔음 — 연속성 유지)
+        frame = _confirmed_frame([])
+        frame.attrs["not_configured"] = True
+        return frame
 
-    today = date.today().isoformat()
+    today = pd.Timestamp.now(tz="UTC").date().isoformat()
     rows  = []
-    for country in ("BRA", "ARG", "USA", "IDN", "MYS"):
+    countries = ("BRA", "ARG", "USA", "IDN", "MYS")
+    confirmed = 0
+    for country in countries:
         try:
             url = f"{FIRMS_BASE}/{firms_key}/VIIRS_SNPP_NRT/{country}/1/{today}"
             text = _retry_get(url).text
-            count = sum(1 for ln in text.split("\n") if ln and not ln.startswith("latitude"))
+            lines = text.splitlines()
+            if not lines or not lines[0].startswith("latitude,longitude,"):
+                print(f"[경고] NASA FIRMS {country}: CSV 헤더 확인 실패")
+                continue
+            confirmed += 1
+            count = sum(bool(line.strip()) for line in lines[1:])
             if count > 0:
                 rows.append(_make_row(
                     f"FIRMS_FIRE_COUNT_{country}", float(count), "hotspots/day",
                     f"[GEOINTEL:FIRMS] VIIRS 위성 화재 — {country} {count}건",
                 ))
-        except RuntimeError as e:
-            print(f"[경고] NASA FIRMS {country} 실패: {e}")
-    print(f"[완료] NASA FIRMS 산불 {len(rows)}개 국가")
-    return _to_df(rows)
+        except RuntimeError:
+            print(f"[경고] NASA FIRMS {country} 호출 실패")
+    print(f"[정보] NASA FIRMS 응답 확인 {confirmed}/{len(countries)}개 국가")
+    return _confirmed_frame(rows) if confirmed == len(countries) else _to_df(rows)
 
 
 def _compute_composite(frames: list[pd.DataFrame]) -> list[dict]:
     """USGS + NOAA + GDELT + FIRMS 신호를 종합한 GeoIntel 복합 지수 산출 (0-100)."""
+    if len(frames) != len(WEIGHTS) or not all(f.attrs.get("confirmed") for f in frames):
+        return []
+    dates = {frame.attrs["observation_day"] for frame in frames}
+    if len(dates) > 1:
+        return []
     all_rows: list[dict] = []
     for f in frames:
         all_rows.extend(f.to_dict("records"))
@@ -316,11 +343,11 @@ def _compute_composite(frames: list[pd.DataFrame]) -> list[dict]:
         WEIGHTS[k] * min(1.0, signals[k] / MAX_NORMS[k])
         for k in WEIGHTS if MAX_NORMS[k] > 0
     ) * 100.0
-    return [_make_row(
-        "GEOINTEL_RISK_COMPOSITE", round(composite, 1),
-        "0-100 (높을수록 공급망 리스크)",
-        f"[COMPOSITE: 지진30%+기상20%+GDELT30%+화재20% | {signals}]",
-    )]
+    unset = [k for k, f in zip(WEIGHTS, frames) if f.attrs.get("not_configured")]
+    note = f"[COMPOSITE: 지진30%+기상20%+GDELT30%+화재20% | {signals}]"
+    if unset:
+        note += f" · 미설정 구성 {unset}(가중치 미반영 — 키 등록 시 반영)"
+    return [_make_row("GEOINTEL_RISK_COMPOSITE", round(composite, 1), "0-100 (높을수록 공급망 리스크)", note)]
 
 
 def run() -> None:
@@ -341,14 +368,18 @@ def run() -> None:
     ]:
         try:
             df = fetcher()
-            if not df.empty:
-                frames.append(df)
+            frames.append(df)
         except Exception as e:
             print(f"[경고] {label} 수집 실패: {e}")
 
-    if frames:
-        composite = _to_df(_compute_composite(frames))
+    composite = _to_df(_compute_composite(frames))
+    if composite.empty:
+        print("[경고] GeoIntel 구성 신호 확인 불완전 — 복합 지수 발행 보류")
+    elif any(f.attrs["observation_day"] != composite["price_date"].iloc[0] for f in frames):
+        print("[경고] GeoIntel 관측일 경계 통과 — 복합 지수 발행 보류")
+    else:
         frames.append(composite)
+    frames = [f for f in frames if not f.empty]
 
     if not frames:
         print("[경고] GeoIntel: 수집된 데이터 없음 — 네트워크 또는 API 상태 확인")

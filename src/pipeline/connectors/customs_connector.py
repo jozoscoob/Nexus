@@ -434,10 +434,17 @@ def _normalize_customs_df(all_rows: list[dict], source_tag: str) -> pd.DataFrame
             if "note" not in df.columns:
                 df["note"] = ""
             df.loc[annual_mask & df["note"].astype(str).eq(""), "note"] = "연간 집계(XML 응답)"
-    n_nat = int(df["price_date"].isna().sum()) if "price_date" in df.columns else len(df)
-    if n_nat:
-        print(f"[경고] price_date 파생 실패 {n_nat}건 — 원본 기간 필드 확인 필요 "
-              f"(보유 컬럼: {sorted(set(df.columns) & {'period_start','strtYymm','stat_year'})})")
+    if "price_date" not in df.columns:
+        df["price_date"] = pd.NaT
+    invalid = df["price_date"].isna()
+    if invalid.any():
+        periods = {}
+        for col in ("period_start", "strtYymm", "stat_year"):
+            if col in df.columns:
+                values = df.loc[invalid, col].astype("string").str.slice(0, 32)
+                periods[col] = values.value_counts(dropna=False).head(5).to_dict()
+        print(f"[경고] {source_tag} price_date 파생 실패 {invalid.sum()}건 — "
+              f"기간 값 표본: {periods!r}")
 
     # A-152(c): XML items에는 hsCd='-'인 집계 행(HS코드 합계)이 올 수 있다.
     #           삭제하지 않고 유지하되 note에 '집계행'을 표기해 상세 행과 구분한다.

@@ -28,6 +28,15 @@ FRED_BASE = "https://api.stlouisfed.org/fred/series/observations"
 EIA_BASE  = "https://api.eia.gov/v2/petroleum/pri/spt/data/"
 BOK_BASE  = "https://ecos.bok.or.kr/api/StatisticSearch"
 OUTPUT_DIR = "data/raw"
+FRED_UNITS = {
+    "FEDFUNDS": "%",
+    "CPIAUCSL": "index (1982–1984=100)",
+    "DEXKOUS": "KRW/USD",
+    "DEXBZUS": "BRL/USD",
+    "DEXCHUS": "CNY/USD",
+    "DEXMAUS": "MYR/USD",
+    "VIXCLS": "index",
+}
 
 
 def _fetch(url: str, params: dict[str, Any], max_retries: int = 4) -> dict:
@@ -40,7 +49,26 @@ def _fetch(url: str, params: dict[str, Any], max_retries: int = 4) -> dict:
             r = httpx.Client(transport=_KR_TRANSPORT, timeout=60).get(url, params=params)
             if r.status_code == 400:
                 base = url.split("?")[0]
-                print(f"[경고] API 400 응답 ({base}): 시리즈 미존재 또는 파라미터 오류. 건너뜀.")
+                if base == FRED_BASE:
+                    try:
+                        error = r.json()
+                    except ValueError:
+                        error = {}
+                    message = str(error.get("error_message", "")).lower() if isinstance(error, dict) else ""
+                    if "series does not exist" in message:
+                        reason = "계열 미존재"
+                    elif "api_key" in message or "api key" in message:
+                        reason = "API 키 관련"
+                    elif any(field in message for field in (
+                        "realtime_start", "realtime_end", "output_type", "observation_start", "observation_end"
+                    )):
+                        reason = "요청 기간 또는 빈티지 파라미터 관련"
+                    else:
+                        reason = "응답 사유 미분류"
+                    mode = "ALFRED" if "output_type" in params else "표준"
+                    print(f"[경고] FRED 400: 계열={params.get('series_id')}, 요청={mode}, 사유={reason}")
+                else:
+                    print(f"[경고] API 400 응답 ({base}): 요청 거절. 건너뜀.")
                 return {}
             r.raise_for_status()
             return r.json()
@@ -132,6 +160,7 @@ def fetch_fred_series(series_id: str, start: str, end: str) -> pd.DataFrame:
                     df = pd.concat([df2, df], ignore_index=True)
                     print(f"[정보] FRED {series_id}: 앞구간 {len(df2):,}건 병합 "
                           f"(총 {len(df):,}건)")
+    df["unit"] = FRED_UNITS.get(series_id, "")
     return df
 
 
@@ -347,7 +376,9 @@ def run(start_date: str | None = None, end_date: str | None = None) -> None:
     def _safe(fn: Callable, *args: Any, label: str = "", **kwargs: Any) -> pd.DataFrame:
         """개별 커넥터 실패를 격리 — 단일 실패가 전체 파이프라인을 중단시키지 않음."""
         try:
-            return fn(*args, **kwargs)
+            frame = fn(*args, **kwargs)
+            print(f"[수집] {label or fn.__name__}: {'행 없음' if frame.empty else f'{len(frame):,}행'}")
+            return frame
         except Exception as e:
             print(f"[경고] {label or fn.__name__} 수집 실패: {e}")
             return pd.DataFrame()
@@ -377,12 +408,14 @@ def run(start_date: str | None = None, end_date: str | None = None) -> None:
 
     frames = [f for f in frames if not f.empty]
     if not frames:
-        print("[경고] 경제 지표: 모든 소스 응답 없음 — API 키 및 네트워크 확인 필요")
-        return
+        raise RuntimeError("[오류] 경제 지표: 모든 소스에서 적재할 행 없음 — API 키·네트워크 확인 필요")
 
     combined = pd.concat(frames, ignore_index=True)
     combined["ingested_at"] = pd.Timestamp.utcnow()
-    combined["unit"] = ""
+    if "unit" not in combined.columns:
+        combined["unit"] = ""
+    else:
+        combined["unit"] = combined["unit"].fillna("")
 
     out = f"{OUTPUT_DIR}/economic_indicators_{today}.parquet"
     # D-023: 저장 직전 as-of 5필드 부여 — 규칙은 src/pipeline/asof.py 단일 관리
