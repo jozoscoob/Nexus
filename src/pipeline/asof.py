@@ -161,6 +161,9 @@ RELEASE_RULES: dict[str, ReleaseRule] = {
     #   현물 환율은 개정이 없으므로 revises=False — 개정 이력 미보존 필터(D-034)에 걸리지 않는다.
     "FX_BRL_":   ReleaseRule("immediate", lag_days=1, revises=False,
                              note="업로드 BRL/USD 일별 — 당일 확정·익영업일 공개(FRED와 동일 규약)"),
+    # 2026-11-20: 원/달러 일별(yfinance KRW=X) — FRED DEXKOUS는 주 1회 일괄 게시라 화면 환율이 최대 1주 정체됨
+    "FX_KRW_":   ReleaseRule("immediate", lag_days=1, revises=False,
+                             note="원/달러 일별 시세 — 당일 확정·익영업일 사용(FRED DEX와 같은 보수 규약)"),
     "FEDFUNDS":  ReleaseRule("monthly_on_day", day=8,
                              note="월평균 실효연방기금금리 — H.15 익월 초 16:15 ET. "
                                   "보수적으로 익월 8일(월말+5영업일)"),

@@ -1,0 +1,981 @@
+{
+ "id": "nexusPipeline01",
+ "name": "Nexus Pipeline",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "cronExpression",
+       "expression": "0 6 * * 2-6"
+      }
+     ]
+    }
+   },
+   "id": "schedule",
+   "name": "화~토 06:00",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    60
+   ]
+  },
+  {
+   "parameters": {
+    "content": "## ① 수집",
+    "height": 300,
+    "width": 1380,
+    "color": 2
+   },
+   "id": "lane0",
+   "name": "구역 ① 수집",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    60,
+    -20
+   ]
+  },
+  {
+   "parameters": {},
+   "id": "manual0",
+   "name": "▶ ① 수집부터 실행",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    120,
+    180
+   ]
+  },
+  {
+   "parameters": {},
+   "id": "start0",
+   "name": "① 수집 시작",
+   "type": "n8n-nodes-base.noOp",
+   "typeVersion": 1,
+   "position": [
+    360,
+    60
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/collect_free",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "collect_free_0",
+   "name": "무료 커넥터 수집",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    620,
+    60
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/te_update",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "te_update_0",
+   "name": "TE 시세 갱신",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    880,
+    60
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/digest",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "digest_0",
+   "name": "비정형 다이제스트(RSS·뉴스)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1140,
+    60
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/codex_verify_semantic",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "codex_verify_semantic_0",
+   "name": "Codex 시맨틱·온톨로지 검토",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1400,
+    60
+   ]
+  },
+  {
+   "parameters": {
+    "content": "## ② 정제",
+    "height": 300,
+    "width": 1120,
+    "color": 3
+   },
+   "id": "lane1",
+   "name": "구역 ② 정제",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    60,
+    320
+   ]
+  },
+  {
+   "parameters": {},
+   "id": "manual1",
+   "name": "▶ ② 정제부터 실행",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    120,
+    520
+   ]
+  },
+  {
+   "parameters": {},
+   "id": "start1",
+   "name": "② 정제 시작",
+   "type": "n8n-nodes-base.noOp",
+   "typeVersion": 1,
+   "position": [
+    360,
+    400
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/manual_parsers",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "manual_parsers_1",
+   "name": "수동 업로드 파서",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    620,
+    400
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/mart_build",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "mart_build_1",
+   "name": "마트 생성(시점 정합)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    880,
+    400
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/vault_export",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "vault_export_1",
+   "name": "Obsidian 볼트 보기",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1140,
+    400
+   ]
+  },
+  {
+   "parameters": {
+    "content": "## ③ 품질 점검",
+    "height": 300,
+    "width": 860,
+    "color": 5
+   },
+   "id": "lane2",
+   "name": "구역 ③ 품질 점검",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    60,
+    660
+   ]
+  },
+  {
+   "parameters": {},
+   "id": "manual2",
+   "name": "▶ ③ 품질 점검부터 실행",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    120,
+    860
+   ]
+  },
+  {
+   "parameters": {},
+   "id": "start2",
+   "name": "③ 품질 점검 시작",
+   "type": "n8n-nodes-base.noOp",
+   "typeVersion": 1,
+   "position": [
+    360,
+    740
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/quality",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "quality_2",
+   "name": "준비도·as-of·시맨틱·테스트",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    620,
+    740
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/codex_verify_data",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "codex_verify_data_2",
+   "name": "Codex 데이터 검증(요약 통계)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    880,
+    740
+   ]
+  },
+  {
+   "parameters": {
+    "content": "## ④ 분석·평가",
+    "height": 300,
+    "width": 1640,
+    "color": 4
+   },
+   "id": "lane3",
+   "name": "구역 ④ 분석·평가",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    60,
+    1000
+   ]
+  },
+  {
+   "parameters": {},
+   "id": "manual3",
+   "name": "▶ ④ 분석·평가부터 실행",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    120,
+    1200
+   ]
+  },
+  {
+   "parameters": {},
+   "id": "start3",
+   "name": "④ 분석·평가 시작",
+   "type": "n8n-nodes-base.noOp",
+   "typeVersion": 1,
+   "position": [
+    360,
+    1080
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/band_compare",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "band_compare_3",
+   "name": "참고 범위 방식 비교",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    620,
+    1080
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/baseline",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "baseline_3",
+   "name": "기준선 성적표",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    880,
+    1080
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/g1_report",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "g1_report_3",
+   "name": "G1 보고서",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1140,
+    1080
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/g2_preview",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "g2_preview_3",
+   "name": "G2 화면",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1400,
+    1080
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/run_report",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "run_report_3",
+   "name": "실행 보고·터미널",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1660,
+    1080
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/pipeline_summary",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "summary",
+   "name": "실행 요약 만들기",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    360,
+    1420
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const r = $json.body || $json; const tail = ((r.steps || [])[0] || {}).tail || '';\nconst m = tail.split('\\n').reverse().find(l => l.startsWith('__SUMMARY__'));\nconst s = m ? JSON.parse(m.slice(11)) : { subject: '[Nexus] ⚠️ 요약 생성 실패', body: tail.slice(-800), failed: true };\nreturn [{ json: s }];"
+   },
+   "id": "parse",
+   "name": "요약 읽기",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    620,
+    1420
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $env.NEXUS_ALERT_EMAIL }}",
+    "toEmail": "={{ $env.NEXUS_ALERT_EMAIL }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.body }}",
+    "options": {
+     "appendAttribution": false
+    }
+   },
+   "id": "mail",
+   "name": "요약 메일 보내기",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    880,
+    1420
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "nexusSmtp01",
+     "name": "Nexus Gmail SMTP"
+    }
+   },
+   "onError": "continueRegularOutput"
+  }
+ ],
+ "connections": {
+  "▶ ① 수집부터 실행": {
+   "main": [
+    [
+     {
+      "node": "① 수집 시작",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "화~토 06:00": {
+   "main": [
+    [
+     {
+      "node": "① 수집 시작",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "① 수집 시작": {
+   "main": [
+    [
+     {
+      "node": "무료 커넥터 수집",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "무료 커넥터 수집": {
+   "main": [
+    [
+     {
+      "node": "TE 시세 갱신",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "TE 시세 갱신": {
+   "main": [
+    [
+     {
+      "node": "비정형 다이제스트(RSS·뉴스)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "비정형 다이제스트(RSS·뉴스)": {
+   "main": [
+    [
+     {
+      "node": "Codex 시맨틱·온톨로지 검토",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "▶ ② 정제부터 실행": {
+   "main": [
+    [
+     {
+      "node": "② 정제 시작",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Codex 시맨틱·온톨로지 검토": {
+   "main": [
+    [
+     {
+      "node": "② 정제 시작",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "② 정제 시작": {
+   "main": [
+    [
+     {
+      "node": "수동 업로드 파서",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "수동 업로드 파서": {
+   "main": [
+    [
+     {
+      "node": "마트 생성(시점 정합)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "마트 생성(시점 정합)": {
+   "main": [
+    [
+     {
+      "node": "Obsidian 볼트 보기",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "▶ ③ 품질 점검부터 실행": {
+   "main": [
+    [
+     {
+      "node": "③ 품질 점검 시작",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Obsidian 볼트 보기": {
+   "main": [
+    [
+     {
+      "node": "③ 품질 점검 시작",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "③ 품질 점검 시작": {
+   "main": [
+    [
+     {
+      "node": "준비도·as-of·시맨틱·테스트",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "준비도·as-of·시맨틱·테스트": {
+   "main": [
+    [
+     {
+      "node": "Codex 데이터 검증(요약 통계)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "▶ ④ 분석·평가부터 실행": {
+   "main": [
+    [
+     {
+      "node": "④ 분석·평가 시작",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Codex 데이터 검증(요약 통계)": {
+   "main": [
+    [
+     {
+      "node": "④ 분석·평가 시작",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "④ 분석·평가 시작": {
+   "main": [
+    [
+     {
+      "node": "참고 범위 방식 비교",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "참고 범위 방식 비교": {
+   "main": [
+    [
+     {
+      "node": "기준선 성적표",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "기준선 성적표": {
+   "main": [
+    [
+     {
+      "node": "G1 보고서",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "G1 보고서": {
+   "main": [
+    [
+     {
+      "node": "G2 화면",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "G2 화면": {
+   "main": [
+    [
+     {
+      "node": "실행 보고·터미널",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "실행 보고·터미널": {
+   "main": [
+    [
+     {
+      "node": "실행 요약 만들기",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "실행 요약 만들기": {
+   "main": [
+    [
+     {
+      "node": "요약 읽기",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "요약 읽기": {
+   "main": [
+    [
+     {
+      "node": "요약 메일 보내기",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "timezone": "Asia/Seoul",
+  "executionOrder": "v1",
+  "errorWorkflow": "nexusErrorAlert01"
+ }
+}

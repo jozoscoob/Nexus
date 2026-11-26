@@ -21,6 +21,15 @@ OUT = Path(__file__).resolve().parents[1] / "docker" / "n8n"
 RUNNER = "http://runner:8000"
 ERROR_WF_ID = "nexusErrorAlert01"
 TWO_HOURS_MS = 7_200_000
+# runner 작업 API 토큰(SPEC §3.4) — n8n 컨테이너 환경 변수 RUNNER_TOKEN을 식으로 참조, JSON에는 값이 없다
+TOKEN_HEADER = {"sendHeaders": True,
+                "headerParameters": {"parameters": [{"name": "X-Runner-Token", "value": "={{ $env.RUNNER_TOKEN }}"}]}}
+# 메일(SPEC §3.3) — 주소는 n8n 환경 변수 NEXUS_ALERT_EMAIL, 자격 증명은 최종 결정자가 n8n 화면에서 앱 비밀번호 입력
+SMTP_CRED = {"smtp": {"id": "nexusSmtp01", "name": "Nexus Gmail SMTP"}}
+SUMMARY_PARSE = ("const r = $json.body || $json; const tail = ((r.steps || [])[0] || {}).tail || '';\n"
+                 "const m = tail.split('\\n').reverse().find(l => l.startsWith('__SUMMARY__'));\n"
+                 "const s = m ? JSON.parse(m.slice(11)) : { subject: '[Nexus] ⚠️ 요약 생성 실패', body: tail.slice(-800), failed: true };\n"
+                 "return [{ json: s }];")
 
 
 def trigger_nodes(cron: str | None, label: str) -> list[dict]:
@@ -54,7 +63,7 @@ def call_node(i: int, wf_id: str, title: str) -> dict:
 
 
 def job_node(i: int, job: str, title: str, disabled: bool = False) -> dict:
-    node = {"parameters": {"method": "POST", "url": f"{RUNNER}/run/{job}",
+    node = {"parameters": {"method": "POST", "url": f"{RUNNER}/run/{job}", **TOKEN_HEADER,
                            "options": {"timeout": TWO_HOURS_MS,
                                        "response": {"response": {"neverError": True, "fullResponse": True}}}},
             "id": job, "name": title, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
@@ -85,7 +94,7 @@ return [{{ json: {{ workflow: $workflow.name, ok: fails.length === 0, fails, at:
          "typeVersion": 2, "position": [x, 100]},
         {"parameters": {"jsCode": only_fail}, "id": "only_fail", "name": "실패만 통과", "type": "n8n-nodes-base.code",
          "typeVersion": 2, "position": [x + 240, 100]},
-        {"parameters": {"method": "POST", "url": f"{RUNNER}/alert", "sendBody": True, "specifyBody": "json",
+        {"parameters": {"method": "POST", "url": f"{RUNNER}/alert", **TOKEN_HEADER, "sendBody": True, "specifyBody": "json",
                         "jsonBody": "={{ JSON.stringify($json) }}", "options": {}},
          "id": "alert", "name": "실패 알림 기록", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
          "position": [x + 480, 100]},
@@ -131,6 +140,70 @@ def integrated(wf_id: str, name: str, cron: str, cron_label: str, stages: list[t
             "settings": {"timezone": "Asia/Seoul", "executionOrder": "v1", "errorWorkflow": ERROR_WF_ID}}
 
 
+def email_node(name: str, pos: list[int], nid: str) -> dict:
+    return {"parameters": {"fromEmail": "={{ $env.NEXUS_ALERT_EMAIL }}", "toEmail": "={{ $env.NEXUS_ALERT_EMAIL }}",
+                           "subject": "={{ $json.subject }}", "emailFormat": "text", "text": "={{ $json.body }}",
+                           "options": {"appendAttribution": False}},
+            "id": nid, "name": name, "type": "n8n-nodes-base.emailSend", "typeVersion": 2.1, "position": pos,
+            "credentials": SMTP_CRED, "onError": "continueRegularOutput"}   # 메일 실패가 파이프라인을 실패시키지 않음
+
+
+LANES = [  # (제목, 스티키 색, [(작업, 노드명)])
+    ("① 수집", 2, [("collect_free", "무료 커넥터 수집"), ("te_update", "TE 시세 갱신"),
+                  ("digest", "비정형 다이제스트(RSS·뉴스)"), ("codex_verify_semantic", "Codex 시맨틱·온톨로지 검토")]),
+    ("② 정제", 3, [("manual_parsers", "수동 업로드 파서"), ("mart_build", "마트 생성(시점 정합)"),
+                  ("vault_export", "Obsidian 볼트 보기")]),
+    ("③ 품질 점검", 5, [("quality", "준비도·as-of·시맨틱·테스트"), ("codex_verify_data", "Codex 데이터 검증(요약 통계)")]),
+    ("④ 분석·평가", 4, [("band_compare", "참고 범위 방식 비교"), ("baseline", "기준선 성적표"), ("g1_report", "G1 보고서"),
+                     ("g2_preview", "G2 화면"), ("run_report", "실행 보고·터미널")]),
+]
+
+
+def pipeline(wf_id: str, name: str, cron: str, cron_label: str) -> dict:
+    """단일 워크플로우 — 색 구역 4개를 순서대로, 구역마다 수동 시작, 끝에 요약 메일 1통(SPEC §3.1)."""
+    nodes, conn, prev = [], {}, None
+    lane_h, x0 = 340, 360
+    nodes.append({"parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": cron}]}},
+                  "id": "schedule", "name": cron_label, "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2,
+                  "position": [0, 60]})
+    for li, (title, color, jobs) in enumerate(LANES):
+        y = li * lane_h + 60
+        start = f"{title} 시작"
+        nodes.append({"parameters": {"content": f"## {title}", "height": lane_h - 40, "width": 260 * (len(jobs) + 1) + 80,
+                                     "color": color},
+                      "id": f"lane{li}", "name": f"구역 {title}", "type": "n8n-nodes-base.stickyNote", "typeVersion": 1,
+                      "position": [x0 - 300, y - 80]})
+        nodes.append({"parameters": {}, "id": f"manual{li}", "name": f"▶ {title}부터 실행", "type": "n8n-nodes-base.manualTrigger",
+                      "typeVersion": 1, "position": [x0 - 240, y + 120]})
+        nodes.append({"parameters": {}, "id": f"start{li}", "name": start, "type": "n8n-nodes-base.noOp", "typeVersion": 1,
+                      "position": [x0, y]})
+        conn[f"▶ {title}부터 실행"] = {"main": [[{"node": start, "type": "main", "index": 0}]]}
+        if prev:
+            conn[prev] = {"main": [[{"node": start, "type": "main", "index": 0}]]}
+        else:
+            conn[cron_label] = {"main": [[{"node": start, "type": "main", "index": 0}]]}
+        last = start
+        for ji, (job, label) in enumerate(jobs):
+            n = job_node(0, job, label)
+            n["id"] = f"{job}_{li}"
+            n["position"] = [x0 + 260 * (ji + 1), y]
+            nodes.append(n)
+            conn[last] = {"main": [[{"node": label, "type": "main", "index": 0}]]}
+            last = label
+        prev = last
+    y = len(LANES) * lane_h + 60
+    nodes += [job_node(0, "pipeline_summary", "실행 요약 만들기"),
+              {"parameters": {"jsCode": SUMMARY_PARSE}, "id": "parse", "name": "요약 읽기", "type": "n8n-nodes-base.code",
+               "typeVersion": 2, "position": [x0 + 260, y]},
+              email_node("요약 메일 보내기", [x0 + 520, y], "mail")]
+    nodes[-3]["id"], nodes[-3]["position"] = "summary", [x0, y]
+    conn[prev] = {"main": [[{"node": "실행 요약 만들기", "type": "main", "index": 0}]]}
+    conn["실행 요약 만들기"] = {"main": [[{"node": "요약 읽기", "type": "main", "index": 0}]]}
+    conn["요약 읽기"] = {"main": [[{"node": "요약 메일 보내기", "type": "main", "index": 0}]]}
+    return {"id": wf_id, "name": name, "nodes": nodes, "connections": conn, "active": False,
+            "settings": {"timezone": "Asia/Seoul", "executionOrder": "v1", "errorWorkflow": ERROR_WF_ID}}
+
+
 def error_workflow() -> dict:
     body = "={{ JSON.stringify({ workflow: $json.workflow.name, failed_node: $json.execution.lastNodeExecuted, " \
            "error: $json.execution.error.message, at: new Date().toISOString() }) }}"
@@ -138,15 +211,23 @@ def error_workflow() -> dict:
             "settings": {"timezone": "Asia/Seoul", "executionOrder": "v1"},
             "nodes": [{"parameters": {}, "id": "err", "name": "워크플로우 오류", "type": "n8n-nodes-base.errorTrigger",
                        "typeVersion": 1, "position": [0, 0]},
-                      {"parameters": {"method": "POST", "url": f"{RUNNER}/alert", "sendBody": True,
+                      {"parameters": {"method": "POST", "url": f"{RUNNER}/alert", **TOKEN_HEADER, "sendBody": True,
                                       "specifyBody": "json", "jsonBody": body, "options": {}},
                        "id": "alert", "name": "실패 알림 기록", "type": "n8n-nodes-base.httpRequest",
-                       "typeVersion": 4.2, "position": [240, 0]}],
-            "connections": {"워크플로우 오류": {"main": [[{"node": "실패 알림 기록", "type": "main", "index": 0}]]}}}
+                       "typeVersion": 4.2, "position": [240, 0]},
+                      {"parameters": {"jsCode": "return [{ json: { subject: `[Nexus] ❌ 워크플로우 중단 — ${$('워크플로우 오류').first().json.workflow.name}`, "
+                                                 "body: `중단 노드: ${$('워크플로우 오류').first().json.execution.lastNodeExecuted}\\n오류: ${$('워크플로우 오류').first().json.execution.error.message}` } }];"},
+                       "id": "errmsg", "name": "중단 메일 내용", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [480, 0]},
+                      email_node("중단 메일 보내기", [720, 0], "errmail")],
+            "connections": {"워크플로우 오류": {"main": [[{"node": "실패 알림 기록", "type": "main", "index": 0}]]},
+                            "실패 알림 기록": {"main": [[{"node": "중단 메일 내용", "type": "main", "index": 0}]]},
+                            "중단 메일 내용": {"main": [[{"node": "중단 메일 보내기", "type": "main", "index": 0}]]}}}
 
 
 COLLECT, PROCESS, ANALYZE = "nexusCollect01", "nexusProcess01", "nexusAnalyze01"
 WORKFLOWS = {
+    # ★ 단일 파이프라인(SPEC §3.1) — 화~토 06:00. 아래 01~04는 비활성 보관(되돌리기용)
+    "nexus_pipeline.json": pipeline("nexusPipeline01", "Nexus Pipeline", "0 6 * * 2-6", "화~토 06:00"),
     # 01 수집 — 무료 커넥터·시세·웹 수집(Codex 크롤러)·비정형(RSS·뉴스) → Codex 교차검증
     "nexus_01_collect.json": chain(COLLECT, "Nexus 01 수집", None, "", [
         ("collect_free", "무료 커넥터 수집"), ("te_update", "TE 시세 갱신"), ("codex_crawl", "Codex 웹 수집"),
@@ -198,6 +279,22 @@ WORKFLOWS = {
         ("databento", "Databento 수집(유료)"), ("mart", "마트·게이트")]),
     "nexus_error_alert.json": error_workflow(),
 }
+
+
+def add_summary_mail(wf: dict, job: str, title: str) -> dict:
+    """체인 워크플로우의 '결과 점검' 뒤에 요약 메일 가지를 붙임(주간 요약 — SPEC §3.3)."""
+    n = job_node(0, job, title)
+    n["id"], n["position"] = job, [2400, 360]
+    wf["nodes"] += [n, {"parameters": {"jsCode": SUMMARY_PARSE}, "id": f"{job}_parse", "name": f"{title} 읽기",
+                        "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [2640, 360]},
+                    email_node(f"{title} 메일", [2880, 360], f"{job}_mail")]
+    wf["connections"]["결과 점검"]["main"][0].append({"node": title, "type": "main", "index": 0})
+    wf["connections"][title] = {"main": [[{"node": f"{title} 읽기", "type": "main", "index": 0}]]}
+    wf["connections"][f"{title} 읽기"] = {"main": [[{"node": f"{title} 메일", "type": "main", "index": 0}]]}
+    return wf
+
+
+add_summary_mail(WORKFLOWS["nexus_weekly.json"], "weekly_summary", "주간 요약")
 
 
 def run() -> None:

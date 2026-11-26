@@ -37,6 +37,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/te_repair",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -60,6 +69,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/manual_parsers",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -83,6 +101,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/mart",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -106,6 +133,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/baseline",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -129,6 +165,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/g2_preview",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -152,6 +197,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/run/vault_export",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "options": {
      "timeout": 7200000,
      "response": {
@@ -201,6 +255,15 @@
    "parameters": {
     "method": "POST",
     "url": "http://runner:8000/alert",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
     "sendBody": true,
     "specifyBody": "json",
     "jsonBody": "={{ JSON.stringify($json) }}",
@@ -214,6 +277,78 @@
     2160,
     100
    ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/weekly_summary",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "weekly_summary",
+   "name": "주간 요약",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2400,
+    360
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const r = $json.body || $json; const tail = ((r.steps || [])[0] || {}).tail || '';\nconst m = tail.split('\\n').reverse().find(l => l.startsWith('__SUMMARY__'));\nconst s = m ? JSON.parse(m.slice(11)) : { subject: '[Nexus] ⚠️ 요약 생성 실패', body: tail.slice(-800), failed: true };\nreturn [{ json: s }];"
+   },
+   "id": "weekly_summary_parse",
+   "name": "주간 요약 읽기",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2640,
+    360
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $env.NEXUS_ALERT_EMAIL }}",
+    "toEmail": "={{ $env.NEXUS_ALERT_EMAIL }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.body }}",
+    "options": {
+     "appendAttribution": false
+    }
+   },
+   "id": "weekly_summary_mail",
+   "name": "주간 요약 메일",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    2880,
+    360
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "nexusSmtp01",
+     "name": "Nexus Gmail SMTP"
+    }
+   },
+   "onError": "continueRegularOutput"
   }
  ],
  "connections": {
@@ -290,6 +425,11 @@
       "node": "실패만 통과",
       "type": "main",
       "index": 0
+     },
+     {
+      "node": "주간 요약",
+      "type": "main",
+      "index": 0
      }
     ]
    ]
@@ -321,6 +461,28 @@
     [
      {
       "node": "TE 시세 공백 복구",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "주간 요약": {
+   "main": [
+    [
+     {
+      "node": "주간 요약 읽기",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "주간 요약 읽기": {
+   "main": [
+    [
+     {
+      "node": "주간 요약 메일",
       "type": "main",
       "index": 0
      }

@@ -43,6 +43,10 @@ CHOKEPOINTS = {
 FIELDS = {"n_tanker": "TANKER", "n_dry_bulk": "DRY_BULK", "n_total": "TOTAL"}
 
 
+QUOTA_WAIT_S = 65          # ArcGIS 분당 요청 단위 한도 초과 시 대기(초)
+PAGE_PAUSE_S = 2           # 페이지 사이 간격 — 분당 한도 소진 방지
+
+
 def _get(params: dict) -> dict:
     """ArcGIS 질의 — 지수 백오프 재시도(data_pipeline.md)."""
     delay = 2
@@ -57,7 +61,10 @@ def _get(params: dict) -> dict:
         except (httpx.HTTPError, RuntimeError, ValueError) as e:
             if attempt == MAX_RETRIES - 1:
                 raise RuntimeError(f"[오류] PortWatch 호출 실패: {e}") from e
-            time.sleep(delay)
+            # ArcGIS 분당 요청 한도(429) — 1분 창이 지나도록 기다린 뒤 재시도(2026-11-24 서버 실측)
+            wait = QUOTA_WAIT_S if "429" in str(e) or "Too many requests" in str(e) else delay
+            print(f"[정보] PortWatch 재시도 {attempt + 1}/{MAX_RETRIES - 1} — {wait}초 대기({str(e)[:60]})")
+            time.sleep(wait)
             delay *= 2
     return {}
 
@@ -73,6 +80,7 @@ def fetch_portwatch(start: str) -> pd.DataFrame:
                      "resultRecordCount": PAGE_SIZE, "f": "json"})
         feats = body.get("features", [])
         rows += [f["attributes"] for f in feats]
+        time.sleep(PAGE_PAUSE_S)
         if len(feats) < PAGE_SIZE and not body.get("exceededTransferLimit"):
             break
         offset += len(feats)
@@ -100,7 +108,15 @@ def to_long(raw: pd.DataFrame) -> pd.DataFrame:
 
 def run() -> None:
     start_year = int(os.environ.get("HISTORICAL_START_YEAR", "2019"))  # 원천 시작 2019-01-01
-    raw = fetch_portwatch(f"{max(start_year, 2019)}-01-01")
+    try:
+        raw = fetch_portwatch(f"{max(start_year, 2019)}-01-01")
+    except RuntimeError as e:
+        # 2026-11-24 확인: IMF가 Daily_Chokepoints_Data를 비공개 전환(질의 499 Token Required·항목 403).
+        # 코드 결함이 아닌 원천 접근 변경 — 기존 parquet 유지, 경고로 요약 메일에 노출(실패로 매일 빨간불 방지).
+        if "Token Required" in str(e) or "GWM_0003" in str(e):
+            print("[경고] PortWatch 원천 비공개 전환(토큰 필요) — 갱신 건너뜀, 이전 해협 데이터 유지")
+            return
+        raise
     if raw.empty:
         raise SystemExit("[오류] PortWatch 응답 0건 — 엔드포인트·네트워크 확인 필요")
     df = attach_asof(to_long(raw), source="IMF_PORTWATCH")
