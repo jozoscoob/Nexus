@@ -24,6 +24,7 @@ from pathlib import Path
 import pandas as pd
 
 RAW = os.environ.get("NEXUS_DATA_ROOT", "data/raw")
+LOCAL_TZ = os.environ.get("TZ", "Asia/Seoul")   # 컨테이너 시간대 — 일자 경계 기준
 OUT = Path("reports/market")
 # A-181: 일별 신호의 변수별 영구 아카이브 (조정자 지시 8/16 — 아티팩트 7~30일 한계 해소).
 #   커밋 저장은 unstructured_analysis.yml 인덱스 CSV 선례(A-090)를 따른다.
@@ -395,7 +396,9 @@ def _items_from_rss(content: bytes) -> list[dict]:
         if not txt:
             return pd.Timestamp(date.today())
         try:
-            return pd.Timestamp(parsedate_to_datetime(txt).date())
+            # 원천 시각(대개 UTC)을 실행 시간대(Asia/Seoul)로 바꾼 뒤 날짜를 취함 — KST 00~09시 실행 시
+            # 전날로 밀리던 결함(2026-11-25·26 06:00 실행 테스트 실패) 수정, 기후 커넥터 KST 결함과 같은 유형
+            return pd.Timestamp(parsedate_to_datetime(txt).astimezone().date())
         except Exception:
             try:
                 return pd.Timestamp(pd.Timestamp(txt).date())
@@ -467,7 +470,8 @@ def _items_from_gdelt(spec: dict) -> list[dict]:
     for a in _gdelt_get_json(params).get("articles", []) or []:
         seen = str(a.get("seendate", "") or "")
         try:
-            d = pd.Timestamp(pd.to_datetime(seen, format="%Y%m%dT%H%M%SZ").date()) if seen \
+            d = pd.Timestamp(pd.to_datetime(seen, format="%Y%m%dT%H%M%SZ", utc=True)
+                             .tz_convert(LOCAL_TZ).date()) if seen \
                 else pd.Timestamp(date.today())
         except (ValueError, TypeError):
             d = pd.Timestamp(date.today())
