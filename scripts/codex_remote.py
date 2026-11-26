@@ -46,6 +46,6 @@ def main(stage: str) -> int:
 
 if __name__ == "__main__":
     s = sys.argv[1] if len(sys.argv) > 1 else ""
-    if s not in ("data", "semantic"):
-        raise SystemExit("[오류] 사용법: codex_remote.py data|semantic")
+    if s not in ("data", "semantic", "investigate"):
+        raise SystemExit("[오류] 사용법: codex_remote.py data|semantic|investigate")
     sys.exit(main(s))

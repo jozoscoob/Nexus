@@ -128,6 +128,37 @@ def prepare_semantic() -> dict:
     return manifest
 
 
+def prepare_investigate(runs: int = 3) -> dict:
+    """근본 원인 조사 입력 — 최근 실행 로그의 경고·오류, 오늘 Codex 보고서·제안, 공개 데이터 사본(데이터 준비 재사용)."""
+    prepare_data()
+    dst = _fresh_dir(WORK / "inputs" / "investigate")
+    _fresh_dir(WORK / "out" / "investigate")
+    logs = ROOT / "docker" / "logs"
+    days = sorted({f.name.rsplit("_", 2)[-2] for f in logs.glob("collect_free_*.json")})[-runs:]
+    seen, lines = set(), []
+    for f in sorted(logs.glob("*.json")):
+        parts = f.stem.rsplit("_", 2)
+        if len(parts) < 3 or parts[-2] not in days:
+            continue
+        try:
+            d = json.loads(f.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        for s in d.get("steps", []):
+            for ln in s.get("tail", "").splitlines():
+                key = (parts[0], ln[:100])
+                if ln.startswith(("[경고]", "[오류]", "FAILED", "Traceback")) and key not in seen:
+                    seen.add(key)
+                    lines.append(f"{parts[-2]} {parts[0]} | {s.get('step', '')[:60]} | {ln[:300]}")
+    (dst / "run_warnings.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    for name in (f"codex_verify_data_{date.today():%Y-%m-%d}.md", f"codex_proposals_{date.today():%Y-%m-%d}.json"):
+        src = ROOT / "reports" / "ops" / name
+        if src.is_file():
+            shutil.copy2(src, dst / name)
+    print(f"[완료] Codex 입력 준비(근본 원인 조사) — 최근 {len(days)}회 실행 경고·오류 {len(lines)}줄")
+    return {"days": days, "lines": len(lines)}
+
+
 if __name__ == "__main__":
     stage = sys.argv[1] if len(sys.argv) > 1 else ""
     for d in ("inputs", "staging", "out", "queue", "logs"):
@@ -136,5 +167,7 @@ if __name__ == "__main__":
         prepare_data()
     elif stage == "semantic":
         prepare_semantic()
+    elif stage == "investigate":
+        prepare_investigate()
     else:
-        raise SystemExit("[오류] 사용법: codex_prepare.py data|semantic")
+        raise SystemExit("[오류] 사용법: codex_prepare.py data|semantic|investigate")

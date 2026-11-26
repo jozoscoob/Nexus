@@ -58,6 +58,23 @@ SEMANTIC_PROMPT = COMMON + (
 )
 
 
+INVESTIGATE_PROMPT = COMMON + (
+    "TASK: root-cause investigation — do NOT just restate symptoms. Inputs: /work/inputs/investigate/"
+    "run_warnings.txt (warnings/errors from the last pipeline runs), today's data review and proposals in the same "
+    "folder, public data copies under /work/inputs/public, code under /repo. Investigate at least these, then any "
+    "other RECURRING problem you find in run_warnings.txt (collection, processing, refinement, analysis): "
+    "(A) FRED economic_indicators rows saved with an empty unit; (B) GeoIntel rows whose event date is after "
+    "available_at, and the GeoIntel composite risk counting unconfirmed/failed signals as 0; (C) repeated "
+    "price_date derivation failures and dropped rows in the customs connector; (D) the FRED 400 'series missing' "
+    "warning; (E) any analysis/quality-step warnings. For each item give: the definitive root cause with evidence "
+    "(file:line and the exact code, plus a data row or log line), whether it is a code defect, an external-source "
+    "issue or a missing key/config, and the smallest correct fix. For code defects write a unified diff against "
+    "/repo paths to /work/out/investigate/patches/<ID>.diff (do not apply it). Write /work/out/investigate/"
+    "findings.json: a list of {id, title, category: code|external|config, root_cause, evidence, fix, "
+    "patch_file|null, test_idea}. Then print a Korean markdown table: ID | 제목 | 분류 | 근본 원인 | 근거 | 수정안.\n"
+)
+
+
 def _codex_ready() -> bool:
     auth = Path(os.environ.get("CODEX_HOME", "/root/.codex")) / "auth.json"
     return bool(shutil.which("codex")) and auth.is_file() and auth.stat().st_size > 0
@@ -66,14 +83,14 @@ def _codex_ready() -> bool:
 def run(stage: str) -> int:
     out = WORK / "out" / stage
     out.mkdir(parents=True, exist_ok=True)
-    manifest = WORK / "inputs" / f"manifest_{stage}.json"
+    manifest = WORK / "inputs" / ("investigate/run_warnings.txt" if stage == "investigate" else f"manifest_{stage}.json")
     if not manifest.is_file():
         print(f"[오류] 입력 준비 안 됨: {manifest} — runner의 codex_prepare가 먼저 실행돼야 함")
         return 1
     if not _codex_ready():
         print(f"[경고] codex CLI 또는 로그인 없음 — {stage} 검증 미실행")
         return 0
-    prompt = DATA_PROMPT if stage == "data" else SEMANTIC_PROMPT
+    prompt = {"data": DATA_PROMPT, "semantic": SEMANTIC_PROMPT, "investigate": INVESTIGATE_PROMPT}[stage]
     cmd = ["codex", "exec", "--sandbox", "danger-full-access", "--skip-git-repo-check", "-C", str(WORK), prompt]
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=TIMEOUT_S, cwd=str(WORK))
     (out / "report.md").write_text(
@@ -88,6 +105,6 @@ def run(stage: str) -> int:
 
 if __name__ == "__main__":
     s = sys.argv[1] if len(sys.argv) > 1 else ""
-    if s not in ("data", "semantic"):
-        raise SystemExit("[오류] 사용법: codex_verifier.py data|semantic")
+    if s not in ("data", "semantic", "investigate"):
+        raise SystemExit("[오류] 사용법: codex_verifier.py data|semantic|investigate")
     sys.exit(run(s))

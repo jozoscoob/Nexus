@@ -49,6 +49,9 @@ JOBS: dict[str, tuple[list[list[str]], bool]] = {
                            [PY, "scripts/codex_gate.py"]], False),
     "codex_verify_semantic": ([[PY, "scripts/codex_prepare.py", "semantic"],
                                [PY, "scripts/codex_remote.py", "semantic"]], False),
+    # 근본 원인 조사(승인자 지시 2026-11-26): 최근 실행 경고·오류 + 오늘 검토 결과 → Codex가 원인·근거·수정 diff 제안(적용은 작업자)
+    "codex_investigate": ([[PY, "scripts/codex_prepare.py", "investigate"],
+                           [PY, "scripts/codex_remote.py", "investigate"]], False),
     # 메일 본문 생성(실행 요약·주간 요약) — n8n이 응답의 마지막 줄 JSON을 메일로 보냄
     "pipeline_summary": ([[PY, "scripts/pipeline_summary.py", "daily"]], False),
     "weekly_summary": ([[PY, "scripts/pipeline_summary.py", "weekly"]], False),
@@ -89,7 +92,8 @@ JOBS: dict[str, tuple[list[list[str]], bool]] = {
 ROLE = os.environ.get("NEXUS_ROLE", "runner")
 if ROLE == "verifier":
     JOBS = {"codex_verify_data": ([[PY, "scripts/codex_verifier.py", "data"]], False),
-            "codex_verify_semantic": ([[PY, "scripts/codex_verifier.py", "semantic"]], False)}
+            "codex_verify_semantic": ([[PY, "scripts/codex_verifier.py", "semantic"]], False),
+            "codex_verify_investigate": ([[PY, "scripts/codex_verifier.py", "investigate"]], False)}
 REPO = os.environ.get("NEXUS_REPO", "/repo")
 RUNNER_TOKEN = os.environ.get("VERIFIER_TOKEN" if ROLE == "verifier" else "RUNNER_TOKEN", "")
 LOG_DIR = Path(os.environ.get("JOB_LOG_DIR", str(Path(REPO) / "docker" / "logs")))
