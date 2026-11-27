@@ -15,6 +15,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
 LOGS = ROOT / "docker" / "logs"
 OPS = ROOT / "reports" / "ops"
 RUN_WINDOW = timedelta(hours=4)
@@ -74,6 +75,17 @@ def _codex_counts(stage: str) -> str:
 
 
 def daily() -> dict:
+    """영문 4구역 메일(승인 2026-11-27) — 본문 구성은 scripts/daily_email.py."""
+    from daily_email import build
+    res = _fresh_results(datetime.now())
+    out = build(res, date.today())
+    OPS.mkdir(parents=True, exist_ok=True)
+    (OPS / f"daily_summary_{date.today():%Y-%m-%d}.json").write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
+    return out
+
+
+def daily_ko_legacy() -> dict:
+    """구 한국어 요약(보관 — 되돌리기용)."""
     now = datetime.now()
     res = _fresh_results(now)
     failed = {j: d for j, d in res.items() if d.get("failed")}
@@ -117,10 +129,11 @@ def weekly() -> dict:
         days.append((d, json.loads(f.read_text(encoding="utf-8")) if f.exists() else None))
     ran = [x for _, x in days if x]
     ok = sum(1 for x in ran if not x["failed"])
-    lines = [f"최근 7일: 실행 {len(ran)}일 · 정상 {ok}일 · 실패 {len(ran) - ok}일 · 기록 없음 {7 - len(ran)}일"]
-    lines += [f"- {d} {'✅' if x and not x['failed'] else '❌' if x else '—'} {x['subject'].split('—')[0].replace('[Nexus] ', '').strip() if x else '실행 기록 없음'}"
-              for d, x in sorted(days)]
-    return {"subject": f"[Nexus] 📊 주간 요약 — {date.today() - timedelta(days=6)} ~ {date.today()}", "body": "\n".join(lines),
+    lines = [f"Last 7 days: {len(ran)} runs, {ok} fully finished, {len(ran) - ok} with failures, "
+             f"{7 - len(ran)} days without a run."]
+    lines += [f"- {d:%a %d %b}: " + (x["subject"].split(": ", 1)[-1] if x else "no run") for d, x in sorted(days)]
+    return {"subject": f"[Nexus] Weekly summary, {date.today() - timedelta(days=6):%d %b} to {date.today():%d %b %Y}",
+            "body": "\n".join(lines),
             "failed": len(ran) - ok > 0, "steps": len(ran)}
 
 

@@ -528,7 +528,9 @@ def fetch_fas_esr_soybean_oil(start_year: int = 2017) -> pd.DataFrame:
     rows: list[dict] = []
     schema_logged = False
 
-    for yr in range(start_year, date.today().year + 1):
+    # FAS ESR의 marketYear는 '끝나는 해' 기준(902 대두유 MY2026 = 2025-10~2026-09). 10월부터는 다음 해 라벨의
+    # 신 마케팅연도가 시작되므로 올해+1까지 조회한다 — 구 코드는 올해까지만 조회해 2026-10-01 이후가 비었음(2026-11-27 확인)
+    for yr in range(start_year, date.today().year + 2):
         for cmd_code, indicator_prefix in COMMODITY_CODES.items():
             url = f"{FAS_ESR_V2_BASE}/commodityCode/{cmd_code}/countryCode/{DEST_KOREA}/marketYear/{yr}"
             try:

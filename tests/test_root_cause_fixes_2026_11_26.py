@@ -109,3 +109,15 @@ def test_mart_unit_check_treats_blank_as_missing() -> None:
     from src.features import build_feature_mart as bm
     src = inspect.getsource(bm)
     assert 'replace("", pd.NA)' in src and "transform" in src
+
+
+def test_esr_requests_next_marketing_year(monkeypatch: pytest.MonkeyPatch) -> None:
+    """2026-11-27: ESR marketYear는 끝나는 해 라벨 — 10월 이후 신 MY(올해+1)를 반드시 조회해야 함."""
+    from datetime import date
+    from src.pipeline.connectors import production_connector as pc
+    asked: list[str] = []
+    monkeypatch.setenv("USDA_FAS_API_KEY", "test")
+    monkeypatch.setattr(pc.time, "sleep", lambda *_: None)
+    monkeypatch.setattr(pc, "_fetch_fas_esr", lambda url, api_key=None, **k: asked.append(url) or [])
+    pc.fetch_fas_esr_soybean_oil(start_year=date.today().year)
+    assert any(f"/marketYear/{date.today().year + 1}" in u for u in asked)

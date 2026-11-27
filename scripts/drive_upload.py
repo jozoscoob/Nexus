@@ -4,7 +4,7 @@
     python scripts/drive_upload.py --date 2026-11-24  # 특정 날짜
     python scripts/drive_upload.py --backfill-month 2026-11 [--extra DIR]   # 그 달 전체 재업로드
 
-Drive 구조: <Nexus Reports>/YYYY-MM/YYYY-MM-DD/ — 원격 루트는 rclone 설정의 root_folder_id(앱이 만든 'Nexus Reports'
+Drive 구조(승인자 지정 2026-11-27): <보고서>/G1/YYYY년/M월/YYYY-MM-DD/ — 연·월 폴더는 바뀔 때 자동 생성 — 원격 루트는 rclone 설정의 root_folder_id(앱이 만든 'Nexus Reports'
 폴더 ID)라서 승인자가 그 폴더를 원하는 위치로 옮겨도 계속 동작한다. 링크는 공유 링크가 아닌 폴더 주소(승인자 계정만 열람).
 올리는 것: G1 보고서(요약 미포함 원본)·G1 경보·일별 브리프, 실행 보고, 실행 요약, Codex 검증·제안 보고서.
 결과 링크: reports/ops/drive_links_<날짜>.json(실행 요약 메일이 읽음). rclone·원격 미설정이면 건너뜀(0).
@@ -26,6 +26,8 @@ ROOT = Path(__file__).resolve().parents[1]
 OPS = ROOT / "reports" / "ops"
 PIPE = ROOT / "reports" / "pipeline"
 REMOTE = os.environ.get("NEXUS_DRIVE_REMOTE", "nexusdrive")
+CATEGORY = os.environ.get("NEXUS_DRIVE_CATEGORY", "G1")
+DRY_RUN = os.environ.get("NEXUS_DRIVE_DRY_RUN") == "1"
 KST = ZoneInfo(os.environ.get("TZ", "Asia/Seoul"))
 G1_PATTERNS = ("g1_variable_importance_*_ko.html", "g1_variable_importance_*_en.html",
                "g1_variable_importance_*_ko.md", "g1_daily_brief_*.html", "g1_alert_*.md")
@@ -71,8 +73,14 @@ def _collect(day: str, extra: list[Path]) -> list[tuple[Path, str]]:
     return out
 
 
-def _folder_url(month: str, day: str) -> str | None:
-    r = _rclone("lsjson", f"{REMOTE}:{month}", "--dirs-only")
+def _day_dir(day: str) -> tuple[str, str]:
+    """(부모 경로, 날짜 폴더명) — 예: ('G1/2026년/11월', '2026-11-27'). 월은 0 없이(승인자 표기 '11월')."""
+    y, m, _ = day.split("-")
+    return f"{CATEGORY}/{y}년/{int(m)}월", day
+
+
+def _folder_url(parent: str, day: str) -> str | None:
+    r = _rclone("lsjson", f"{REMOTE}:{parent}", "--dirs-only")
     try:
         for item in json.loads(r.stdout or "[]"):
             if item.get("Name") == day and item.get("ID"):
@@ -87,20 +95,23 @@ def upload(day: str, extra: list[Path]) -> int:
     if not files:
         print(f"[정보] {day} 올릴 보고서 없음")
         return 0
-    month = day[:7]
+    parent, folder = _day_dir(day)
+    if DRY_RUN:
+        print(f"[정보] (시험) {REMOTE}:{parent}/{folder}/ ← {', '.join(n for _, n in files)}")
+        return 0
     with tempfile.TemporaryDirectory() as tmp:
         for src, name in files:
             shutil.copy2(src, Path(tmp) / name)
-        r = _rclone("copy", tmp, f"{REMOTE}:{month}/{day}", "--no-traverse")
+        r = _rclone("copy", tmp, f"{REMOTE}:{parent}/{folder}", "--no-traverse")
     if r.returncode:
         print(f"[오류] Drive 업로드 실패({day}): {r.stderr.strip()[-400:]}")
         return 1
-    url = _folder_url(month, day)
+    url = _folder_url(parent, folder)
     OPS.mkdir(parents=True, exist_ok=True)
     (OPS / f"drive_links_{day}.json").write_text(json.dumps(
         {"date": day, "folder_url": url, "files": [n for _, n in files]}, ensure_ascii=False, indent=1),
         encoding="utf-8")
-    print(f"[완료] Drive {month}/{day} — {len(files)}개 파일 · 폴더 {url or '(링크 확인 실패)'}")
+    print(f"[완료] Drive {parent}/{folder} — {len(files)}개 파일 · 폴더 {url or '(링크 확인 실패)'}")
     return 0
 
 

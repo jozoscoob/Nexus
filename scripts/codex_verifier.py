@@ -26,7 +26,8 @@ COMMON = (
     "container. Layout: /work/inputs is READ-ONLY input; /work/staging is a throwaway writable copy you may "
     "change to test fixes; /work/out is where you write results; /repo/src, /repo/scripts, /repo/config are "
     "read-only code. There is nothing else to find: no API keys, no other data. Never try to reach any network "
-    "address except your own API. Write all prose in Korean.\n"
+    "address except your own API. Write all prose in English (the owner reads the daily email in English); keep the "
+    "severity words exactly as specified (치명/높음/참고).\n"
 )
 DATA_PROMPT = COMMON + (
     "TASK: verify the structured data. Read /work/inputs/manifest_data.json first. scope=daily means focus on "
