@@ -40,6 +40,10 @@ def _rclone(*args: str) -> subprocess.CompletedProcess:
 
 
 def _ready() -> bool:
+    hold = ROOT / "codex_work" / "drive_upload_hold"
+    if hold.is_file():   # 승인자 폴더 정리 대기 등 — 앱이 볼 수 없는 승인자 폴더와 이름이 겹쳐 중복 폴더가 생기는 것을 막음
+        print(f"[경고] Drive 업로드 보류 — {hold.read_text(encoding='utf-8').strip()[:160]}")
+        return False
     if not shutil.which("rclone"):
         print("[경고] rclone 미설치 — Drive 저장 건너뜀")
         return False
