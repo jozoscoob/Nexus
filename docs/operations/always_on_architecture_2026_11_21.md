@@ -115,6 +115,7 @@
 | 작업 API 인증 | runner `POST /run/<job>`에 공유 토큰 헤더(`X-Runner-Token`) 필수 — 값은 서버 `docker/.env`에만, n8n은 환경 변수 식으로 참조(워크플로우 JSON에 값 없음). 토큰 없으면 401 |
 | 실행 이력 정리 | n8n `EXECUTIONS_DATA_PRUNE` — 14일·최대 1만 건(SQLite 무한 증가 방지) |
 | SSH 보강 | 비밀번호 로그인 끔(이미지 기본) + 루트 로그인 끔 + 인증 시도 3회 + fail2ban(10분 내 5회 실패 시 1시간 차단). 변경 후 새 연결로 키 로그인 확인 |
+| 보고서 Google Drive 저장(11-27) | 승인자 승인. rclone(범위 drive.file — 앱이 만든 폴더·파일만), 토큰은 runner 전용 볼륨 `rclone_config`(검증 컨테이너 없음). 원격 루트는 앱이 만든 'Nexus Reports' 폴더 ID로 고정 → 승인자가 원하는 폴더로 옮겨도 동작. 파이프라인 ④ 끝(`drive_upload`)에서 `YYYY-MM/YYYY-MM-DD/`로 G1 보고서(원본·요약 미포함)·경보·브리프·실행 보고·Codex 보고서 저장, 폴더 링크는 메일용 `reports/ops/drive_links_<날짜>.json`. 11월 백필 6일·56파일. 로그인은 서버 `rclone config create … scope=drive.file`(호스트 망) + 노트북 SSH 터널 53682 — 대기 중 다른 요청이 들어가면 실패하므로 터널 점검 금지 |
 | Codex 검증 컨테이너(11-26) | 별도 컨테이너 + 내부 전용 망 + 허용 목록 프록시(OpenAI·ChatGPT만). 공개 데이터는 사본 전체·라이선스는 통계만, 쓰기는 스테이징·출력 폴더만. 제안은 게이트 → 승인 → 작업자 적용(백업 14일). 서버에서만 켬(`COMPOSE_PROFILES=verifier`) — SPEC §3.8 |
 | 배포 키 | ✅ 11-26 등록·전환 완료 — `/opt/nexus`는 git 작업 사본(원문 PDF 제외 sparse checkout·blob 지연 받기, 브랜치 `claude/codex-obsidian-g2-framework`). 갱신은 `sudo sh /opt/nexus/docker/deploy.sh` 한 줄: fast-forward만, 서버가 갱신하는 추적 데이터 9개(TE xlsx 5·신호 아카이브·경보 원장 등)는 유지하고 겹치면 아무것도 바꾸지 않고 중단, 이미지·compose 변경 시에만 재빌드·재기동 |
 | 노트북 볼트 복사 | 07:00 작업이 서버 runner를 토큰 헤더와 함께 호출하도록 갱신 |
