@@ -65,3 +65,29 @@ def test_composite_published_and_declares_unconfigured_source() -> None:
     rows = gc._compute_composite(frames)
     assert len(rows) == 1 and rows[0]["value"] == pytest.approx(45.0)
     assert "미설정" in rows[0]["note"] and "FIRMS_FIRE" in rows[0]["note"]
+
+
+def test_vix_skips_vintage_request(monkeypatch: pytest.MonkeyPatch) -> None:
+    """D: VIXCLS는 vintage 3,980개로 최초 발표본 요청 상한(2,000) 초과 → 표준 요청만 보냄."""
+    sent: list[dict] = []
+
+    def fake_fetch(url: str, params: dict, *a, **k) -> dict:
+        sent.append(dict(params))
+        return {"observations": [{"date": "2026-11-20", "value": "17.1"}]}
+
+    monkeypatch.setattr(ec, "_fetch", fake_fetch)
+    monkeypatch.setenv("FRED_API_KEY", "test")
+    df = ec.fetch_fred_series("VIXCLS", "2026-11-20", "2026-11-20")
+    assert not df.empty and all("output_type" not in p for p in sent)
+
+
+def test_customs_total_rows_excluded_not_counted_as_failure(capsys: pytest.CaptureFixture[str]) -> None:
+    """C: '총계'(기간 합계) 행은 날짜 파생 실패가 아니라 명시적 제외 — 월별 행은 그대로."""
+    from src.pipeline.connectors import customs_connector as cc
+    rows = [{"year": "2026.01", "hsCode": "1507100000", "impDlr": "100", "impWgt": "50"},
+            {"year": "2026.02", "hsCode": "1507100000", "impDlr": "120", "impWgt": "60"},
+            {"year": "총계", "hsCode": "-", "impDlr": "220", "impWgt": "110"}]
+    df = cc._normalize_customs_df(rows, "KoreaCustoms/Itemtrade")
+    out = capsys.readouterr().out
+    assert len(df) == 2 and df["price_date"].notna().all()
+    assert "총계" in out and "파생 실패" not in out

@@ -28,6 +28,9 @@ FRED_BASE = "https://api.stlouisfed.org/fred/series/observations"
 EIA_BASE  = "https://api.eia.gov/v2/petroleum/pri/spt/data/"
 BOK_BASE  = "https://ecos.bok.or.kr/api/StatisticSearch"
 OUTPUT_DIR = "data/raw"
+# 개정되지 않는 일별 시장 지표 — 최초 발표본(ALFRED) 요청이 무의미하고, VIXCLS는 vintage가 3,980개라
+# output_type=4 상한(2,000)을 넘어 매일 400을 받았다(2026-11-26 확인). 표준 요청으로 바로 받는다.
+FRED_NO_VINTAGE = {"VIXCLS"}
 FRED_UNITS = {
     "FEDFUNDS": "%",
     "CPIAUCSL": "index (1982–1984=100)",
@@ -55,7 +58,9 @@ def _fetch(url: str, params: dict[str, Any], max_retries: int = 4) -> dict:
                     except ValueError:
                         error = {}
                     message = str(error.get("error_message", "")).lower() if isinstance(error, dict) else ""
-                    if "series does not exist" in message:
+                    if "maximum number of vintage dates" in message:
+                        reason = "vintage 수 상한 초과(개정 없는 계열이면 FRED_NO_VINTAGE에 등록)"
+                    elif "series does not exist" in message:
                         reason = "계열 미존재"
                     elif "api_key" in message or "api key" in message:
                         reason = "API 키 관련"
@@ -100,9 +105,11 @@ def fetch_fred_series(series_id: str, start: str, end: str) -> pd.DataFrame:
         "realtime_end": "9999-12-31",
         "output_type": "4",               # 4 = initial release only
     }
+    if series_id in FRED_NO_VINTAGE:
+        params = {k: v for k, v in params.items() if k not in ("realtime_start", "realtime_end", "output_type")}
     data = _fetch(FRED_BASE, params)
     obs = data.get("observations", [])
-    if not obs:
+    if not obs and "output_type" in params:
         # ALFRED 파라미터를 지원하지 않는 응답이면 표준 요청으로 폴백
         print(f"[정보] FRED {series_id}: ALFRED 응답 없음 — 표준 요청으로 재시도")
         data = _fetch(FRED_BASE, {k: v for k, v in params.items()

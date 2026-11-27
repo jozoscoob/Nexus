@@ -436,6 +436,13 @@ def _normalize_customs_df(all_rows: list[dict], source_tag: str) -> pd.DataFrame
             df.loc[annual_mask & df["note"].astype(str).eq(""), "note"] = "연간 집계(XML 응답)"
     if "price_date" not in df.columns:
         df["price_date"] = pd.NaT
+    # '총계' 행은 조회 기간 전체 합계(월별 행의 합) — 기간이 없어 날짜를 만들 수 없고, 남기면 중복 집계가 됨.
+    #   2026-11-26 확인: 매일 '파생 실패 60건'의 정체가 전부 이 행(Itemtrade 16·nitemtrade 44)이었음 → 명시적으로 제외
+    if "stat_year" in df.columns:
+        total = df["stat_year"].astype(str).str.strip().eq("총계") & df["price_date"].isna()
+        if total.any():
+            print(f"[정보] {source_tag} 기간 합계('총계') 행 {int(total.sum())}건 제외 — 월별 행의 합이라 정보 손실 없음")
+            df = df[~total].copy()
     invalid = df["price_date"].isna()
     if invalid.any():
         periods = {}
