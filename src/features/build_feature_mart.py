@@ -213,6 +213,11 @@ def load_long(raw_dir: str = RAW_DIR) -> Loaded:
     #    (A-126: WASDE가 세계표 1.44 백만MT와 미국표 3,176 백만파운드를 한 코드에 담고 있었다).
     #    ASOF JOIN은 동점을 물리적 행 순서로 조용히 해소하므로 실행마다 값이 바뀐다.
     #    자동 선택으로 덮지 말고 **실패시킨다**.
+    # 빈 단위는 '단위 미기재'(결측)이지 별개 단위가 아님 — 2026-11-27 FRED 단위 기입 후 이전 스냅샷의 빈 단위와
+    #   충돌로 오판해 마트가 멈춤. 지표별로 기재된 단위가 하나뿐이면 빈 칸을 그 단위로 채우고, 서로 다른 '기재 단위'만 충돌로 본다.
+    unit = long["unit"].astype("string").str.strip().replace("", pd.NA)
+    known = unit.groupby(long["indicator_code"]).transform(lambda s: s.dropna().iloc[0] if s.dropna().nunique() == 1 else pd.NA)
+    long["unit"] = unit.fillna(known)
     unit_clash = long.groupby("indicator_code")["unit"].nunique()
     unit_clash = unit_clash[unit_clash > 1]
     if len(unit_clash):

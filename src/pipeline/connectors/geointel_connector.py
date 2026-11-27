@@ -125,11 +125,18 @@ def _to_df(rows: list[dict]) -> pd.DataFrame:
 def _confirmed_frame(rows: list[dict]) -> pd.DataFrame:
     frame = _to_df(rows)
     frame.attrs["confirmed"] = True
-    frame.attrs["observation_day"] = (
-        frame["price_date"].iloc[0] if not frame.empty
-        else pd.Timestamp.now(tz="UTC").tz_localize(None).normalize()
+    frame.attrs["observation_day"] = str(   # 문자열 — Timestamp를 attrs에 두면 to_parquet 메타데이터 직렬화가 실패(2026-11-27 06:00)
+        (frame["price_date"].iloc[0] if not frame.empty
+         else pd.Timestamp.now(tz="UTC").tz_localize(None).normalize()).date()
     )
     return frame
+
+
+def _save(df: pd.DataFrame, out: str) -> None:
+    """저장 — 수집 판정용 attrs(확인 여부·관측일)는 메모리 전용이라 파일 메타데이터에 싣지 않는다."""
+    df = df.copy()
+    df.attrs = {}
+    df.to_parquet(out, index=False)
 
 
 def fetch_usgs_earthquakes() -> pd.DataFrame:
@@ -375,7 +382,7 @@ def run() -> None:
     composite = _to_df(_compute_composite(frames))
     if composite.empty:
         print("[경고] GeoIntel 구성 신호 확인 불완전 — 복합 지수 발행 보류")
-    elif any(f.attrs["observation_day"] != composite["price_date"].iloc[0] for f in frames):
+    elif any(f.attrs["observation_day"] != str(composite["price_date"].iloc[0].date()) for f in frames):
         print("[경고] GeoIntel 관측일 경계 통과 — 복합 지수 발행 보류")
     else:
         frames.append(composite)
@@ -389,7 +396,7 @@ def run() -> None:
     out = f"{OUTPUT_DIR}/geointel_{today}.parquet"
     # D-023: 저장 직전 as-of 5필드 부여 — 규칙은 src/pipeline/asof.py 단일 관리
     df = attach_asof(df, source="GEOINTEL")
-    df.to_parquet(out, index=False)
+    _save(df, out)
     print(f"[완료] GeoIntel 지정학 인텔리전스 {len(df)}건 → {out}")
 
 

@@ -91,3 +91,21 @@ def test_customs_total_rows_excluded_not_counted_as_failure(capsys: pytest.Captu
     out = capsys.readouterr().out
     assert len(df) == 2 and df["price_date"].notna().all()
     assert "총계" in out and "파생 실패" not in out
+
+
+def test_geointel_save_survives_collection_attrs(tmp_path) -> None:
+    """2026-11-27 06:00 회귀: 수집 판정 attrs가 parquet 메타데이터로 넘어가 저장이 실패하면 안 됨."""
+    df = pd.concat([_frame([gc._make_row("SEISMIC_X", 5.0, "M", "")]),
+                    _frame([gc._make_row("GDELT_EVENT_SCORE", 3.0, "a", "")])], ignore_index=True)
+    df.attrs = {"confirmed": True, "observation_day": pd.Timestamp("2026-11-27")}   # 최악의 경우 가정
+    out = tmp_path / "g.parquet"
+    gc._save(df, str(out))
+    assert len(pd.read_parquet(out)) == 2
+
+
+def test_mart_unit_check_treats_blank_as_missing() -> None:
+    """2026-11-27 06:00 회귀: 이전 스냅샷의 빈 단위와 새 단위는 충돌이 아님 — 서로 다른 기재 단위만 충돌."""
+    import inspect
+    from src.features import build_feature_mart as bm
+    src = inspect.getsource(bm)
+    assert 'replace("", pd.NA)' in src and "transform" in src
