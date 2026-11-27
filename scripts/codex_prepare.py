@@ -151,6 +151,9 @@ def prepare_investigate(runs: int = 3) -> dict:
                     seen.add(key)
                     lines.append(f"{parts[-2]} {parts[0]} | {s.get('step', '')[:60]} | {ln[:300]}")
     (dst / "run_warnings.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    q = os.environ.get("CODEX_QUESTIONS_FILE", "")
+    if q and Path(q).is_file():   # 승인자·작업자가 정한 질문 목록 — 있으면 기본 조사 목록 대신 이 질문에 답함
+        shutil.copy2(q, dst / "questions.md")
     for name in (f"codex_verify_data_{date.today():%Y-%m-%d}.md", f"codex_proposals_{date.today():%Y-%m-%d}.json"):
         src = ROOT / "reports" / "ops" / name
         if src.is_file():

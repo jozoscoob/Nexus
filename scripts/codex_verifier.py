@@ -59,7 +59,8 @@ SEMANTIC_PROMPT = COMMON + (
 
 
 INVESTIGATE_PROMPT = COMMON + (
-    "TASK: root-cause investigation — do NOT just restate symptoms. Inputs: /work/inputs/investigate/"
+    "If /work/inputs/investigate/questions.md exists, answer THOSE questions (same output format) instead of the "
+    "default list below. TASK: root-cause investigation — do NOT just restate symptoms. Inputs: /work/inputs/investigate/"
     "run_warnings.txt (warnings/errors from the last pipeline runs), today's data review and proposals in the same "
     "folder, public data copies under /work/inputs/public, code under /repo. Investigate at least these, then any "
     "other RECURRING problem you find in run_warnings.txt (collection, processing, refinement, analysis): "
