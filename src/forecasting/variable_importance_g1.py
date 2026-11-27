@@ -2236,7 +2236,7 @@ def _render_html(
 <h1>{title}<br><small style="font-size:14px;color:#5c6bc0">{sub}</small></h1>
 
 <div class="meta">
-  <strong>{'생성 일자' if lang == 'ko' else 'Generated (UTC)'}:</strong> {run_ts[:10] if lang == 'ko' else run_ts} &nbsp;│&nbsp;
+  <strong>{'생성 일자' if lang == 'ko' else 'Generated (KST)'}:</strong> {run_ts[:10] if lang == 'ko' else run_ts} &nbsp;│&nbsp;
   <strong>{'데이터 범위' if lang == 'ko' else 'Data Range'}:</strong> {data_period if data_period else (f"{'최근' if lang == 'ko' else 'Last'} {days}{'일' if lang == 'ko' else ' days'}") }
 </div>
 
@@ -2292,7 +2292,9 @@ def run(days: int = 7) -> None:
     os.makedirs(REPORT_DIR, exist_ok=True)
 
     from datetime import datetime
-    now    = datetime.utcnow()
+    from zoneinfo import ZoneInfo
+    # 실행 시간대(KST) 기준 — utcnow는 06:40 KST 실행을 전날 날짜로 찍었다(2026-11-27 보고서가 11-26으로 표기)
+    now    = datetime.now(ZoneInfo(os.environ.get("TZ", "Asia/Seoul"))).replace(tzinfo=None)
     tag    = now.strftime("%Y%m%d_%H%M")
     run_ts = now.strftime("%Y-%m-%d %H:%M:%S")
     run_id = os.environ.get("GITHUB_RUN_ID", "local")
