@@ -54,6 +54,8 @@ JOBS: dict[str, tuple[list[list[str]], bool]] = {
                            [PY, "scripts/codex_remote.py", "investigate"]], False),
     # 메일 본문 생성(실행 요약·주간 요약) — n8n이 응답의 마지막 줄 JSON을 메일로 보냄
     "pipeline_summary": ([[PY, "scripts/pipeline_summary.py", "daily"]], False),
+    # 보고서 Google Drive 저장(승인자 승인 2026-11-26) — 날짜별 폴더, 링크는 메일에. rclone 미설정이면 건너뜀(비치명)
+    "drive_upload": ([[PY, "scripts/drive_upload.py"]], False),
     "weekly_summary": ([[PY, "scripts/pipeline_summary.py", "weekly"]], False),
     # TE 시세 xlsx 증분 갱신(TRADING_ECONOMICS_API_KEY) → 정형화 — Actions te_xlsx_update.yml 대체
     "te_update": ([[PY, "scripts/update_te_xlsx_from_api.py", "--mode", "snapshot"],

@@ -155,7 +155,8 @@ LANES = [  # (제목, 스티키 색, [(작업, 노드명)])
                   ("vault_export", "Obsidian 볼트 보기")]),
     ("③ 품질 점검", 5, [("quality", "준비도·as-of·시맨틱·테스트"), ("codex_verify_data", "Codex 데이터 검증(요약 통계)")]),
     ("④ 분석·평가", 4, [("band_compare", "참고 범위 방식 비교"), ("baseline", "기준선 성적표"), ("g1_report", "G1 보고서"),
-                     ("g2_preview", "G2 화면"), ("run_report", "실행 보고·터미널")]),
+                     ("g2_preview", "G2 화면"), ("run_report", "실행 보고·터미널"),
+                     ("drive_upload", "Google Drive 보고서 저장")]),
 ]
 
 

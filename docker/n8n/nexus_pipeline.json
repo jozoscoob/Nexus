@@ -428,7 +428,7 @@
    "parameters": {
     "content": "## ④ 분석·평가",
     "height": 300,
-    "width": 1640,
+    "width": 1900,
     "color": 4
    },
    "id": "lane3",
@@ -619,6 +619,38 @@
    "typeVersion": 4.2,
    "position": [
     1660,
+    1080
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://runner:8000/run/drive_upload",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Runner-Token",
+       "value": "={{ $env.RUNNER_TOKEN }}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 7200000,
+     "response": {
+      "response": {
+       "neverError": true,
+       "fullResponse": true
+      }
+     }
+    }
+   },
+   "id": "drive_upload_3",
+   "name": "Google Drive 보고서 저장",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1920,
     1080
    ]
   },
@@ -939,6 +971,17 @@
    ]
   },
   "실행 보고·터미널": {
+   "main": [
+    [
+     {
+      "node": "Google Drive 보고서 저장",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Google Drive 보고서 저장": {
    "main": [
     [
      {

@@ -9,6 +9,7 @@ services:
       - ${CODEX_AUTH_JSON:-${USERPROFILE}/.codex/auth.json}:/run/secrets/codex_auth.json:ro
       # Codex 로그인 ②(상시 서버) 서버 자체 로그인을 영구 볼륨에 보관 — 재빌드·재시작에도 유지
       - codex_home:/root/.codex
+      - rclone_config:/root/.config/rclone      # Google Drive 토큰(runner 전용 — 검증 컨테이너에는 없음)
     env_file: [{path: ../.env, required: false}]
     environment:
       TZ: Asia/Seoul
@@ -81,3 +82,5 @@ volumes:
   n8n_data:
   codex_home:
     name: codex_home
+  rclone_config:
+    name: rclone_config

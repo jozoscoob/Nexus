@@ -19,11 +19,12 @@ LOGS = ROOT / "docker" / "logs"
 OPS = ROOT / "reports" / "ops"
 RUN_WINDOW = timedelta(hours=4)
 PIPELINE_JOBS = ["collect_free", "te_update", "digest", "codex_verify_semantic", "manual_parsers", "mart_build", "vault_export",
-                 "quality", "codex_verify_data", "band_compare", "baseline", "g1_report", "g2_preview", "run_report"]
+                 "quality", "codex_verify_data", "band_compare", "baseline", "g1_report", "g2_preview", "run_report", "drive_upload"]
 LABEL = {"collect_free": "수집", "te_update": "TE 시세", "digest": "비정형 다이제스트", "codex_verify_semantic": "Codex 시맨틱 검토",
          "manual_parsers": "수동 파서", "mart_build": "마트", "vault_export": "볼트 보기", "quality": "품질 점검",
          "codex_verify_data": "Codex 데이터 검증", "band_compare": "범위 방식 비교", "baseline": "기준선",
-         "g1_report": "G1 보고서", "g2_preview": "G2 화면", "run_report": "실행 보고"}
+         "g1_report": "G1 보고서", "g2_preview": "G2 화면", "run_report": "실행 보고",
+         "drive_upload": "Drive 저장"}
 
 
 def _fresh_results(now: datetime) -> dict[str, dict]:
